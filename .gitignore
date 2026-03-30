@@ -1,0 +1,30 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Claude Code (session-specific)
+.claude/
+
+# Assets (runtime-generated, per-project)
+_base/assets/failures/
+_base/assets/patterns/
+_base/assets/guardrails/
+_base/assets/snippets/
+_base/assets/decisions/
+_base/assets/compressed/
+_base/assets/index.json
+
+# State files (runtime-generated)
+PROGRESS.md
+work-current-rag.md
+state.json
+
+# Packaged skills
+*.skill
