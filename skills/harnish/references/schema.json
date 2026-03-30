@@ -1,0 +1,206 @@
+{
+  "_comment": "L0 Contract — 전체 시스템의 데이터 계약. 모든 레이어는 이 스키마를 준수한다.",
+
+  "frontmatter": {
+    "_comment": "자산 마크다운 파일의 YAML frontmatter 필드 정의",
+    "required": {
+      "type": {
+        "enum": ["failure", "pattern", "guardrail", "snippet", "decision", "compressed"],
+        "description": "자산 유형"
+      },
+      "date": {
+        "format": "YYYY-MM-DD",
+        "description": "기록 일자"
+      },
+      "tags": {
+        "format": "[\"tag1\", \"tag2\"]",
+        "description": "검색·그룹화용 태그. 소문자 kebab-case, 3~5개 권장"
+      }
+    },
+    "optional": {
+      "context": {
+        "type": "string",
+        "description": "기록 배경 (검색성 향상)"
+      },
+      "scope": {
+        "enum": ["generic", "project", "team"],
+        "default": "generic",
+        "description": "적용 범위. generic=범용, project=프로젝트한정, team=팀한정"
+      },
+      "stability": {
+        "type": "integer",
+        "default": 1,
+        "applies_to": ["pattern", "snippet"],
+        "description": "재사용 횟수 기반 안정도. 3 이상이면 스킬화 후보"
+      },
+      "resolved": {
+        "type": "boolean",
+        "applies_to": ["failure"],
+        "description": "해결 여부"
+      },
+      "level": {
+        "enum": ["soft", "hard"],
+        "applies_to": ["guardrail"],
+        "description": "규칙 강도"
+      },
+      "confidence": {
+        "enum": ["low", "medium", "high"],
+        "applies_to": ["decision"],
+        "description": "결정 확신도"
+      },
+      "summarized": {
+        "type": "boolean",
+        "applies_to": ["compressed"],
+        "description": "Claude 요약 완료 여부"
+      },
+      "source_session": {
+        "type": "string",
+        "description": "기록한 세션 ID"
+      },
+      "environment": {
+        "type": "string",
+        "description": "기록 환경"
+      },
+      "localized_from": {
+        "type": "string",
+        "description": "localize 원본 파일명 (localize-asset.sh가 설정)"
+      },
+      "abstracted_from": {
+        "type": "string",
+        "description": "abstract 원본 파일명 (abstract-asset.sh가 설정)"
+      }
+    }
+  },
+
+  "index": {
+    "_comment": ".meta/index.json 구조. 시스템의 중앙 조율점.",
+    "fields": {
+      "version": {
+        "type": "string",
+        "description": "스키마 버전 (semver)"
+      },
+      "thresholds": {
+        "compression_trigger": {
+          "type": "integer",
+          "default": 5,
+          "description": "동일 태그 N건 이상이면 압축 권장"
+        },
+        "skillification_stability": {
+          "type": "integer",
+          "default": 3,
+          "description": "stability ≥ N이면 스킬화 후보"
+        },
+        "guardrail_consolidation": {
+          "type": "integer",
+          "default": 3,
+          "description": "동일 도메인 가드레일 N건 이상이면 통합 권장"
+        }
+      },
+      "counts": {
+        "type": "object",
+        "description": "유형별 자산 수 {failures: N, patterns: N, ...}"
+      },
+      "tag_index": {
+        "type": "object",
+        "description": "태그별 자산 수 {docker: N, api: N, ...}"
+      }
+    },
+    "mutators": [
+      "init-assets.sh (생성)",
+      "record-asset.sh (counts++, tag_index++)",
+      "compress-assets.sh (counts--, tag_index--)",
+      "check-thresholds.sh --rebuild (전체 재구축)"
+    ]
+  },
+
+  "hook_io": {
+    "_comment": "detect-asset.sh의 stdin/stdout 계약",
+    "input": {
+      "source": "Claude Code hook system (PostToolUse, PostToolUseFailure, Stop)",
+      "format": "JSON via stdin",
+      "fields": {
+        "hook_event_name": "PostToolUse | PostToolUseFailure | Stop | SessionEnd",
+        "tool_name": "Bash | Edit | Write | NotebookEdit | ...",
+        "session_id": "string",
+        "tool_output": "string (PostToolUseFailure의 에러 메시지)",
+        "tool_input": "object (선택적)"
+      }
+    },
+    "output": {
+      "format": "JSON via stdout (없으면 빈 출력)",
+      "schema": {
+        "hookSpecificOutput": {
+          "hookEventName": "string",
+          "additionalContext": "string ([asset-recorder] 프리픽스)"
+        }
+      }
+    }
+  },
+
+  "script_io": {
+    "_comment": "각 스크립트의 I/O 계약 요약",
+    "common_args": {
+      "--base-dir": "자산 루트 경로 (기본: 환경변수 또는 상대경로 해석)"
+    },
+    "record-asset.sh": {
+      "input": "--type, --tags, --title, --content|--body-file, [--scope, --context, --env, --session-id, --stdin]",
+      "output": "{status, file, type, tags, alerts, rca}"
+    },
+    "quality-gate.sh": {
+      "input": "--base-dir, [--date, --format json|text]",
+      "output": "{ralp_gate, summary, verdict, question, issues}"
+    },
+    "check-thresholds.sh": {
+      "input": "--base-dir, [--format json|text, --rebuild]",
+      "output": "{status, counts, total, tag_index, alerts}"
+    },
+    "compress-assets.sh": {
+      "input": "--tag|--type|--all, --base-dir",
+      "output": "{label, count, output, needs_summary} 또는 {status: empty}"
+    },
+    "localize-asset.sh": {
+      "input": "--source, --project-context|--context-file|--team-context, [--scope, --base-dir]",
+      "output": "{status, source, output, direction, type, next_step}"
+    },
+    "abstract-asset.sh": {
+      "input": "--source, [--replace|--keep-original, --base-dir]",
+      "output": "{status, source, output, direction, detected_specifics, replace_original, next_step}"
+    },
+    "skillify.sh": {
+      "input": "--source, --skill-name, [--output-dir]",
+      "output": "{status, skill_name, skill_dir, source_summarized, files, next_steps}"
+    }
+  },
+
+  "layers": {
+    "_comment": "구현 레이어 정의. 하위 레이어는 상위를 호출하지 않는다.",
+    "L0_Contract": {
+      "files": ["references/schema.json", "references/sections.json"],
+      "rule": "데이터 계약만 정의. 코드 없음."
+    },
+    "L1_Storage": {
+      "files": ["scripts/common.sh", "scripts/init-assets.sh"],
+      "rule": "디렉토리·인덱스 관리, 공용 함수. L2 이상을 호출하지 않음.",
+      "exports": ["_default_base()", "resolve_env()", "slugify()", "format_yaml_tags()", "atomic_write_index()", "parse_frontmatter()"]
+    },
+    "L2_Operation": {
+      "files": ["scripts/record-asset.sh", "scripts/quality-gate.sh", "scripts/localize-asset.sh", "scripts/abstract-asset.sh"],
+      "rule": "단일 자산 CRUD·검증·변환. L1만 source 가능.",
+      "depends_on": ["L1_Storage", "L0_Contract"]
+    },
+    "L3_Aggregate": {
+      "files": ["scripts/check-thresholds.sh", "scripts/compress-assets.sh", "scripts/skillify.sh"],
+      "rule": "다중 자산 분석·변환. L1 source 가능, L2 호출 가능.",
+      "depends_on": ["L1_Storage", "L2_Operation", "L0_Contract"]
+    },
+    "L4_Interface": {
+      "files": ["scripts/detect-asset.sh", "SKILL.md", "hooks/hooks.json"],
+      "rule": "외부 경계. hook 핸들러는 L2·L3를 호출 가능. SKILL.md는 Claude의 진입점.",
+      "depends_on": ["L1_Storage", "L2_Operation", "L3_Aggregate"]
+    },
+    "L5_Test": {
+      "files": ["scripts/test-harness.py", "scripts/test-harness.sh"],
+      "rule": "검증 전용. 모든 레이어 호출 가능. 프로덕션 코드에서 호출하지 않음."
+    }
+  }
+}
