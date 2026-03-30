@@ -14,8 +14,8 @@ drafti (설계) → harnish (분해) → ralphi (실행)
 
 | Skill | Command | Role |
 |-------|---------|------|
-| **prd-architect** | `/prd-architect` | 기술 주도 설계 PRD 생성 |
-| **prd-feature** | `/prd-feature` | 기획 기반 명세 PRD 생성 |
+| **drafti-architect** | `/drafti-architect` | 기술 주도 설계 PRD 생성 |
+| **drafti-feature** | `/drafti-feature` | 기획 기반 명세 PRD 생성 |
 | **harnish** | `/harnish` | PRD를 태스크로 분해 + 오케스트레이션 |
 | **ralphi** | `/ralphi` | 자율 실행 루프 (Read → Act → Log → Progress) |
 
@@ -24,8 +24,8 @@ drafti (설계) → harnish (분해) → ralphi (실행)
 ```
 harnish/
 ├── skills/
-│   ├── prd-architect/        # 기술 설계 PRD
-│   ├── prd-feature/          # 기획 명세 PRD
+│   ├── drafti-architect/     # 기술 설계 PRD
+│   ├── drafti-feature/       # 기획 명세 PRD
 │   ├── harnish/              # 오케스트레이터 (seeding / anchor / experience)
 │   └── ralphi/               # 자율 실행 루프
 ├── hooks/hooks.json          # Claude Code hooks
@@ -40,7 +40,7 @@ harnish/
 claude plugin install https://github.com/plz-salad-not-here/harnish
 
 # mcpmarket
-# prd-architect, prd-feature, harnish, ralphi 개별 설치
+# drafti-architect, drafti-feature, harnish, ralphi 개별 설치
 ```
 
 ## Development
@@ -61,7 +61,7 @@ Pre-commit hook이 자동으로 검증합니다:
 
 - **harnish** = harness + ish
 - **ralphi** = RALP (Recursive Autonomous Loop Process) + i
-- **drafti** = draft + i (prd-architect + prd-feature의 개념명)
+- **drafti** = draft + i (drafti-architect + drafti-feature의 프리픽스)
 
 ## License
 
