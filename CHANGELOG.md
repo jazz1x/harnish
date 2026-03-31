@@ -36,7 +36,7 @@ First release. 4 skills + 16 shared scripts + asset infrastructure.
 - 다언어 타입 체커 (Python/TS/Go/Java/Rust)
 - references: task-schema.md, progress-template.md, escalation-protocol.md, guardrail-levels.md, thresholds.md
 
-#### ralphi `0.0.1`
+#### ralpi `0.0.1`
 - 아티팩트 정합성 검증 스킬 (자가검증 + 자가수정 루프, 최대 7회)
 - 4개 아티팩트 타입: PRD, SKILL.md, 스크립트, 코드
 - criteria-code.md: 9개 언어 도구 매핑 테이블
