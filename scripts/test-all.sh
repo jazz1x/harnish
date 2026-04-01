@@ -618,9 +618,11 @@ fi
 echo "${BOLD}[SKILL.md 정합성]${NC}"
 
 skill_ok=true
+skill_count=0
 for skill_dir in "$HARNISH_ROOT"/skills/*/; do
   skill_md="$skill_dir/SKILL.md"
   [[ -f "$skill_md" ]] || continue
+  skill_count=$((skill_count + 1))
   skill_name=$(basename "$skill_dir")
   for field in name description version; do
     if ! head -20 "$skill_md" | grep -qE "^${field}:"; then
@@ -629,8 +631,32 @@ for skill_dir in "$HARNISH_ROOT"/skills/*/; do
     fi
   done
 done
-if $skill_ok; then
-  pass "SKILL.md frontmatter: 4개 스킬 모두 name/description/version 정상"
+if [[ $skill_count -eq 0 ]]; then
+  fail "SKILL.md frontmatter: skills/ 디렉토리에 스킬 없음"
+elif $skill_ok; then
+  pass "SKILL.md frontmatter: ${skill_count}개 스킬 모두 name/description/version 정상"
+fi
+
+# ════════════════════════════════════════
+# 25b. SKILL.md → references/ 파일 존재 검증
+# ════════════════════════════════════════
+
+ref_ok=true
+for skill_dir in "$HARNISH_ROOT"/skills/*/; do
+  skill_md="$skill_dir/SKILL.md"
+  [[ -f "$skill_md" ]] || continue
+  skill_name=$(basename "$skill_dir")
+  # SKILL.md에서 references/ 참조 추출
+  refs=$(grep -oE 'references/[a-zA-Z0-9_-]+\.md' "$skill_md" | sort -u)
+  for ref in $refs; do
+    if [[ ! -f "$skill_dir/$ref" ]]; then
+      fail "references 존재: $skill_name/$ref 누락"
+      ref_ok=false
+    fi
+  done
+done
+if $ref_ok; then
+  pass "references 존재: SKILL.md에서 참조하는 모든 references/ 파일 존재"
 fi
 
 # ════════════════════════════════════════
