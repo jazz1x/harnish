@@ -30,12 +30,10 @@ description: >
 핵심 키워드 3~5개 추출 후:
 
 ```bash
-if [[ -f "${CLAUDE_SKILL_DIR}/../../scripts/query-assets.sh" ]]; then
-  HARNISH_ROOT="${CLAUDE_SKILL_DIR}/../.."
-  # 성공/실패 사례
-  bash "$HARNISH_ROOT/scripts/query-assets.sh" \
+if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]]; then
+  bash "${CLAUDE_PLUGIN_ROOT}/scripts/query-assets.sh" \
     --tags "{키워드}" --format inject \
-    --base-dir "$HARNISH_ROOT/_base/assets"
+    --base-dir "${CLAUDE_PLUGIN_ROOT}/_base/assets"
 fi
 ```
 
@@ -118,11 +116,11 @@ PRD 섹션 구성:
 
 자산 기록:
 ```bash
-if [[ -n "$HARNISH_ROOT" ]]; then
-  bash "$HARNISH_ROOT/scripts/record-asset.sh" \
+if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]]; then
+  bash "${CLAUDE_PLUGIN_ROOT}/scripts/record-asset.sh" \
     --type pattern --tags "{키워드}" \
     --title "{피쳐명} 구현 패턴" --content "{요약}" \
-    --base-dir "$HARNISH_ROOT/_base/assets"
+    --base-dir "${CLAUDE_PLUGIN_ROOT}/_base/assets"
 fi
 ```
 

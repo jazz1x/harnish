@@ -32,11 +32,10 @@ description: >
 문제에서 태그 3~5개 추출 (기술 스택 → 문제 도메인 → 작업 유형 순).
 
 ```bash
-if [[ -f "${CLAUDE_SKILL_DIR}/../../scripts/query-assets.sh" ]]; then
-  HARNISH_ROOT="${CLAUDE_SKILL_DIR}/../.."
-  bash "$HARNISH_ROOT/scripts/query-assets.sh" \
+if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]]; then
+  bash "${CLAUDE_PLUGIN_ROOT}/scripts/query-assets.sh" \
     --tags "{추출 태그}" --format inject \
-    --base-dir "$HARNISH_ROOT/_base/assets"
+    --base-dir "${CLAUDE_PLUGIN_ROOT}/_base/assets"
 fi
 ```
 
@@ -91,18 +90,18 @@ mkdir -p docs/
 
 자산 기록 (harnish 생태계 모드):
 ```bash
-if [[ -n "$HARNISH_ROOT" ]]; then
+if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]]; then
   # Decision 기록
-  bash "$HARNISH_ROOT/scripts/record-asset.sh" \
+  bash "${CLAUDE_PLUGIN_ROOT}/scripts/record-asset.sh" \
     --type decision --tags "{태그}" \
     --title "{결정 한 줄}" --content "{선택 근거}" \
-    --base-dir "$HARNISH_ROOT/_base/assets"
+    --base-dir "${CLAUDE_PLUGIN_ROOT}/_base/assets"
 
   # Guardrail 기록 (도출된 제약이 있을 때)
-  bash "$HARNISH_ROOT/scripts/record-asset.sh" \
+  bash "${CLAUDE_PLUGIN_ROOT}/scripts/record-asset.sh" \
     --type guardrail --tags "{태그}" \
     --title "{규칙 한 줄}" --content "{위반 시 결과}" \
-    --base-dir "$HARNISH_ROOT/_base/assets"
+    --base-dir "${CLAUDE_PLUGIN_ROOT}/_base/assets"
 fi
 ```
 

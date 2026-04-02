@@ -18,7 +18,7 @@ description: >
 > bash 3.2+, python3, jq. macOS/Linux.
 
 ```bash
-HARNISH_ROOT="${CLAUDE_SKILL_DIR}/../.."
+HARNISH_ROOT="${CLAUDE_PLUGIN_ROOT}"
 VALIDATE_SCRIPT="$HARNISH_ROOT/scripts/validate-progress.sh"
 LOOP_STEP_SCRIPT="$HARNISH_ROOT/scripts/loop-step.sh"
 CHECK_VIOL_SCRIPT="$HARNISH_ROOT/scripts/check-violations.sh"
