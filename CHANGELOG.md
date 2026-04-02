@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- 플러그인 매니페스트 (`.claude-plugin/plugin.json`) — `claude plugin add github:jazz1x/harnish`로 설치 가능
+- ralpi: HITL + 자율 수정 모드 (발화 기반 판별: "점검해"→HITL, "고쳐"→자율)
+- ralpi: `criteria-project.md` 추가 (프로젝트/디렉토리 스코프 점검 기준)
+- `.harnish/` 통합 마이그레이션 PRD (`docs/prd-harnish-dir-migration.md`)
+
+### Changed
+- 전체 SKILL.md 저수준 모델 대응 압축 (1,208줄→587줄, -51%)
+  - harnish: Step 선형화, ASCII 다이어그램 제거 (387→213줄)
+  - drafti-architect: Mermaid 제거, 3중 반복 통합 (294→131줄)
+  - drafti-feature: 피쳐플래그 필수→선택 전환 (308→148줄)
+  - ralpi: Step 선형화, criteria 파일명 직접 매핑 (219→95줄)
+- drafti-feature: 피쳐플래그를 모든 기능에 강제하지 않고 조건부 적용
+- ralpi: `criteria-script.md` 크로스플랫폼 호환성 주의 목록 현실화
+- `test-all.sh`: 스킬 카운트 동적화, references 존재 검증 추가
+
 ## [0.0.1] - 2026-03-31
 
 First release. 4 skills + 16 shared scripts + asset infrastructure.
