@@ -143,8 +143,8 @@
       "--base-dir": "자산 루트 경로 (기본: 환경변수 또는 상대경로 해석)"
     },
     "record-asset.sh": {
-      "input": "--type, --tags, --title, --content|--body-file, [--scope, --context, --env, --session-id, --stdin]",
-      "output": "{status, file, type, tags, alerts, rca}"
+      "input": "--type, --tags, --title, --body|--body-file, [--scope, --context, --session-id, --stdin, --base-dir]",
+      "output": "{status, type, slug, tags, alerts, rca}"
     },
     "quality-gate.sh": {
       "input": "--base-dir, [--date, --format json|text]",
@@ -171,23 +171,23 @@
       "output": "{status, skill_name, skill_dir, source_summarized, files, next_steps}"
     },
     "validate-progress.sh": {
-      "input": "[PROGRESS.json 경로]",
+      "input": "[harnish-current-work.json 경로]",
       "output": "구조 정상/오류 메시지 (exit 0=정상, 1=오류)"
     },
     "loop-step.sh": {
-      "input": "[PROGRESS.json 경로] [--format json|text]",
+      "input": "[harnish-current-work.json 경로] [--format json|text]",
       "output": "{status, current_task, current_title, current_phase, next_action, prd_path, todo_remaining, phase_todo_remaining, phase_milestone, milestone_phase, done_count}"
     },
     "compress-progress.sh": {
-      "input": "[PROGRESS.json 경로] --trigger milestone|count [--phase N] [--dry-run]",
-      "output": "압축 결과 메시지 + .progress-archive/phases.jsonl append"
+      "input": "[harnish-current-work.json 경로] --trigger milestone|count [--phase N] [--dry-run]",
+      "output": "압축 결과 메시지 + harnish-progress-archive.jsonl append"
     },
     "check-violations.sh": {
-      "input": "[PROGRESS.json 경로]",
+      "input": "[harnish-current-work.json 경로]",
       "output": "위반/에스컬레이션 건수 + 상세"
     },
     "progress-report.sh": {
-      "input": "[PROGRESS.json 경로]",
+      "input": "[harnish-current-work.json 경로]",
       "output": "마크다운 형태의 사람용 보고서 (stdout)"
     }
   },

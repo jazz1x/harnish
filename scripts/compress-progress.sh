@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# compress-progress.sh — PROGRESS.json Done 섹션 압축 + JSONL 아카이브
+# compress-progress.sh — harnish-current-work.json Done 섹션 압축 + JSONL 아카이브
 #
 # 역할:
-#   완료된 Phase를 PROGRESS.json에서 compressed stub으로 축약하고,
+#   완료된 Phase를 harnish-current-work.json에서 compressed stub으로 축약하고,
 #   상세 내용은 .progress-archive/phases.jsonl 에 한 줄(JSON)로 저장한다.
 #
 # 트리거:
 #   A. milestone: Phase 완료 직후 — 해당 Phase를 정확히 압축
-#      bash compress-progress.sh ./PROGRESS.json --trigger milestone --phase 1
+#      bash compress-progress.sh ./harnish-current-work.json --trigger milestone --phase 1
 #
 #   B. count: 카운터 기반 — Done에 미압축 완료 Phase가 있으면 압축
-#      bash compress-progress.sh ./PROGRESS.json --trigger count
+#      bash compress-progress.sh ./harnish-current-work.json --trigger count
 #
 # 옵션:
 #   --trigger milestone|count
@@ -19,7 +19,10 @@
 
 set -euo pipefail
 
-PROGRESS_FILE="${1:-./PROGRESS.json}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
+
+PROGRESS_FILE="${1:-$(resolve_progress_file)}"
 TRIGGER="count"
 TARGET_PHASE=""
 DRY_RUN=false
@@ -53,8 +56,7 @@ if [[ "$TRIGGER" == "milestone" && -z "$TARGET_PHASE" ]]; then
 fi
 
 PROGRESS_DIR="$(dirname "$PROGRESS_FILE")"
-ARCHIVE_DIR="${PROGRESS_DIR}/.progress-archive"
-ARCHIVE_JSONL="${ARCHIVE_DIR}/phases.jsonl"
+ARCHIVE_JSONL="${PROGRESS_DIR}/harnish-progress-archive.jsonl"
 
 # ── 압축할 Phase 목록 결정 ──
 PHASES_TO_COMPRESS=()
@@ -73,7 +75,7 @@ fi
 echo "🗜  압축 대상 Phase: ${PHASES_TO_COMPRESS[*]}"
 
 # ── 아카이브 디렉토리 + 백업 ──
-[[ "$DRY_RUN" == false ]] && mkdir -p "$ARCHIVE_DIR"
+[[ "$DRY_RUN" == false ]] && true
 [[ "$DRY_RUN" == false ]] && cp "$PROGRESS_FILE" "${PROGRESS_FILE}.backup"
 
 CURRENT_JSON=$(cat "$PROGRESS_FILE")
@@ -115,9 +117,9 @@ for PHASE_NUM in "${PHASES_TO_COMPRESS[@]}"; do
     echo "  ✅ Phase ${PHASE_NUM} → ${ARCHIVE_JSONL} 에 append"
   fi
 
-  # PROGRESS.json에서 Phase를 compressed stub으로 교체
+  # harnish-current-work.json에서 Phase를 compressed stub으로 교체
   SUMMARY_LINE="tasks:${TASK_COUNT} | files:${CHANGED_FILES:-없음}"
-  ARCHIVE_REF=".progress-archive/phases.jsonl#phase=${PHASE_NUM}"
+  ARCHIVE_REF="harnish-progress-archive.jsonl#phase=${PHASE_NUM}"
 
   CURRENT_JSON=$(echo "$CURRENT_JSON" | jq --argjson p "$PHASE_NUM" \
     --arg summary "$SUMMARY_LINE" \

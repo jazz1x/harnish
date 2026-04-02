@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# validate-progress.sh — PROGRESS.json 구조 검증 스크립트
+# validate-progress.sh — harnish-current-work.json 구조 검증 스크립트
 #
-# 역할: PROGRESS.json이 harnish가 파싱할 수 있는 올바른 구조인지 검증한다.
+# 역할: harnish-current-work.json이 harnish가 파싱할 수 있는 올바른 구조인지 검증한다.
 #       세션 시작 시, 마일스톤 도달 시 자동 실행.
 #
 # 사용법:
-#   bash validate-progress.sh [PROGRESS.json 경로]
-#   bash validate-progress.sh                     # 현재 디렉토리의 PROGRESS.json
+#   bash validate-progress.sh [harnish-current-work.json 경로]
+#   bash validate-progress.sh                     # 현재 디렉토리의 harnish-current-work.json
 #
 # 종료 코드:
 #   0 — 구조 정상
@@ -14,21 +14,16 @@
 
 set -euo pipefail
 
-PROGRESS_FILE="${1:-PROGRESS.json}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
-# ═══════════════════════════════════════
-# 의존성 체크
-# ═══════════════════════════════════════
-if ! command -v jq &>/dev/null; then
-    echo "오류: jq가 설치되어 있지 않습니다. brew install jq" >&2
-    exit 1
-fi
+PROGRESS_FILE="${1:-$(resolve_progress_file)}"
 
 # ═══════════════════════════════════════
 # 파일 존재 확인
 # ═══════════════════════════════════════
 if [[ ! -f "$PROGRESS_FILE" ]]; then
-    echo "오류: PROGRESS.json 없음: $PROGRESS_FILE" >&2
+    echo "오류: harnish-current-work.json 없음: $PROGRESS_FILE" >&2
     exit 1
 fi
 
@@ -109,7 +104,7 @@ done
 # 결과 출력
 # ═══════════════════════════════════════
 if [[ ${#ERRORS[@]} -gt 0 ]]; then
-    echo "❌ PROGRESS.json 구조 오류 발견:" >&2
+    echo "❌ harnish-current-work.json 구조 오류 발견:" >&2
     for err in "${ERRORS[@]}"; do
         echo "  • $err" >&2
     done
@@ -123,7 +118,7 @@ if [[ ${#WARNINGS[@]} -gt 0 ]]; then
 fi
 
 if [[ ${#ERRORS[@]} -eq 0 ]]; then
-    echo "✅ PROGRESS.json 구조 정상 (경고 ${#WARNINGS[@]}건)"
+    echo "✅ harnish-current-work.json 구조 정상 (경고 ${#WARNINGS[@]}건)"
     exit 0
 else
     echo "❌ 구조 오류 ${#ERRORS[@]}건, 경고 ${#WARNINGS[@]}건" >&2

@@ -33,7 +33,7 @@ description: >
 if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]]; then
   bash "${CLAUDE_PLUGIN_ROOT}/scripts/query-assets.sh" \
     --tags "{키워드}" --format inject \
-    --base-dir "${CLAUDE_PLUGIN_ROOT}/_base/assets"
+    --base-dir "$(pwd)/.harnish"
 fi
 ```
 
@@ -120,7 +120,7 @@ if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]]; then
   bash "${CLAUDE_PLUGIN_ROOT}/scripts/record-asset.sh" \
     --type pattern --tags "{키워드}" \
     --title "{피쳐명} 구현 패턴" --content "{요약}" \
-    --base-dir "${CLAUDE_PLUGIN_ROOT}/_base/assets"
+    --base-dir "$(pwd)/.harnish"
 fi
 ```
 

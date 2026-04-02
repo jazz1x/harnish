@@ -29,19 +29,25 @@ require_cmd jq "brew install jq"
 # SCRIPT_DIR은 source하기 전에 설정되어야 한다.
 
 # 자산 루트 경로 해석
-# 우선순위: ASSET_BASE_DIR > CLAUDE_PROJECT_DIR/_base/assets > 스크립트 상대경로
+# 우선순위: ASSET_BASE_DIR > CLAUDE_PROJECT_DIR/.harnish > CWD/.harnish
 resolve_base_dir() {
     if [[ -n "${ASSET_BASE_DIR:-}" ]]; then
         echo "$ASSET_BASE_DIR"
     elif [[ -n "${CLAUDE_PROJECT_DIR:-}" ]]; then
-        echo "${CLAUDE_PROJECT_DIR}/_base/assets"
+        echo "${CLAUDE_PROJECT_DIR}/.harnish"
     else
-        local harnish_root
-        harnish_root="$(cd "${SCRIPT_DIR:-$(pwd)}/.." && pwd)"
-        local parent
-        parent="$(cd "$harnish_root/.." && pwd)"
-        echo "$parent/_base/assets"
+        echo "$(pwd)/.harnish"
     fi
+}
+
+# PROGRESS 파일 경로
+resolve_progress_file() {
+    echo "$(resolve_base_dir)/harnish-current-work.json"
+}
+
+# RAG 자산 파일 경로
+resolve_rag_file() {
+    echo "$(resolve_base_dir)/harnish-rag.jsonl"
 }
 
 # 스킬 디렉토리 (references/ 접근용)
@@ -72,96 +78,3 @@ slugify() {
     fi
 }
 
-# ═══════════════════════════════════════
-# YAML 태그 포맷 — 따옴표로 감싸서 YAML 규격 준수
-# ═══════════════════════════════════════
-# 입력: "api,retry,http-client"
-# 출력: ["api", "retry", "http-client"]
-format_yaml_tags() {
-    local raw="$1"
-    if [[ -z "$raw" ]]; then
-        echo "[]"
-        return
-    fi
-    local result=""
-    IFS=',' read -ra items <<< "$raw"
-    for item in "${items[@]}"; do
-        item=$(echo "$item" | xargs)
-        [[ -z "$item" ]] && continue
-        if [[ -n "$result" ]]; then
-            result="${result}, \"${item}\""
-        else
-            result="\"${item}\""
-        fi
-    done
-    echo "[${result}]"
-}
-
-# ═══════════════════════════════════════
-# Frontmatter 파싱 — 파일에서 YAML frontmatter만 추출
-# ═══════════════════════════════════════
-# 입력: 파일 경로
-# 출력: frontmatter 본문 (--- 제외)
-parse_frontmatter() {
-    local file="$1"
-    awk '/^---$/{n++; next} n==1{print} n>=2{exit}' "$file"
-}
-
-# 입력: 파일 경로
-# 출력: body 본문 (frontmatter 제외)
-parse_body() {
-    local file="$1"
-    sed -n '/^---$/,/^---$/!p' "$file" | sed '1{/^$/d;}'
-}
-
-# frontmatter에서 특정 필드 추출
-# 사용: get_field "$frontmatter" "type"
-get_field() {
-    local fm="$1" field="$2"
-    echo "$fm" | grep -E "${field}:" 2>/dev/null | head -1 | sed "s/.*${field}:[[:space:]]*//" | sed 's/^"//; s/"$//' || echo ""
-}
-
-# frontmatter에서 tags 배열 추출 (따옴표 제거)
-get_tags() {
-    local fm="$1"
-    echo "$fm" | grep -E 'tags:' 2>/dev/null | head -1 | sed 's/.*tags:[[:space:]]*\[//' | sed 's/\].*//' || echo ""
-}
-
-# ═══════════════════════════════════════
-# Index.json 관리 — atomic write
-# ═══════════════════════════════════════
-# index를 안전하게 갱신한다 (임시파일 + mv)
-# 사용: atomic_write_index "$INDEX_FILE" "$UPDATED_JSON"
-atomic_write_index() {
-    local index_file="$1" content="$2"
-    echo "$content" > "${index_file}.tmp" && mv "${index_file}.tmp" "$index_file"
-}
-
-# ═══════════════════════════════════════
-# 폴더 매핑
-# ═══════════════════════════════════════
-# type → folder 변환
-type_to_folder() {
-    local type="$1"
-    case "$type" in
-        pattern)   echo "patterns";;
-        failure)   echo "failures";;
-        guardrail) echo "guardrails";;
-        snippet)   echo "snippets";;
-        decision)  echo "decisions";;
-        compressed) echo ".compressed";;
-        *) echo "";;
-    esac
-}
-
-# ═══════════════════════════════════════
-# 로깅
-# ═══════════════════════════════════════
-asset_log() {
-    local base_dir="$1" msg="$2"
-    local log_file="${base_dir}/.meta/hook.log"
-    local ts
-    ts=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-    mkdir -p "$(dirname "$log_file")" 2>/dev/null
-    echo "[${ts}] $msg" >> "$log_file" 2>/dev/null || true
-}

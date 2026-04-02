@@ -1,7 +1,7 @@
 # 태스크 YAML 스키마
 
 > 태스크 시딩 결과물의 구조 정의.
-> PROGRESS.json에 인라인으로 기록하거나, 별도 YAML 파일로 관리할 수 있다.
+> harnish-current-work.json에 인라인으로 기록하거나, 별도 YAML 파일로 관리할 수 있다.
 
 ---
 
