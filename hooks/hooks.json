@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel 2>/dev/null || echo .)/scripts/detect-asset.sh\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/detect-asset.sh\"",
             "timeout": 10
           }
         ]
@@ -14,11 +14,11 @@
     ],
     "PostToolUseFailure": [
       {
-        "matcher": ".*",
+        "matcher": "Bash|Edit|Write|NotebookEdit",
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel 2>/dev/null || echo .)/scripts/detect-asset.sh\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/detect-asset.sh\"",
             "timeout": 10
           }
         ]
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash \"$(git rev-parse --show-toplevel 2>/dev/null || echo .)/scripts/detect-asset.sh\"",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/scripts/detect-asset.sh\"",
             "timeout": 20,
             "statusMessage": "자산 품질 게이트 + 임계치 확인 중..."
           }

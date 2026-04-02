@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
-# progress-report.sh — PROGRESS.json → 사람용 마크다운 렌더링
+# progress-report.sh — harnish-current-work.json → 사람용 마크다운 렌더링
 #
-# 사용법: bash progress-report.sh [PROGRESS.json 경로]
+# 사용법: bash progress-report.sh [harnish-current-work.json 경로]
 # 출력: stdout (markdown)
 
 set -euo pipefail
 
-PROGRESS_FILE="${1:-./PROGRESS.json}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
-if ! command -v jq &>/dev/null; then
-    echo "오류: jq가 설치되어 있지 않습니다. brew install jq" >&2
-    exit 1
-fi
+PROGRESS_FILE="${1:-$(resolve_progress_file)}"
 
 if [[ ! -f "$PROGRESS_FILE" ]]; then
-    echo "오류: PROGRESS.json 없음: $PROGRESS_FILE" >&2
+    echo "오류: harnish-current-work.json 없음: $PROGRESS_FILE" >&2
     exit 1
 fi
 

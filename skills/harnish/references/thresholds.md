@@ -27,9 +27,8 @@
 1. 대상 자산 그룹 선택 (태그 또는 유형 기준)
 2. 중복 자산 식별 및 병합
 3. 핵심 내용만 추출하여 하나의 요약 문서로
-4. 원본 자산은 `_base/assets/.archive/`로 이동
-5. 압축 결과를 `_base/assets/.compressed/`에 저장
-6. index.json 갱신
+4. 원본 레코드에 `compressed: true` 추가
+5. 요약본 1건 harnish-rag.jsonl에 append
 
 ## 스킬화 프로세스
 

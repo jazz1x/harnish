@@ -12,21 +12,8 @@ Thumbs.db
 # Claude Code (session-specific)
 .claude/
 
-# Assets (runtime-generated, per-project)
-_base/assets/failures/
-_base/assets/patterns/
-_base/assets/guardrails/
-_base/assets/snippets/
-_base/assets/decisions/
-_base/assets/compressed/
-_base/assets/index.json
-
-# State files (runtime-generated)
-PROGRESS.json
-PROGRESS.json.backup
-PROGRESS.md
-work-current-rag.md
-state.json
+# Runtime data (per-project, generated in user's CWD)
+.harnish/
 
 # Packaged skills
 *.skill

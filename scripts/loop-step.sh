@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # loop-step.sh — RALP 단일 스텝 상태 리포터
-# 용도: 현재 PROGRESS.json에서 루프 좌표를 추출하여 저수준 모델에 주입할 컨텍스트를 출력한다
-# 사용법: bash loop-step.sh [PROGRESS.json 경로] [--format json|text]
+# 용도: 현재 harnish-current-work.json에서 루프 좌표를 추출하여 저수준 모델에 주입할 컨텍스트를 출력한다
+# 사용법: bash loop-step.sh [harnish-current-work.json 경로] [--format json|text]
 
 set -euo pipefail
 
-PROGRESS_FILE="${1:-./PROGRESS.json}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
+
+PROGRESS_FILE="${1:-$(resolve_progress_file)}"
 FORMAT="${2:---format}"
 FORMAT_VALUE="${3:-text}"
 
@@ -25,7 +28,7 @@ if ! command -v jq &>/dev/null; then
 fi
 
 if [[ ! -f "$PROGRESS_FILE" ]]; then
-  echo "ERROR: PROGRESS.json not found at '$PROGRESS_FILE'" >&2
+  echo "ERROR: harnish-current-work.json not found at '$PROGRESS_FILE'" >&2
   echo "HINT: Run harnish Mode A (시딩) first to seed tasks." >&2
   exit 1
 fi

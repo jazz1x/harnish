@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
-# check-violations.sh — PROGRESS.json 위반/에스컬레이션 확인
-# 사용법: bash check-violations.sh [PROGRESS.json 경로]
+# check-violations.sh — harnish-current-work.json 위반/에스컬레이션 확인
+# 사용법: bash check-violations.sh [harnish-current-work.json 경로]
 
 set -euo pipefail
 
-PROGRESS_FILE="${1:-./PROGRESS.json}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "$SCRIPT_DIR/common.sh"
 
-if ! command -v jq &>/dev/null; then
-    echo "오류: jq가 설치되어 있지 않습니다. brew install jq" >&2
-    exit 1
-fi
+PROGRESS_FILE="${1:-$(resolve_progress_file)}"
 
 if [[ ! -f "$PROGRESS_FILE" ]]; then
     echo "ERROR: $PROGRESS_FILE not found" >&2

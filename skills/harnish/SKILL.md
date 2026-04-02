@@ -6,19 +6,19 @@ description: >
   트리거: "구현 시작", "태스크 분해", "루프 돌려", "이어서 진행",
   "다음 태스크", "진행 상태", "자산 현황", "자산 압축",
   "이 패턴 기억해", "스킬로 만들어",
-  PROGRESS.json 존재 시 작업 재개 요청.
+  harnish-current-work.json 존재 시 작업 재개 요청.
 ---
 
 # harnish — 자율 구현 엔진
 
-> 판단하지 않는다. 규칙을 따른다. 길을 잃으면 PROGRESS.json로 돌아온다. 막히면 에스컬레이션한다. 발명 금지.
+> 판단하지 않는다. 규칙을 따른다. 길을 잃으면 harnish-current-work.json로 돌아온다. 막히면 에스컬레이션한다. 발명 금지.
 
 ## 환경 설정 (세션 시작 시 실행)
 
 > bash 3.2+, python3, jq. macOS/Linux.
 
 ```bash
-HARNISH_ROOT="${CLAUDE_SKILL_DIR}/../.."
+HARNISH_ROOT="${CLAUDE_PLUGIN_ROOT}"
 VALIDATE_SCRIPT="$HARNISH_ROOT/scripts/validate-progress.sh"
 LOOP_STEP_SCRIPT="$HARNISH_ROOT/scripts/loop-step.sh"
 CHECK_VIOL_SCRIPT="$HARNISH_ROOT/scripts/check-violations.sh"
@@ -32,27 +32,27 @@ COMPRESS_EVERY_N=5
 
 | 조건 | 모드 | 다음 | 읽을 reference |
 |------|------|------|---------------|
-| PRD 제공, PROGRESS.json 없음 | 시딩 | Step 2 | `task-schema.md` + `progress-template.md` |
-| PROGRESS.json 존재 | 구현 루프 | Step 3 | `escalation-protocol.md` + `guardrail-levels.md` |
+| PRD 제공, harnish-current-work.json 없음 | 시딩 | Step 2 | `task-schema.md` + `progress-template.md` |
+| harnish-current-work.json 존재 | 구현 루프 | Step 3 | `escalation-protocol.md` + `guardrail-levels.md` |
 | "자산 현황/압축/기억해/스킬로" | 경험 | Step 5 | `thresholds.md` |
-| PROGRESS.json 존재 + 세션 시작 | 복원 | Step 4 | — |
+| harnish-current-work.json 존재 + 세션 시작 | 복원 | Step 4 | — |
 
 reference는 **동시에 2개까지만** 로드.
 
-## Step 2: 시딩 (PRD → PROGRESS.json)
+## Step 2: 시딩 (PRD → harnish-current-work.json)
 
 1. PRD 파일 확인: `docs/prd-{name}.md`. §4(구현명세), §6(테스트), §7(가드레일) 존재 확인
 2. 기존 자산 조회:
    ```bash
    bash "$HARNISH_ROOT/scripts/query-assets.sh" \
      --tags "{키}" --types guardrail --format text \
-     --base-dir "$HARNISH_ROOT/_base/assets"
+     --base-dir "$(pwd)/.harnish"
    ```
 3. 페이즈 분할: 데이터 → 비즈니스 로직 → UI → 통합 테스트
 4. 태스크 분해: **1 태스크 = 1파일 | 1함수 | 1테스트 | 1설정**
-5. `references/progress-template.md`를 읽고 PROGRESS.json 생성 → 검증:
+5. `references/progress-template.md`를 읽고 harnish-current-work.json 생성 → 검증:
    ```bash
-   bash "$VALIDATE_SCRIPT" ./PROGRESS.json
+   bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json
    ```
 6. 사용자에게 보고: "Phase {N}개, Task {M}개 시딩 완료 — 확인 후 '루프 돌려'"
 7. → Step 3으로
@@ -62,8 +62,8 @@ reference는 **동시에 2개까지만** 로드.
 ### 진입
 
 ```bash
-bash "$VALIDATE_SCRIPT" ./PROGRESS.json
-bash "$LOOP_STEP_SCRIPT" ./PROGRESS.json
+bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json
+bash "$LOOP_STEP_SCRIPT" .harnish/harnish-current-work.json
 ```
 - `STATUS=ALL_DONE` → 완료 보고 → STOP
 - `STATUS=NO_DOING` → 첫 Todo를 Doing으로 이동 (아래 "Todo→Doing" 참조)
@@ -72,8 +72,8 @@ bash "$LOOP_STEP_SCRIPT" ./PROGRESS.json
 ### 루프 1회 = READ → ACT → LOG → PROGRESS
 
 **[READ]**
-- PROGRESS.json doing 태스크의 목적·전략·파일·금지사항 읽기
-- 자산 조회: `bash "$HARNISH_ROOT/scripts/query-assets.sh" --tags "{task-id},{phase}" --format inject --base-dir "$HARNISH_ROOT/_base/assets"`
+- harnish-current-work.json doing 태스크의 목적·전략·파일·금지사항 읽기
+- 자산 조회: `bash "$HARNISH_ROOT/scripts/query-assets.sh" --tags "{task-id},{phase}" --format inject --base-dir "$(pwd)/.harnish"`
 
 **[ACT]**
 - 가이드에 따라 파일 생성/수정
@@ -81,8 +81,8 @@ bash "$LOOP_STEP_SCRIPT" ./PROGRESS.json
 - Soft 가드레일 위반 → 경고 + 자동 교정
 
 **[LOG]** (3액션마다)
-- PROGRESS.json doing 갱신: 현재 / 마지막 액션 / 다음 액션
-- `bash "$VALIDATE_SCRIPT" ./PROGRESS.json`
+- harnish-current-work.json doing 갱신: 현재 / 마지막 액션 / 다음 액션
+- `bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json`
 
 **[PROGRESS]** acceptance_criteria 실행:
 - **통과** → Doing→Done 이동 → 자산 기록(해당 시) → TASK_COMPLETE_COUNT += 1 → 다음 Todo→Doing → 루프 반복
@@ -102,16 +102,16 @@ bash "$LOOP_STEP_SCRIPT" ./PROGRESS.json
 
 1. `.todo.phases[0].tasks[0]` 확인 (첫 미완료 태스크)
 2. `depends_on` 충족 확인 (선행 Task 모두 `.done.phases`에 존재)
-3. PROGRESS.json 갱신: `.doing.task = {id, title, started_at, current, next_action, blocker:null, retry_count:0, context}`, `.todo`에서 해당 task 제거
+3. harnish-current-work.json 갱신: `.doing.task = {id, title, started_at, current, next_action, blocker:null, retry_count:0, context}`, `.todo`에서 해당 task 제거
 4. `.metadata.status` 업데이트
-5. `bash "$VALIDATE_SCRIPT" ./PROGRESS.json`
+5. `bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json`
 
 ### Doing→Done 이동
 
 1. `.done.phases`에서 같은 phase 찾기 (없으면 새 Phase 추가)
 2. 완료 태스크 추가: `{id, title, result: "1줄 요약", files_changed, verification, duration}`
 3. `.doing.task = null`, `.stats.completed_tasks += 1`
-4. `bash "$VALIDATE_SCRIPT" ./PROGRESS.json`
+4. `bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json`
 
 ### Phase 완료 시 (마일스톤)
 
@@ -123,13 +123,13 @@ bash "$LOOP_STEP_SCRIPT" ./PROGRESS.json
 
 RAG 압축 실행:
 ```bash
-bash "$COMPRESS_SCRIPT" ./PROGRESS.json --trigger milestone --phase {N}
+bash "$COMPRESS_SCRIPT" .harnish/harnish-current-work.json --trigger milestone --phase {N}
 ```
 
 카운터 기반 압축 (COMPRESS_EVERY_N 마다):
 ```bash
 if (( TASK_COMPLETE_COUNT % COMPRESS_EVERY_N == 0 )); then
-  bash "$COMPRESS_SCRIPT" ./PROGRESS.json --trigger count
+  bash "$COMPRESS_SCRIPT" .harnish/harnish-current-work.json --trigger count
 fi
 ```
 
@@ -146,10 +146,10 @@ fi
 
 ## Step 4: 세션 복원 (앵커링)
 
-PROGRESS.json 존재 + 새 세션 시작 시:
+harnish-current-work.json 존재 + 새 세션 시작 시:
 
-1. `bash "$VALIDATE_SCRIPT" ./PROGRESS.json` → 구조 정상 확인
-2. `bash "$LOOP_STEP_SCRIPT" ./PROGRESS.json` → 좌표 추출
+1. `bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json` → 구조 정상 확인
+2. `bash "$LOOP_STEP_SCRIPT" .harnish/harnish-current-work.json` → 좌표 추출
 3. Doing 있으면 "다음 액션"부터 재개 / 없으면 Todo 첫 Task
 4. 보고 후 → Step 3 루프 진입:
    ```
@@ -177,7 +177,7 @@ PROGRESS.json 존재 + 새 세션 시작 시:
 bash "$HARNISH_ROOT/scripts/record-asset.sh" \
   --type {유형} --tags "{task-id},{phase}" \
   --title "{한 줄}" --content "{내용}" \
-  --base-dir "$HARNISH_ROOT/_base/assets"
+  --base-dir "$(pwd)/.harnish"
 ```
 
 ### 수동 트리거
@@ -204,10 +204,10 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 - PRD에 명시되지 않은 새 패키지 설치 금지
 - 하드코딩된 시크릿 삽입 금지
 - scope 밖 파일의 비관련 리팩토링 금지
-- PROGRESS.json 삭제 또는 done 객체 직접 수정 금지
+- harnish-current-work.json 삭제 또는 done 객체 직접 수정 금지
 
 ## 종료 조건
 
 - Todo 비어있고 Doing 없음 → 완료 보고 → STOP
-- 사용자 "중단" → PROGRESS.json에 현재 상태 기록 → STOP
-- 세션 종료 시 → `bash "$CHECK_VIOL_SCRIPT" ./PROGRESS.json`
+- 사용자 "중단" → harnish-current-work.json에 현재 상태 기록 → STOP
+- 세션 종료 시 → `bash "$CHECK_VIOL_SCRIPT" .harnish/harnish-current-work.json`

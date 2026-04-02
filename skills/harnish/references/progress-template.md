@@ -1,6 +1,6 @@
-# PROGRESS.json 스키마
+# harnish-current-work.json 스키마
 
-> harnish 스킬이 PROGRESS.json을 생성/갱신할 때 참조하는 구조.
+> harnish 스킬이 harnish-current-work.json을 생성/갱신할 때 참조하는 구조.
 > 이 파일은 세션 간 맥락 보존의 핵심이다.
 
 ---
@@ -154,7 +154,7 @@
 
 ### 세션 시작 시
 
-1. PROGRESS.json 읽기
+1. harnish-current-work.json 읽기
 2. `doing.task`이 non-null이면 `next_action`부터 재개
 3. `doing.task`이 null이면 `todo.phases`에서 다음 태스크 선택
 4. 사용자에게 간략히 보고
