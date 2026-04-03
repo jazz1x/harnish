@@ -2,33 +2,33 @@
 name: harnish
 version: 0.0.1
 description: >
-  자율 구현 엔진. PRD→태스크 분해, RALP 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
-  트리거: "구현 시작", "태스크 분해", "루프 돌려", "이어서 진행",
-  "다음 태스크", "진행 상태", "자산 현황", "자산 압축",
-  "이 패턴 기억해", "스킬로 만들어",
-  harnish-current-work.json 존재 시 작업 재개 요청.
+  Autonomous implementation engine. PRD to task decomposition, RALP loop autonomous execution, cross-session context preservation, experience accumulation.
+  triggers: "구현 시작", "start implementation", "태스크 분해", "decompose tasks", "루프 돌려", "run loop", "이어서 진행", "continue",
+  "다음 태스크", "next task", "진행 상태", "progress status", "자산 현황", "asset status", "자산 압축", "compress assets",
+  "이 패턴 기억해", "remember this pattern", "스킬로 만들어", "make it a skill",
+  Request to resume work when harnish-current-work.json exists.
 ---
 
-# harnish — 자율 구현 엔진
+# harnish — Autonomous Implementation Engine
 
-> 판단하지 않는다. 규칙을 따른다. 길을 잃으면 harnish-current-work.json로 돌아온다. 막히면 에스컬레이션한다. 발명 금지.
+> Do not judge. Follow the rules. When lost, return to harnish-current-work.json. When stuck, escalate. No invention.
 
-## 스킬 체인
+## Skill Chain
 
 ```
-drafti-architect (또는 drafti-feature) → harnish → ralpi
+drafti-architect (or drafti-feature) → harnish → ralpi
 ```
 
-| 스킬 | 독립 호출 | 전제 조건 |
-|------|----------|----------|
-| drafti-architect | 가능 | 없음 (기술 문제만 있으면 됨) |
-| drafti-feature | 가능 | 기획서 필요 |
-| harnish | 가능 | docs/prd-*.md 또는 기존 harnish-current-work.json |
-| ralpi | 가능 | 검증 대상 파일/디렉토리 지정 |
+| Skill | Standalone Call | Prerequisites |
+|-------|----------------|---------------|
+| drafti-architect | Yes | None (only needs a technical problem) |
+| drafti-feature | Yes | Requires a planning document |
+| harnish | Yes | docs/prd-*.md or existing harnish-current-work.json |
+| ralpi | Yes | Specify target files/directories to verify |
 
-harnish 시작 시 PRD 없으면: "PRD가 없습니다. /drafti-architect 또는 /drafti-feature로 먼저 생성하세요."
+When harnish starts without a PRD: "No PRD found. Please create one first with /drafti-architect or /drafti-feature."
 
-## 환경 설정 (세션 시작 시 실행)
+## Environment Setup (Runs at Session Start)
 
 > bash 3.2+, python3, jq. macOS/Linux.
 
@@ -43,192 +43,192 @@ TASK_COMPLETE_COUNT=0
 COMPRESS_EVERY_N=5
 ```
 
-## Step 1: 모드 판별
+## Step 1: Mode Detection
 
-| 조건 | 모드 | 다음 | 읽을 reference |
-|------|------|------|---------------|
-| PRD 제공, harnish-current-work.json 없음 | 시딩 | Step 2 | `task-schema.md` + `progress-template.md` |
-| harnish-current-work.json 존재 | 구현 루프 | Step 3 | `escalation-protocol.md` + `guardrail-levels.md` |
-| "자산 현황/압축/기억해/스킬로" | 경험 | Step 5 | `thresholds.md` |
-| harnish-current-work.json 존재 + 세션 시작 | 복원 | Step 4 | — |
+| Condition | Mode | Next | References to Load |
+|-----------|------|------|--------------------|
+| PRD provided, no harnish-current-work.json | Seeding | Step 2 | `task-schema.md` + `progress-template.md` |
+| harnish-current-work.json exists | Implementation Loop | Step 3 | `escalation-protocol.md` + `guardrail-levels.md` |
+| "자산 현황/압축/기억해/스킬로" | Experience | Step 5 | `thresholds.md` |
+| harnish-current-work.json exists + session start | Restore | Step 4 | — |
 
-reference는 **동시에 2개까지만** 로드.
+Load **at most 2 references** at a time.
 
-## Step 2: 시딩 (PRD → harnish-current-work.json)
+## Step 2: Seeding (PRD → harnish-current-work.json)
 
-1. PRD 파일 확인: `docs/prd-{name}.md`. §4(구현명세), §6(테스트), §7(가드레일) 존재 확인
-2. 기존 자산 조회:
+1. Verify PRD file: `docs/prd-{name}.md`. Confirm existence of §4 (Implementation Spec), §6 (Tests), §7 (Guardrails)
+2. Query existing assets:
    ```bash
    bash "$HARNISH_ROOT/scripts/query-assets.sh" \
-     --tags "{키}" --types guardrail --format text \
+     --tags "{key}" --types guardrail --format text \
      --base-dir "$(pwd)/.harnish"
    ```
-3. 페이즈 분할: 데이터 → 비즈니스 로직 → UI → 통합 테스트
-4. 태스크 분해: **1 태스크 = 1파일 | 1함수 | 1테스트 | 1설정**
-5. `references/progress-template.md`를 읽고 harnish-current-work.json 생성 → 검증:
+3. Phase splitting: Data → Business Logic → UI → Integration Tests
+4. Task decomposition: **1 task = 1 file | 1 function | 1 test | 1 config**
+5. Read `references/progress-template.md` and generate harnish-current-work.json → validate:
    ```bash
    bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json
    ```
-6. 사용자에게 보고: "Phase {N}개, Task {M}개 시딩 완료 — 확인 후 '루프 돌려'"
-7. → Step 3으로
+6. Report to user: "Seeding complete — {N} Phases, {M} Tasks — review and say 'run loop'"
+7. → Proceed to Step 3
 
-## Step 3: 구현 루프 (RALP)
+## Step 3: Implementation Loop (RALP)
 
-### 진입
+### Entry
 
 ```bash
 bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json
 bash "$LOOP_STEP_SCRIPT" .harnish/harnish-current-work.json
 ```
-- `STATUS=ALL_DONE` → 완료 보고 → STOP
-- `STATUS=NO_DOING` → 첫 Todo를 Doing으로 이동 (아래 "Todo→Doing" 참조)
-- `STATUS=ACTIVE` → 현재 태스크의 다음 액션 확인 → 루프 시작
+- `STATUS=ALL_DONE` → report completion → STOP
+- `STATUS=NO_DOING` → move first Todo to Doing (see "Todo→Doing" below)
+- `STATUS=ACTIVE` → check next action of current task → start loop
 
-### 루프 1회 = READ → ACT → LOG → PROGRESS
+### One Loop Cycle = READ → ACT → LOG → PROGRESS
 
 **[READ]**
-- harnish-current-work.json doing 태스크의 목적·전략·파일·금지사항 읽기
-- 자산 조회: `bash "$HARNISH_ROOT/scripts/query-assets.sh" --tags "{task-id},{phase}" --format inject --base-dir "$(pwd)/.harnish"`
+- Read the doing task's objective, strategy, files, and prohibitions from harnish-current-work.json
+- Query assets: `bash "$HARNISH_ROOT/scripts/query-assets.sh" --tags "{task-id},{phase}" --format inject --base-dir "$(pwd)/.harnish"`
 
 **[ACT]**
-- 가이드에 따라 파일 생성/수정
-- Hard 가드레일 위반 → 즉시 STOP + 에스컬레이션
-- Soft 가드레일 위반 → 경고 + 자동 교정
+- Create/modify files according to the guide
+- Hard guardrail violation → immediately STOP + escalation
+- Soft guardrail violation → warning + auto-correction
 
-**[LOG]** (3액션마다)
-- harnish-current-work.json doing 갱신: 현재 / 마지막 액션 / 다음 액션
+**[LOG]** (every 3 actions)
+- Update harnish-current-work.json doing: current / last action / next action
 - `bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json`
 
-**[PROGRESS]** acceptance_criteria 실행:
-- **통과** → Doing→Done 이동 → 자산 기록(해당 시) → TASK_COMPLETE_COUNT += 1 → 다음 Todo→Doing → 루프 반복
-- **1~2회 실패** → 원인 분석 → 수정 → [ACT]로
-- **3회 실패** → failure 자산 기록 → **에스컬레이션. 혼자 해결 금지.**
+**[PROGRESS]** Run acceptance_criteria:
+- **Pass** → move Doing→Done → record asset (if applicable) → TASK_COMPLETE_COUNT += 1 → move next Todo→Doing → repeat loop
+- **1-2 failures** → analyze cause → fix → go to [ACT]
+- **3 failures** → record failure asset → **escalation. Do not attempt to resolve alone.**
 
-### acceptance_criteria 실행 방법
+### How to Run acceptance_criteria
 
-| 형태 | 실행 | 통과 기준 |
-|------|------|----------|
-| bash 명령 | 그대로 실행 | exit 0 |
-| 조건 목록 | 코드에서 각 조건 확인 | 모두 ✓ |
-| 혼합 | bash 먼저, 조건은 이후 | 둘 다 통과 |
-| 없음 | **에스컬레이션** (criteria 없이 Done 금지) | — |
+| Form | Execution | Pass Criteria |
+|------|-----------|---------------|
+| bash command | Execute as-is | exit 0 |
+| Condition list | Verify each condition in code | All ✓ |
+| Mixed | bash first, then conditions | Both pass |
+| None | **Escalation** (cannot mark Done without criteria) | — |
 
-#### acceptance_criteria 비어있을 때 동작 시점
+#### Behavior When acceptance_criteria Is Empty
 
-1. **시딩 (Step 2)**: PRD §6에서 criteria 추출. 매핑 불가 시 → 사용자에게 즉시 질문: "Task {id}의 acceptance_criteria를 지정해주세요."
-2. **Todo→Doing 이동 시**: acceptance_criteria 필드가 비어있거나 없으면 → Doing 전환 전 에스컬레이션. Doing으로 넘기지 않음.
-3. **[PROGRESS] 단계**: Doing 상태에서 criteria가 비어있으면 → 즉시 에스컬레이션 (1회 시도도 하지 않음). 3회 실패 규칙과 별개.
+1. **Seeding (Step 2)**: Extract criteria from PRD §6. If mapping is not possible → immediately ask the user: "Please specify acceptance_criteria for Task {id}."
+2. **Todo→Doing transition**: If the acceptance_criteria field is empty or missing → escalate before transitioning to Doing. Do not move to Doing.
+3. **[PROGRESS] phase**: If criteria is empty while in Doing state → immediately escalate (do not attempt even once). Separate from the 3-failure rule.
 
-### Todo→Doing 이동
+### Todo→Doing Transition
 
-1. `.todo.phases[0].tasks[0]` 확인 (첫 미완료 태스크)
-2. `depends_on` 충족 확인 (선행 Task 모두 `.done.phases`에 존재)
-3. harnish-current-work.json 갱신: `.doing.task = {id, title, started_at, current, next_action, blocker:null, retry_count:0, context}`, `.todo`에서 해당 task 제거
-4. `.metadata.status` 업데이트
+1. Check `.todo.phases[0].tasks[0]` (first incomplete task)
+2. Verify `depends_on` is satisfied (all prerequisite Tasks exist in `.done.phases`)
+3. Update harnish-current-work.json: `.doing.task = {id, title, started_at, current, next_action, blocker:null, retry_count:0, context}`, remove the task from `.todo`
+4. Update `.metadata.status`
 5. `bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json`
 
-### Doing→Done 이동
+### Doing→Done Transition
 
-1. `.done.phases`에서 같은 phase 찾기 (없으면 새 Phase 추가)
-2. 완료 태스크 추가: `{id, title, result: "1줄 요약", files_changed, verification, duration}`
+1. Find the same phase in `.done.phases` (add a new Phase if not found)
+2. Add completed task: `{id, title, result: "one-line summary", files_changed, verification, duration}`
 3. `.doing.task = null`, `.stats.completed_tasks += 1`
 4. `bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json`
 
-### Phase 완료 시 (마일스톤)
+### On Phase Completion (Milestone)
 
 ```
-✅ 마일스톤: Phase {N} — {제목}
-완료: {M}개 태스크 / 변경: {K}개 파일
-다음: Phase {N+1} — 계속 진행할까요?
+✅ Milestone: Phase {N} — {title}
+Completed: {M} tasks / Changed: {K} files
+Next: Phase {N+1} — Shall we continue?
 ```
 
-RAG 압축 실행:
+Run RAG compression:
 ```bash
 bash "$COMPRESS_SCRIPT" .harnish/harnish-current-work.json --trigger milestone --phase {N}
 ```
 
-카운터 기반 압축 (COMPRESS_EVERY_N 마다):
+Counter-based compression (every COMPRESS_EVERY_N):
 ```bash
 if (( TASK_COMPLETE_COUNT % COMPRESS_EVERY_N == 0 )); then
   bash "$COMPRESS_SCRIPT" .harnish/harnish-current-work.json --trigger count
 fi
 ```
 
-사용자 응답 대기 → "계속" → 다음 Phase → 루프 반복. 모든 Phase Done → 완료 보고.
+Wait for user response → "continue" → next Phase → repeat loop. All Phases Done → completion report.
 
-### 에스컬레이션 보고
+### Escalation Report
 
 ```
-🆘 에스컬레이션: Task {ID} — {제목}
-막힌 지점: {파일/함수/명령}
-시도: 1. {시도}: {결과} / 2. ... / 3. ...
-선택지: A. {A} / B. {B}
+🆘 Escalation: Task {ID} — {title}
+Blocked at: {file/function/command}
+Attempts: 1. {attempt}: {result} / 2. ... / 3. ...
+Options: A. {A} / B. {B}
 ```
 
-## Step 4: 세션 복원 (앵커링)
+## Step 4: Session Restore (Anchoring)
 
-harnish-current-work.json 존재 + 새 세션 시작 시:
+When harnish-current-work.json exists + new session starts:
 
-1. `bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json` → 구조 정상 확인
-2. `bash "$LOOP_STEP_SCRIPT" .harnish/harnish-current-work.json` → 좌표 추출
-3. Doing 있으면 "다음 액션"부터 재개 / 없으면 Todo 첫 Task
-4. 보고 후 → Step 3 루프 진입:
+1. `bash "$VALIDATE_SCRIPT" .harnish/harnish-current-work.json` → verify structure integrity
+2. `bash "$LOOP_STEP_SCRIPT" .harnish/harnish-current-work.json` → extract coordinates
+3. If Doing exists, resume from "next action" / otherwise first Todo Task
+4. Report then → enter Step 3 loop:
    ```
-   🔄 세션 복원 완료
-   현재: Phase {N} / Task {ID} — {제목}
-   다음: {next_action}
+   🔄 Session restored
+   Current: Phase {N} / Task {ID} — {title}
+   Next: {next_action}
    ```
 
-## Step 5: 경험 축적
+## Step 5: Experience Accumulation
 
-### 자산 기록 판단
+### Asset Recording Criteria
 
-| 조건 | 유형 | 필수/권장 |
-|------|------|----------|
-| 동일 에러 2회+ AND 해결 | failure | 필수 |
-| 사용자 "기억해/패턴 기록" | 해당 유형 | 필수 |
-| 사용자 "절대 ~하지 마" | guardrail | 필수 |
-| 첫 시도 성공 AND 범용적 | pattern | 권장 |
-| A vs B 선택 AND 근거 명확 | decision | 권장 |
-| 동일 코드 구조 2회+ | snippet | 권장 |
-| 위 해당 없음 | — | 기록하지 않음 |
+| Condition | Type | Required/Recommended |
+|-----------|------|----------------------|
+| Same error 2+ times AND resolved | failure | Required |
+| User says "remember/record pattern" | Corresponding type | Required |
+| User says "never do ~" | guardrail | Required |
+| First-try success AND generalizable | pattern | Recommended |
+| A vs B choice AND clear rationale | decision | Recommended |
+| Same code structure 2+ times | snippet | Recommended |
+| None of the above | — | Do not record |
 
-기록:
+Recording:
 ```bash
 bash "$HARNISH_ROOT/scripts/record-asset.sh" \
-  --type {유형} --tags "{task-id},{phase}" \
-  --title "{한 줄}" --content "{내용}" \
+  --type {type} --tags "{task-id},{phase}" \
+  --title "{one line}" --content "{content}" \
   --base-dir "$(pwd)/.harnish"
 ```
 
-### 수동 트리거
+### Manual Triggers
 
-| 발화 | 스크립트 |
-|------|---------|
-| "자산 현황" | check-thresholds.sh |
-| "자산 압축" | compress-assets.sh |
-| "이 패턴 기억해" | record-asset.sh --type pattern |
-| "스킬로 만들어" | skillify.sh |
-| "자산 품질" | quality-gate.sh |
-| "위반 확인" | check-violations.sh |
+| Utterance | Script |
+|-----------|--------|
+| "자산 현황" / "asset status" | check-thresholds.sh |
+| "자산 압축" / "compress assets" | compress-assets.sh |
+| "이 패턴 기억해" / "remember this pattern" | record-asset.sh --type pattern |
+| "스킬로 만들어" / "make it a skill" | skillify.sh |
+| "자산 품질" / "asset quality" | quality-gate.sh |
+| "위반 확인" / "check violations" | check-violations.sh |
 
-## 가드레일
+## Guardrails
 
-**Soft** (경고 + 교정):
-- 파일 100줄+ 변경 → 태스크 분할 검토
-- 테스트 없이 Done 선언 금지
-- acceptance_criteria 없는 태스크 Done 처리 금지
-- 현재 태스크 scope 외 파일 수정 시 경고
+**Soft** (warning + correction):
+- 100+ line file change → review task splitting
+- Cannot declare Done without tests
+- Cannot mark Done a task without acceptance_criteria
+- Warning when modifying files outside current task scope
 
-**Hard** (즉시 STOP + 에스컬레이션):
-- DROP TABLE / DROP DATABASE 금지
-- PRD에 명시되지 않은 새 패키지 설치 금지
-- 하드코딩된 시크릿 삽입 금지
-- scope 밖 파일의 비관련 리팩토링 금지
-- harnish-current-work.json 삭제 또는 done 객체 직접 수정 금지
+**Hard** (immediate STOP + escalation):
+- DROP TABLE / DROP DATABASE prohibited
+- Installing new packages not specified in PRD prohibited
+- Inserting hardcoded secrets prohibited
+- Unrelated refactoring of files outside scope prohibited
+- Deleting harnish-current-work.json or directly modifying the done object prohibited
 
-## 종료 조건
+## Termination Conditions
 
-- Todo 비어있고 Doing 없음 → 완료 보고 → STOP
-- 사용자 "중단" → harnish-current-work.json에 현재 상태 기록 → STOP
-- 세션 종료 시 → `bash "$CHECK_VIOL_SCRIPT" .harnish/harnish-current-work.json`
+- Todo is empty and no Doing → completion report → STOP
+- User says "stop" → record current state in harnish-current-work.json → STOP
+- On session end → `bash "$CHECK_VIOL_SCRIPT" .harnish/harnish-current-work.json`

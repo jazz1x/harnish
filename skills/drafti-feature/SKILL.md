@@ -2,155 +2,156 @@
 name: drafti-feature
 version: 0.0.1
 description: >
-  기획 기반 구현 명세 PRD 생성기. 기획 요구사항을 구현 가능한 명세로 변환한다.
-  트리거: "이 기획서로 PRD 만들어", "피쳐 PRD", "기획서 기반 구현 명세",
-  "피쳐 설계", 또는 기획 문서가 첨부/참조되었을 때.
-  drafti-architect와 구분: 기획 문서 있음 → feature, 없음 → architect.
+  Planning-based implementation spec PRD generator. Converts planning requirements into an implementation-ready spec.
+  Triggers: "이 기획서로 PRD 만들어", "create PRD from this planning doc", "피쳐 PRD", "feature PRD",
+  "기획서 기반 구현 명세", "implementation spec from planning doc",
+  "피쳐 설계", "feature design", or when a planning document is attached/referenced.
+  Distinction from drafti-architect: planning document exists → feature, does not exist → architect.
 ---
 
-# drafti-feature — 기획→구현 명세 PRD
+# drafti-feature — Planning to Implementation Spec PRD
 
-> 기획 요구사항을 받아서 "어떻게 만드는가"에 집중한 구현 명세 PRD를 만든다.
+> Takes planning requirements and produces an implementation spec PRD focused on "how to build it."
 
-## 환경 설정
+## Environment Setup
 
 ```bash
 HARNISH_ROOT="${CLAUDE_PLUGIN_ROOT}"
 ```
 
-## 스킬 체인
+## Skill Chain
 
-독립 호출 가능 (기획서 필요). 후속: "검토 후 '구현 시작'" → harnish, 또는 "/ralpi로 PRD 정합성 확인" → ralpi.
+Can be invoked independently (planning doc required). Follow-up: "start implementation after review" → harnish, or "/ralpi to verify PRD consistency" → ralpi.
 
-## Step 1: 요구사항 파싱
+## Step 1: Requirement Parsing
 
-기획서에서 4가지를 추출한다:
+Extract 4 items from the planning document:
 
-| 항목 | 내용 |
+| Item | Content |
 |-----|------|
-| 핵심 기능 | 사용자에게 보이는 변화 (1~3줄) |
-| 성공 지표 | KPI/목표 (수치 또는 조건) |
-| 사용자 흐름 | Happy path + 분기 |
-| 비기능 요구사항 | 성능, 보안, 접근성 |
+| Core Feature | User-visible changes (1~3 lines) |
+| Success Metrics | KPI/goals (numeric or conditional) |
+| User Flow | Happy path + branches |
+| Non-Functional Requirements | Performance, security, accessibility |
 
-1~2개 빠졌으면 사용자에게 확인. 모두 있으면 다음.
+If 1~2 items are missing, confirm with the user. If all present, proceed.
 
-## Step 2: 기존 자산 조회
+## Step 2: Existing Asset Query
 
-핵심 키워드 3~5개 추출 후:
+Extract 3~5 core keywords, then:
 
 ```bash
 if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]]; then
   bash "${HARNISH_ROOT}/scripts/query-assets.sh" \
-    --tags "{키워드}" --format inject \
+    --tags "{keywords}" --format inject \
     --base-dir "$(pwd)/.harnish"
 fi
 ```
 
-자산 있으면 참고, 없어도 진행.
+If assets found, use as reference; if none, proceed anyway.
 
-## Step 3: 코드베이스 탐색
+## Step 3: Codebase Exploration
 
-프로젝트 설정 파일(`package.json`, `pyproject.toml`, `go.mod` 등)로 언어를 감지한 뒤, 핵심 키워드로 영향 파일을 탐색한다.
+Detect the language from project config files (`package.json`, `pyproject.toml`, `go.mod`, etc.), then explore affected files using core keywords.
 
-1. **키워드 검색**: 관련 코드 파일 찾기
-2. **파일명 패턴**: 관련 컴포넌트/모듈 찾기
-3. **데이터 모델**: 타입 정의/인터페이스/클래스 찾기
+1. **Keyword search**: Find related code files
+2. **Filename patterns**: Find related components/modules
+3. **Data models**: Find type definitions/interfaces/classes
 
-결과: 영향 파일 목록 + 데이터 모델 변경 여부 → PRD §4에 반영.
+Result: Affected file list + whether data model changes are needed → reflect in PRD §4.
 
-## Step 4: 피쳐플래그 판단 (선택)
+## Step 4: Feature Flag Assessment (Optional)
 
-**모든 기능에 플래그가 필요하지 않다.** 아래 조건에 해당할 때만 설계한다.
+**Not all features need a flag.** Design one only when the conditions below apply.
 
-| 조건 | 플래그 필요 | 불필요 |
+| Condition | Flag Needed | Not Needed |
 |------|-----------|--------|
-| 사용자 대면 서비스, 점진적 롤아웃 필요 | ✓ | |
-| 결제/금융 등 고위험 기능 | ✓ | |
-| 내부 도구, CLI, 라이브러리, 인프라 | | ✓ |
-| 단순 버그 수정, 리팩토링 | | ✓ |
+| User-facing service, gradual rollout needed | ✓ | |
+| High-risk features such as payments/finance | ✓ | |
+| Internal tools, CLI, libraries, infrastructure | | ✓ |
+| Simple bug fixes, refactoring | | ✓ |
 
-플래그 필요 시 → `references/feature-flag-patterns.md`를 읽고:
-- 플래그 키: `{feature_name}_enabled`
-- 롤아웃 전략 선택 (비율/세그먼트/수동)
-- 킬스위치 조건 (에러율 > 1%, p99 > 500ms 등)
-- 롤백 계획
+If flag needed → read `references/feature-flag-patterns.md` and:
+- Flag key: `{feature_name}_enabled`
+- Select rollout strategy (percentage/segment/manual)
+- Kill switch conditions (error rate > 1%, p99 > 500ms, etc.)
+- Rollback plan
 
-불필요 시 → PRD §2 생략, §4 구현 명세로 바로 진행.
+If not needed → skip PRD §2, proceed directly to §4 implementation spec.
 
-## Step 5: 구현 명세 작성
+## Step 5: Implementation Spec Writing
 
-**태스크 분해의 기반. 파일 경로·함수·분기 위치를 구체적으로.**
+**Foundation for task decomposition. Be specific about file paths, functions, and branch locations.**
 
-§4.1 영향 파일:
+§4.1 Affected files:
 ```
-| 파일 경로 | 변경 유형 | 설명 | 플래그 분기 |
+| File Path | Change Type | Description | Flag Branch |
 ```
 
-§4.2 함수/컴포넌트: 입력 → 동작 → 출력
+§4.2 Functions/Components: Input → Behavior → Output
 
-§4.3 플래그 분기 위치 (플래그 있을 때만): 파일 | 함수 | 위치 | 조건
+§4.3 Flag branch locations (only when flag exists): File | Function | Location | Condition
 
-§4.4 데이터 모델 (DB 변경 있을 때만): 추가 필드 + 마이그레이션 + 롤백 안전성
+§4.4 Data model (only when DB changes exist): Added fields + migration + rollback safety
 
-`references/prd-template.md`를 읽고 작성.
+Read `references/prd-template.md` and write accordingly.
 
-## Step 6: 엣지케이스 + 테스트
+## Step 6: Edge Cases + Tests
 
-**플래그 있을 때**: ON/OFF/부분 롤아웃 각각 분리
-**플래그 없을 때**: 정상/에러/경계값으로 분리
+**When flag exists**: Separate into ON/OFF/partial rollout cases
+**When no flag**: Separate into normal/error/boundary value cases
 
-§6 테스트 기준 (Acceptance Criteria):
-- 새 기능 동작 확인
-- 기존 기능 회귀 확인
-- (플래그 시) 롤백 후 기존 동작 100% 복원
+§6 Test Criteria (Acceptance Criteria):
+- Verify new feature behavior
+- Verify existing feature regression
+- (When flag exists) 100% restoration of existing behavior after rollback
 
-## Step 7: 저장 + 자산 기록
+## Step 7: Save + Asset Recording
 
 ```bash
 mkdir -p docs/
-# PRD 저장: docs/prd-{slug}.md
+# PRD save: docs/prd-{slug}.md
 ```
 
-PRD 섹션 구성:
-| 섹션 | 내용 |
+PRD section structure:
+| Section | Content |
 |------|------|
-| §1 | 기획 요약 |
-| §2 | 플래그 설계 ← **플래그 필요 시만** |
-| §3 | 기술 설계 (영향 파일) |
-| §4 | 구현 명세 |
-| §5 | 엣지케이스 |
-| §6 | 테스트 기준 |
-| §7 | 가드레일 |
-| §8 | 자산 참조 |
+| §1 | Planning summary |
+| §2 | Flag design ← **only when flag is needed** |
+| §3 | Technical design (affected files) |
+| §4 | Implementation spec |
+| §5 | Edge cases |
+| §6 | Test criteria |
+| §7 | Guardrails |
+| §8 | Asset references |
 
-자산 기록:
+Asset recording:
 ```bash
 if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]]; then
   bash "${HARNISH_ROOT}/scripts/record-asset.sh" \
-    --type pattern --tags "{키워드}" \
-    --title "{피쳐명} 구현 패턴" --content "{요약}" \
+    --type pattern --tags "{keywords}" \
+    --title "{feature name} implementation pattern" --content "{summary}" \
     --base-dir "$(pwd)/.harnish"
 fi
 ```
 
-## Step 8: 완료
+## Step 8: Completion
 
 ```
-✅ PRD 생성: docs/prd-{slug}.md
-포함: §4 구현 명세 / §6 테스트 기준 / §7 가드레일
-다음: 검토 후 "구현 시작" 또는 /ralpi로 정합성 확인.
+✅ PRD generated: docs/prd-{slug}.md
+Includes: §4 Implementation spec / §6 Test criteria / §7 Guardrails
+Next: "start implementation" after review, or /ralpi for consistency check.
 ```
 
-## drafti-architect와의 구분
+## Distinction from drafti-architect
 
-| 사용자 요청 | 판단 | 스킬 |
+| User Request | Judgment | Skill |
 |-----------|------|------|
-| "이 기획서 기반으로 PRD" | 기획 문서 있음 | → drafti-feature |
-| "이 문제 어떻게 설계할까" | 기획 없음 | → drafti-architect |
+| "Create PRD based on this planning doc" | Planning document exists | → drafti-feature |
+| "How should I design this problem" | No planning doc | → drafti-architect |
 
-## 금지
+## Prohibited
 
-- 기획서 없이 요구사항 추측 (없으면 drafti-architect로)
-- 불필요한 피쳐플래그 강제 (Step 4 판단표 따를 것)
-- reference 2개 동시 로드 (1개씩 시점별 전환)
+- Guessing requirements without a planning doc (use drafti-architect instead)
+- Forcing unnecessary feature flags (follow the Step 4 assessment table)
+- Loading 2 references simultaneously (load 1 at a time, switch per phase)

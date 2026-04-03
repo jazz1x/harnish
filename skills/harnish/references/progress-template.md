@@ -1,11 +1,11 @@
-# harnish-current-work.json 스키마
+# harnish-current-work.json Schema
 
-> harnish 스킬이 harnish-current-work.json을 생성/갱신할 때 참조하는 구조.
-> 이 파일은 세션 간 맥락 보존의 핵심이다.
+> Structure referenced when the harnish skill creates/updates harnish-current-work.json.
+> This file is the core of cross-session context preservation.
 
 ---
 
-## JSON 스키마
+## JSON Schema
 
 ```json
 {
@@ -17,24 +17,24 @@
       "emoji": "🟢",
       "phase": 1,
       "task": "1-1",
-      "label": "정상 진행 중"
+      "label": "Progressing normally"
     }
   },
   "done": {
     "phases": [
       {
         "phase": 1,
-        "title": "페이즈 제목",
+        "title": "Phase title",
         "compressed": false,
         "milestone_approved_at": "YYYY-MM-DDTHH:MM:SS+09:00",
         "tasks": [
           {
             "id": "1-1",
-            "title": "태스크 제목",
-            "result": "무엇을 했는가 — 한 줄",
-            "files_changed": ["파일1", "파일2"],
-            "verification": "어떻게 확인했는가 — 명령어 또는 조건",
-            "duration": "대략적 턴 수 또는 시간"
+            "title": "Task title",
+            "result": "What was done — one line",
+            "files_changed": ["file1", "file2"],
+            "verification": "How it was verified — command or condition",
+            "duration": "Approximate number of turns or time"
           }
         ]
       }
@@ -47,11 +47,11 @@
     "phases": [
       {
         "phase": 2,
-        "title": "페이즈 제목",
+        "title": "Phase title",
         "tasks": [
           {
             "id": "2-1",
-            "title": "태스크 제목",
+            "title": "Task title",
             "depends_on": []
           }
         ]
@@ -72,45 +72,45 @@
 }
 ```
 
-## 필드 설명
+## Field Descriptions
 
 ### metadata.status
 
-| emoji | 의미 |
-|-------|------|
-| 🟢 | 정상 진행 중 |
-| 🟡 | 진행 중이나 이슈 있음 |
-| 🔴 | 블로커 발생, 에스컬레이션 필요 |
-| ✅ | 전체 완료 |
+| emoji | Meaning |
+|-------|---------|
+| 🟢 | Progressing normally |
+| 🟡 | In progress but has issues |
+| 🔴 | Blocker occurred, escalation needed |
+| ✅ | Fully complete |
 
 ### doing.task
 
-활성 태스크가 있으면 객체, 없으면 `null`.
+An object if there is an active task, `null` otherwise.
 
 ```json
 {
   "id": "1-2",
-  "title": "API 엔드포인트 생성",
+  "title": "Create API endpoint",
   "started_at": "YYYY-MM-DDTHH:MM:SS+09:00",
-  "current": "지금 뭘 하고 있는가",
-  "last_action": "가장 최근 수행한 것",
-  "next_action": "바로 다음에 할 것",
+  "current": "What is being done right now",
+  "last_action": "Most recently performed action",
+  "next_action": "What to do immediately next",
   "blocker": null,
   "retry_count": 0,
   "context": {
-    "guide": "guide.objective 요약",
-    "scope": "guardrails.scope 요약",
+    "guide": "guide.objective summary",
+    "scope": "guardrails.scope summary",
     "prd_reference": "PRD §4.1"
   }
 }
 ```
 
-### done.phases[] — 압축된 Phase
+### done.phases[] — Compressed Phase
 
 ```json
 {
   "phase": 1,
-  "title": "데이터 모델",
+  "title": "Data model",
   "compressed": true,
   "compressed_summary": "tasks:4 | files:src/models/*.ts",
   "archive_ref": ".progress-archive/phases.jsonl#phase=1"
@@ -119,42 +119,42 @@
 
 ---
 
-## 갱신 규칙
+## Update Rules
 
-### 태스크 시작 시
+### On Task Start
 
-1. `todo.phases[].tasks[]`에서 해당 태스크를 제거
-2. `doing.task`에 태스크 객체 설정 (started_at, context 포함)
-3. `metadata.status` 갱신
+1. Remove the task from `todo.phases[].tasks[]`
+2. Set the task object in `doing.task` (including started_at, context)
+3. Update `metadata.status`
 
-### 3액션마다
+### Every 3 Actions
 
-`doing.task`의 `current`, `last_action`, `next_action` 갱신.
-이 갱신은 세션 중단 시 복원 지점 역할을 한다.
+Update `current`, `last_action`, `next_action` in `doing.task`.
+This update serves as a restore point in case of session interruption.
 
-### 태스크 완료 시
+### On Task Completion
 
-1. `doing.task`를 `done.phases[].tasks[]`에 추가 (result, files_changed, verification, duration 포함)
-2. `doing.task`를 `null`로 설정
-3. `stats.completed_tasks` 증가
-4. 마일스톤이면 체크포인트 보고서 생성
+1. Add `doing.task` to `done.phases[].tasks[]` (including result, files_changed, verification, duration)
+2. Set `doing.task` to `null`
+3. Increment `stats.completed_tasks`
+4. If milestone, generate checkpoint report
 
-### 에러 발생 시
+### On Error
 
-1. `issues[]`에 추가
-2. `doing.task.blocker` 설정
-3. `doing.task.retry_count` 증가
+1. Add to `issues[]`
+2. Set `doing.task.blocker`
+3. Increment `doing.task.retry_count`
 
-### 마일스톤 도달 시
+### On Milestone Reached
 
-1. `stats` 갱신
-2. 체크포인트 보고서 생성 (progress-report.sh)
-3. 사용자 승인 요청
-4. `done.phases[].milestone_approved_at` 기록
+1. Update `stats`
+2. Generate checkpoint report (progress-report.sh)
+3. Request user approval
+4. Record `done.phases[].milestone_approved_at`
 
-### 세션 시작 시
+### On Session Start
 
-1. harnish-current-work.json 읽기
-2. `doing.task`이 non-null이면 `next_action`부터 재개
-3. `doing.task`이 null이면 `todo.phases`에서 다음 태스크 선택
-4. 사용자에게 간략히 보고
+1. Read harnish-current-work.json
+2. If `doing.task` is non-null, resume from `next_action`
+3. If `doing.task` is null, select next task from `todo.phases`
+4. Brief report to user

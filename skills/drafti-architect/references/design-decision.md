@@ -1,94 +1,94 @@
-# 설계 결정 작성 가이드
+# Design Decision Writing Guide
 
-> drafti-architect 스킬이 PRD의 §2 설계 결정을 작성할 때 참조하는 가이드.
+> Guide referenced by the drafti-architect skill when writing the §2 Design Decision section of a PRD.
 
-## 왜 설계 결정이 중요한가
+## Why Design Decisions Matter
 
-기술 작업에서 가장 비싼 비용은 "중간에 설계를 바꾸는 것"이다.
-설계 결정 섹션은 이 비용을 줄이기 위해 존재한다:
+The most expensive cost in technical work is "changing the design midway."
+The design decision section exists to reduce this cost:
 
-1. **대안을 미리 탐색**하여 나중에 "이것도 시도해봤어야 하는데"를 방지
-2. **선택 근거를 기록**하여 나중에 "왜 이렇게 했지?"에 답변 가능
-3. **유효 조건을 명시**하여 상황이 변했을 때 재검토 시점을 파악
+1. **Explore alternatives in advance** to prevent "we should have tried this too" later
+2. **Record selection rationale** to be able to answer "why did we do it this way?" later
+3. **Specify validity conditions** to identify when to revisit if circumstances change
 
-## 대안 탐색 방법
+## How to Explore Alternatives
 
-### 최소 2개 대안 필수
+### Minimum 2 Alternatives Required
 
-"명백한 정답"이 있어 보여도 반드시 대안을 하나 더 탐색한다.
-명백한 정답이 왜 정답인지 설명하는 것도 가치 있는 설계 결정이다.
+Even if there appears to be an "obvious right answer," always explore at least one more alternative.
+Explaining why the obvious answer is correct is also a valuable design decision.
 
-### 대안 발굴 체크리스트
+### Alternative Discovery Checklist
 
-- **기존 도구/라이브러리**: 이미 있는 것으로 해결할 수 있는가?
-- **직접 구현**: 외부 의존 없이 만들면?
-- **아키텍처 변경**: 근본적으로 다른 접근법은?
-- **현상 유지**: 지금 상태로 두면 실제로 얼마나 나쁜가?
-- **단계적 접근**: 지금은 간단하게 하고 나중에 확장하면?
+- **Existing tools/libraries**: Can this be solved with something that already exists?
+- **Build from scratch**: What if we build it without external dependencies?
+- **Architecture change**: Is there a fundamentally different approach?
+- **Status quo**: How bad is it really if we leave it as is?
+- **Phased approach**: What if we keep it simple now and extend later?
 
-### 대안별 필수 분석 항목
+### Required Analysis Items Per Alternative
 
-| 항목 | 설명 |
+| Item | Description |
 |------|------|
-| 접근법 | 어떻게 동작하는가 (3~5줄) |
-| 장점 | 이것이 좋은 이유 |
-| 단점 | 비용, 리스크, 한계 |
-| 적합한 상황 | 어떤 조건에서 이것이 최선인가 |
+| Approach | How it works (3~5 lines) |
+| Pros | Why this is good |
+| Cons | Cost, risk, limitations |
+| Suitable situation | Under what conditions is this the best choice |
 
-## 트레이드오프 분석 패턴
+## Trade-off Analysis Patterns
 
-### 패턴 1: 정량적 비교 (가능할 때)
-
-```
-대안 A: 구현 ~2일, 유지보수 연 ~10시간, 의존성 +1
-대안 B: 구현 ~4일, 유지보수 연 ~2시간, 의존성 +0
-→ 6개월 이상 유지한다면 B가 유리 (손익분기 ~4개월)
-```
-
-### 패턴 2: 가치 축 비교 (정량화 어려울 때)
+### Pattern 1: Quantitative Comparison (when possible)
 
 ```
-              단순성    확장성    성능     유지보수
-대안 A:        ★★★      ★        ★★       ★★★
-대안 B:        ★         ★★★     ★★★      ★★
-→ 현재 요구사항 범위에서는 단순성 우선 → A 선택
-→ 요구사항이 크게 확장되면 B 재검토
+Alternative A: Implementation ~2 days, maintenance ~10 hrs/year, dependencies +1
+Alternative B: Implementation ~4 days, maintenance ~2 hrs/year, dependencies +0
+→ If maintained for 6+ months, B is advantageous (break-even ~4 months)
 ```
 
-### 패턴 3: 리스크 기반
+### Pattern 2: Value Axis Comparison (when quantification is difficult)
 
 ```
-대안 A: 검증된 방법, 리스크 낮음, 하지만 기술 부채 누적
-대안 B: 새로운 접근, 리스크 중간, 장기적으로 깔끔
-→ 롤백 가능 여부: A는 즉시 가능, B는 마이그레이션 필요
-→ 판단: 기술 부채 수준이 아직 관리 가능하므로 A, 부채가 한계에 도달하면 B
+              Simplicity  Scalability  Performance  Maintenance
+Alternative A:   ★★★         ★            ★★          ★★★
+Alternative B:   ★           ★★★          ★★★         ★★
+→ Within current requirements scope, prioritize simplicity → select A
+→ Revisit B if requirements expand significantly
 ```
 
-## 선택 근거 작성 원칙
+### Pattern 3: Risk-Based
 
-1. **"~가 더 낫다" 대신 "~인 상황이므로 ~를 선택한다"**
-   - 나쁜 예: "대안 A가 더 좋다"
-   - 좋은 예: "현재 팀 규모(2명)와 프로젝트 수명(6개월)을 고려하면 A의 단순성이 더 중요하다"
+```
+Alternative A: Proven method, low risk, but accumulates tech debt
+Alternative B: New approach, medium risk, cleaner long-term
+→ Rollback feasibility: A is immediate, B requires migration
+→ Judgment: Tech debt level is still manageable so A; switch to B when debt reaches threshold
+```
 
-2. **유효 조건 명시**
-   - "이 결정은 {조건}에서 유효하다"
-   - "{조건}이 변하면 재검토가 필요하다"
+## Selection Rationale Writing Principles
 
-3. **기각된 대안 존중**
-   - 기각된 대안도 나쁜 것이 아니라 "현재 상황에 맞지 않는 것"
-   - 어떤 상황에서 기각된 대안이 더 나은 선택이 될 수 있는지 명시
+1. **Instead of "~is better," use "given ~situation, we select ~"**
+   - Bad example: "Alternative A is better"
+   - Good example: "Considering the current team size (2 people) and project lifespan (6 months), A's simplicity matters more"
 
-## 자산 연계
+2. **Specify validity conditions**
+   - "This decision is valid under {condition}"
+   - "Revisiting is needed if {condition} changes"
 
-설계 결정이 확정되면 decision 자산으로 기록한다.
-이렇게 기록된 결정은 향후 비슷한 문제에서 참조 자산으로 활용된다.
+3. **Respect rejected alternatives**
+   - Rejected alternatives are not bad, just "not fitting the current situation"
+   - Specify under what circumstances the rejected alternative could be a better choice
 
-기록 시 포함할 것:
-- 결정 사항 (한 문장)
-- 고려한 대안들 (간략히)
-- 선택 근거
-- 유효 조건
+## Asset Integration
 
-이전에 기록된 decision 자산이 현재 문제와 관련 있으면,
-PRD §2에서 "이전 결정 참조"로 언급한다.
-같은 판단을 반복하지 않아도 되고, 이전 판단이 현재도 유효한지 검토하는 계기가 된다.
+Once a design decision is finalized, record it as a decision asset.
+Decisions recorded this way are utilized as reference assets for similar problems in the future.
+
+Include when recording:
+- The decision (one sentence)
+- Considered alternatives (briefly)
+- Selection rationale
+- Validity conditions
+
+If a previously recorded decision asset is related to the current problem,
+mention it in PRD §2 as "prior decision reference."
+This avoids repeating the same judgment and provides an opportunity to review whether the prior judgment is still valid.

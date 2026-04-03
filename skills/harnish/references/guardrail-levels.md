@@ -1,106 +1,106 @@
-# 가드레일 레벨 판단 가이드
+# Guardrail Level Classification Guide
 
-> 가드레일을 soft(경고)와 hard(금지)로 분류하는 기준.
-> 모든 것을 금지하면 경직되고, 모든 것을 경고하면 무시된다.
-> 적절한 균형이 핵심이다.
-
----
-
-## 판단 기준
-
-### Hard (금지사항) — 즉시 중단
-
-다음 조건 중 하나라도 해당하면 hard:
-
-| 조건 | 예시 |
-|------|------|
-| **비가역적 결과** | DROP TABLE, 파일 영구 삭제, 프로덕션 데이터 변경 |
-| **보안 위험** | 하드코딩 비밀번호, 인증 우회 |
-| **데이터 무결성 위험** | 마이그레이션 없는 스키마 변경, FK 제약 없는 참조 |
-| **범위 명백한 이탈** | 현재 태스크와 완전히 무관한 파일 수정 |
-| **사용자 명시적 금지** | "절대 ~하지 마", "~ 건드리지 마" |
-
-### Soft (가드레일) — 경고 후 교정
-
-다음 조건에 해당하면 soft:
-
-| 조건 | 예시 |
-|------|------|
-| **가역적 결과** | 코드 스타일 위반, 불필요한 로그 추가 |
-| **선호도 문제** | 함수 길이, 변수 네이밍, 주석 스타일 |
-| **최적화 관련** | N+1 쿼리, 불필요한 렌더링 |
-| **구조적 권장** | 디렉토리 구조, 모듈 분리 |
-
-### 회색 영역 — 맥락에 따라 판단
-
-| 상황 | 판단 |
-|------|------|
-| 새 패키지 설치 | PRD에 명시되어 있으면 OK, 없으면 hard |
-| 기존 테스트 수정 | 기능 변경에 따른 수정이면 soft, 무관한 수정이면 hard |
-| 코드 리팩토링 | 현재 태스크 범위 내이면 soft, 범위 밖이면 hard |
+> Criteria for classifying guardrails into soft (warning) and hard (prohibition).
+> Prohibiting everything leads to rigidity; warning about everything leads to being ignored.
+> Proper balance is key.
 
 ---
 
-## 위반 시 동작 흐름
+## Classification Criteria
 
-### Soft 위반
+### Hard (Prohibitions) — Immediate Stop
+
+If any of the following conditions apply, classify as hard:
+
+| Condition | Example |
+|-----------|---------|
+| **Irreversible outcome** | DROP TABLE, permanent file deletion, production data modification |
+| **Security risk** | Hardcoded passwords, authentication bypass |
+| **Data integrity risk** | Schema change without migration, reference without FK constraint |
+| **Clear scope deviation** | Modifying files completely unrelated to current task |
+| **Explicit user prohibition** | "Never do ~", "Don't touch ~" |
+
+### Soft (Guardrails) — Warning Then Correction
+
+If the following conditions apply, classify as soft:
+
+| Condition | Example |
+|-----------|---------|
+| **Reversible outcome** | Code style violation, unnecessary log addition |
+| **Preference matter** | Function length, variable naming, comment style |
+| **Optimization related** | N+1 queries, unnecessary rendering |
+| **Structural recommendation** | Directory structure, module separation |
+
+### Gray Area — Context-Dependent
+
+| Situation | Classification |
+|-----------|---------------|
+| Installing new package | OK if specified in PRD, hard if not |
+| Modifying existing tests | Soft if due to feature change, hard if unrelated |
+| Code refactoring | Soft if within current task scope, hard if outside scope |
+
+---
+
+## Violation Action Flow
+
+### Soft Violation
 
 ```
-1. 경고 메시지 로그 (harnish-current-work.json 이슈 로그에 기록)
-2. 위반 유형별 자동 교정 동작:
+1. Log warning message (record in harnish-current-work.json issue log)
+2. Auto-correction action by violation type:
 
-   파일 100줄+ 변경:
-     → 자동 교정 불가. 경고 로그 + 사용자에게 태스크 분할 제안.
-     → 사용자 응답 전까지 현재 태스크 계속 진행.
+   100+ line file change:
+     → Cannot auto-correct. Warning log + suggest task splitting to user.
+     → Continue current task until user responds.
 
-   테스트 없이 Done 처리 시도:
-     → 자동 교정 불가. Done 전환 거부.
-     → 에스컬레이션: "Task {id}에 테스트가 없습니다. acceptance_criteria를 추가하세요."
+   Attempting Done without tests:
+     → Cannot auto-correct. Reject Done transition.
+     → Escalation: "Task {id} has no tests. Please add acceptance_criteria."
 
-   acceptance_criteria 없는 태스크:
-     → 자동 교정 불가. Done 전환 거부.
-     → 에스컬레이션: "Task {id}의 acceptance_criteria가 비어있습니다."
+   Task without acceptance_criteria:
+     → Cannot auto-correct. Reject Done transition.
+     → Escalation: "Task {id}'s acceptance_criteria is empty."
 
-   scope 밖 파일 참조 (읽기만):
-     → 자동 교정: 경고 로그만 남기고 계속.
+   Referencing out-of-scope file (read only):
+     → Auto-correct: Log warning only and continue.
 
-   scope 밖 파일 수정:
-     → 자동 교정 불가. 수정 롤백.
-     → 에스컬레이션: "Task {id}가 scope 밖 파일 {path}을 수정하려 합니다."
+   Modifying out-of-scope file:
+     → Cannot auto-correct. Rollback modification.
+     → Escalation: "Task {id} is attempting to modify out-of-scope file {path}."
 
-   코드 스타일/최적화/구조적 권장:
-     → 자동 교정: 가능하면 즉시 교정 후 계속.
-     → 교정 불가 시: 경고 로그만 남기고 계속.
+   Code style/optimization/structural recommendations:
+     → Auto-correct: If possible, correct immediately and continue.
+     → If correction not possible: Log warning only and continue.
 
-3. 3회 이상 같은 위반이 반복되면: 사용자에게 알림.
+3. If the same violation repeats 3+ times: Notify the user.
 ```
 
-### Hard 위반
+### Hard Violation
 
 ```
-1. 즉시 중단 (작업 중인 변경을 커밋하지 않음)
-2. harnish-current-work.json 위반 기록에 추가
-3. 사용자에게 에스컬레이션
-4. 사용자 판단:
-   - "예외 허용" → 이유를 기록하고 계속
-   - "금지 유지" → 대안 경로 탐색
-   - "태스크 재설계" → 시딩 수정
+1. Immediately stop (do not commit in-progress changes)
+2. Add to harnish-current-work.json violation records
+3. Escalate to user
+4. User decision:
+   - "Allow exception" → Record reason and continue
+   - "Maintain prohibition" → Explore alternative path
+   - "Redesign task" → Modify seeding
 ```
 
 ---
 
-## PRD에서 가드레일 추출하기
+## Extracting Guardrails from PRD
 
-PRD §7의 가드레일을 파싱할 때:
+When parsing guardrails from PRD §7:
 
-1. "절대", "금지", "never", "하면 안 됨" → hard 후보
-2. "권장", "선호", "가능하면", "should" → soft 후보
-3. 명시적 레벨이 없으면 위 판단 기준표로 분류
-4. 확신이 없으면 soft로 분류 (경직보다 유연이 낫다)
+1. "absolutely", "prohibited", "never", "must not" → hard candidate
+2. "recommended", "preferred", "if possible", "should" → soft candidate
+3. If no explicit level, classify using the criteria table above
+4. If uncertain, classify as soft (flexibility is better than rigidity)
 
-## asset-recorder 기존 가드레일 매핑
+## Mapping Existing asset-recorder Guardrails
 
-asset-recorder에 기록된 guardrail 자산의 `level` 필드:
-- `hard` → 그대로 hard
-- `soft` → 그대로 soft
-- 없음 → 내용을 읽고 위 기준으로 판단
+The `level` field of guardrail assets recorded in asset-recorder:
+- `hard` → remains hard
+- `soft` → remains soft
+- Missing → read the content and classify using the criteria above

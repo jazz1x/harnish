@@ -1,26 +1,26 @@
-# PRD 검증 기준
+# PRD Verification Criteria
 
-> ralpi가 PRD 아티팩트를 검증할 때 참조하는 상세 기준.
-> harnish M5 이후 고도화 예정. 현재는 최소 기준만 정의.
+> Detailed criteria referenced by ralpi when verifying PRD artifacts.
+> To be enhanced after harnish M5. Currently only minimum criteria are defined.
 
-## 필수 섹션
+## Required Sections
 
-- §4 구현 명세: 파일 경로, 함수명, 변경 유형 존재
-- §6 테스트 기준: bash 명령 또는 조건 목록 존재
-- §7 가드레일: hard/soft 구분 존재
+- §4 Implementation Spec: file paths, function names, change types must exist
+- §6 Test Criteria: bash commands or condition lists must exist
+- §7 Guardrails: hard/soft distinction must exist
 
-## 모호 표현 금지 목록
+## Prohibited Ambiguous Expressions
 
-"적절히", "필요하면", "나중에", "등등", "기타", "충분히", "가능하면"
-→ 발견 시 이슈로 보고 (구체적 표현으로 교체 필요)
+"appropriately", "if needed", "later", "etc.", "other", "sufficiently", "if possible"
+→ Report as issue when found (must be replaced with specific expressions)
 
-## 섹션 번호 일관성
+## Section Number Consistency
 
-§1 → §2 → ... → §N 순서. 중간 누락 불가.
+§1 → §2 → ... → §N in order. No gaps allowed.
 
-## 파일 경로 실존성
+## File Path Existence
 
-§4에 명시된 파일 경로가:
-- 이미 존재하거나 (modify/delete)
-- create로 명시되거나
-- 경로 확인 불가 시 경고
+File paths specified in §4 must:
+- Already exist (modify/delete)
+- Be explicitly marked as create
+- Warn if path cannot be verified

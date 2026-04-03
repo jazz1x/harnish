@@ -2,99 +2,99 @@
 
 > Claude Code plugin — autonomous implementation engine
 
-**harnish** (harness + ish) = "대충 하네스 비스무리한 것"
+**harnish** (harness + ish) — an implementation environment that gets smarter as you work. Failures become guardrails, patterns accumulate, and context persists across sessions.
 
-작업할수록 똑똑해지는 구현 환경. 실패가 가드레일이 되고, 패턴이 축적되며, 세션이 바뀌어도 맥락이 유실되지 않는다.
+[한국어](./README.ko.md)
 
 ## Skills
 
 | Skill | Version | Command | Role |
 |-------|---------|---------|------|
-| **drafti-architect** | 0.0.1 | `/drafti-architect` | 기술 주도 설계 PRD 생성 |
-| **drafti-feature** | 0.0.1 | `/drafti-feature` | 기획 기반 구현 명세 PRD 생성 |
-| **harnish** | 0.0.1 | `/harnish` | 자율 구현 엔진 (시딩 + RALP 루프 + 앵커링 + 경험축적) |
-| **ralpi** | 0.0.1 | `/ralpi` | 점검 (HITL 보고 또는 자율 수정) |
+| **drafti-architect** | 0.0.1 | `/harnish:drafti-architect` | Tech-driven design PRD generation |
+| **drafti-feature** | 0.0.1 | `/harnish:drafti-feature` | Planning-based implementation spec PRD |
+| **harnish** | 0.0.1 | `/harnish:harnish` | Autonomous implementation engine (seeding + RALP loop + anchoring + experience) |
+| **ralpi** | 0.0.1 | `/harnish:ralpi` | Inspection (HITL reporting or autonomous fix) |
 
-각 스킬은 **독립 궤도**에서 동작하며, **공유 아티팩트(파일)**로만 연결된다.
+Each skill operates in an **independent orbit**, connected only through **shared artifacts (files)**.
 
 ```
-drafti  ──→  docs/prd-*.md  ──→  harnish  ──→  구현 코드
+drafti  ──→  docs/prd-*.md  ──→  harnish  ──→  implementation code
                                      │
-                                     └── .harnish/ (작업 좌표 + 경험 축적, 사용자 프로젝트 CWD)
+                                     └── .harnish/ (work coordinates + experience, in user project CWD)
 
-ralpi  ──→  어떤 아티팩트든 점검 (PRD, SKILL.md, 스크립트, 코드)
-              HITL(보고→대기) 또는 자율(즉시 수정)
+ralpi  ──→  inspects any artifact (PRD, SKILL.md, scripts, code)
+              HITL (report → wait) or autonomous (fix immediately)
 ```
 
 ## Usage
 
-### 1. PRD 생성 (설계)
+### 1. PRD Generation (Design)
 
 ```
-사용자: "Redis 캐시 레이어 설계해줘"
-→ drafti-architect가 설계 대안 2~3개 탐색, 트레이드오프 분석
-→ docs/prd-redis-cache.md 생성
+User: "Design a Redis cache layer"
+→ drafti-architect explores 2-3 design alternatives with trade-off analysis
+→ generates docs/prd-redis-cache.md
 
-사용자: "이 기획서로 PRD 만들어" (기획 문서 첨부)
-→ drafti-feature가 구현 명세 PRD 생성 (피쳐플래그는 필요 시만)
-→ docs/prd-user-profile-edit.md 생성
+User: "Create a PRD from this planning doc" (with planning document attached)
+→ drafti-feature generates implementation spec PRD (feature flags only when needed)
+→ generates docs/prd-user-profile-edit.md
 ```
 
-### 2. 자율 구현 (harnish)
+### 2. Autonomous Implementation (harnish)
 
 ```
-사용자: "구현 시작" 또는 "태스크 분해"
-→ PRD를 원자적 태스크로 분해 → harnish-current-work.json 생성
-→ "Phase 3개, Task 12개 시딩 완료 — 확인 후 '루프 돌려'"
+User: "Start implementation" or "Decompose tasks"
+→ Decomposes PRD into atomic tasks → generates harnish-current-work.json
+→ "3 Phases, 12 Tasks seeded — review then 'run the loop'"
 
-사용자: "루프 돌려"
-→ RALP 루프 자동 실행 (Read → Act → Log → Progress → repeat)
-→ 매 3액션마다 harnish-current-work.json 갱신, Phase 완료 시 마일스톤 보고
+User: "Run the loop"
+→ RALP loop auto-executes (Read → Act → Log → Progress → repeat)
+→ Updates harnish-current-work.json every 3 actions, milestone report on phase completion
 
-사용자: (새 세션에서) "이어서 진행"
-→ harnish-current-work.json에서 좌표 복원, 중단 지점부터 자동 재개
+User: (in a new session) "Continue where I left off"
+→ Restores coordinates from harnish-current-work.json, auto-resumes from break point
 ```
 
-### 3. 점검 (ralpi)
+### 3. Inspection (ralpi)
 
 ```
-사용자: "이 PRD 점검해"
-→ 타입 감지 (PRD) → 정적 분석 → 이슈 보고 → 사용자 판단 대기 (HITL)
+User: "Inspect this PRD"
+→ Type detection (PRD) → static analysis → issue report → waits for user judgment (HITL)
 
-사용자: "src/cache.py 점검하고 고쳐"
-→ 타입 감지 (코드) → 분석 → 즉시 수정 → 결과 보고 (자율)
-→ 테스트 FAIL 시 롤백, 의도 불명확 시 미수정 분류
+User: "Inspect and fix src/cache.py"
+→ Type detection (code) → analysis → immediate fix → result report (autonomous)
+→ Rolls back on test failure, classifies as unfixed when intent is unclear
 ```
 
-### 4. 경험 축적
+### 4. Experience Accumulation
 
 ```
-사용자: "이 패턴 기억해"
-→ pattern 자산으로 기록 → 이후 작업에서 자동 참조
+User: "Remember this pattern"
+→ Records as pattern asset → auto-referenced in future work
 
-사용자: "자산 현황"
-→ 축적된 failure/pattern/guardrail/snippet/decision 현황 조회
+User: "Asset status"
+→ Shows accumulated failure/pattern/guardrail/snippet/decision assets
 
-사용자: "스킬로 만들어"
-→ 압축된 자산에서 재사용 가능한 SKILL.md 초안 생성
+User: "Make this a skill"
+→ Generates reusable SKILL.md draft from compressed assets
 ```
 
 ## Structure
 
 ```
 harnish/
-├── .claude-plugin/plugin.json  # 플러그인 매니페스트
+├── .claude-plugin/plugin.json  # Plugin manifest
 ├── skills/
-│   ├── drafti-architect/       # 기술 설계 PRD 생성
-│   ├── drafti-feature/         # 기획 명세 PRD 생성
-│   ├── harnish/                # 자율 구현 (시딩/RALP/앵커링/경험)
-│   └── ralpi/                  # 점검 (HITL/자율)
+│   ├── drafti-architect/       # Tech design PRD generation
+│   ├── drafti-feature/         # Planning spec PRD generation
+│   ├── harnish/                # Autonomous implementation (seeding/RALP/anchoring/experience)
+│   └── ralpi/                  # Inspection (HITL/autonomous)
 ├── hooks/hooks.json            # Claude Code hooks
-├── scripts/                    # 공용 스크립트 (16개)
-├── docs/                       # PRD 문서
-├── VERSION                     # 리포 버전
-├── CHANGELOG.md                # 릴리스 이력
-└── VERSIONING.md               # 버저닝 정책
+├── scripts/                    # Shared scripts (16)
+├── docs/                       # PRD documents
+├── VERSION                     # Repo version
+├── CHANGELOG.md                # Release history
+└── VERSIONING.md               # Versioning policy
 ```
 
 ## Install
@@ -105,7 +105,7 @@ cd your-project
 claude --plugin-dir /path/to/harnish
 ```
 
-스킬은 `/harnish:harnish`, `/harnish:drafti-architect`, `/harnish:drafti-feature`, `/harnish:ralpi`로 등록됩니다.
+Skills register as `/harnish:harnish`, `/harnish:drafti-architect`, `/harnish:drafti-feature`, `/harnish:ralpi`.
 
 ## Development
 
@@ -115,28 +115,28 @@ cd harnish
 git config core.hooksPath .githooks
 ```
 
-Pre-commit hook이 자동으로 검증합니다:
+Pre-commit hooks automatically validate:
 - `shellcheck` — shell script lint
-- JSON syntax — `hooks.json` 등
-- SKILL.md frontmatter — `name`, `description`, `version` 필수 필드
-- SKILL.md version — SemVer 포맷 (`X.Y.Z`) 검증
-- Script permissions — `.sh` 파일 실행 권한
+- JSON syntax — `hooks.json`, etc.
+- SKILL.md frontmatter — `name`, `description`, `version` required fields
+- SKILL.md version — SemVer format (`X.Y.Z`)
+- Script permissions — `.sh` file execution permissions
 
 ## Versioning
 
-혼합 버저닝: 리포 전체 버전(`VERSION`) + 스킬별 독립 버전(`SKILL.md` frontmatter).
+Hybrid versioning: repo-level version (`VERSION`) + per-skill independent versions (`SKILL.md` frontmatter).
 
-- SemVer 2.0.0 준수
-- PR 머지 시 git tag (`v0.0.1`)
-- Keep a Changelog 포맷
+- SemVer 2.0.0 compliant
+- Git tag on PR merge (`v0.0.1`)
+- Keep a Changelog format
 
-상세: [VERSIONING.md](./VERSIONING.md) | 이력: [CHANGELOG.md](./CHANGELOG.md)
+Details: [VERSIONING.md](./VERSIONING.md) | History: [CHANGELOG.md](./CHANGELOG.md)
 
 ## Naming
 
-- **harnish** = harness + ish (자율 구현 엔진)
-- **ralpi** = RALP (Recursive Autonomous Loop Process) + i (점검)
-- **drafti** = draft + i (PRD 생성 — drafti-architect + drafti-feature)
+- **harnish** = harness + ish (autonomous implementation engine)
+- **ralpi** = RALP (Recursive Autonomous Loop Process) + i (inspection)
+- **drafti** = draft + i (PRD generation — drafti-architect + drafti-feature)
 
 ## License
 

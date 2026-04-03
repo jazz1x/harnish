@@ -2,139 +2,139 @@
 name: drafti-architect
 version: 0.0.1
 description: >
-  기술 설계 PRD 생성기. 기획 문서 없이 기술 문제 정의만으로 구현 가능한 PRD를 생성한다.
-  트리거: "설계해", "아키텍처 PRD", "이 문제 어떻게 해결할지",
-  "기술적으로 어떻게", "PRD 만들어" (기획서 미제공 시).
-  drafti-feature와 구분: 기획 문서 없음 → architect, 있음 → feature.
+  Technical design PRD generator. Creates an implementation-ready PRD from a technical problem definition alone, without a planning document.
+  Triggers: "설계해", "design this", "아키텍처 PRD", "architecture PRD", "이 문제 어떻게 해결할지", "how to solve this problem",
+  "기술적으로 어떻게", "how to technically", "PRD 만들어", "create PRD" (when no planning doc is provided).
+  Distinction from drafti-feature: no planning document → architect, has planning document → feature.
 ---
 
-# drafti-architect — 기술 설계 PRD
+# drafti-architect — Technical Design PRD
 
-> 기획 없이 기술 문제에서 설계 판단을 내리고 구현 가능한 PRD를 만든다.
+> Makes design decisions from technical problems and produces an implementation-ready PRD, without a planning document.
 
-## 환경 설정
+## Environment Setup
 
 ```bash
 HARNISH_ROOT="${CLAUDE_PLUGIN_ROOT}"
 ```
 
-## 스킬 체인
+## Skill Chain
 
-독립 호출 가능. 후속: "검토 후 '구현 시작'" → harnish, 또는 "/ralpi로 PRD 정합성 확인" → ralpi.
+Can be invoked independently. Follow-up: "start implementation after review" → harnish, or "/ralpi to verify PRD consistency" → ralpi.
 
-## Step 1: 문제 명확화
+## Step 1: Problem Clarification
 
-사용자 입력에서 5개 항목을 검사한다. 이미 답이 있으면 넘어간다.
+Inspect 5 items from the user input. Skip items that already have answers.
 
-| # | 항목 | 검사 기준 |
+| # | Item | Inspection Criteria |
 |---|------|----------|
-| 1 | 문제 정의 | "무엇이 문제인가" + 구체적 고통점이 있는가? |
-| 2 | 긴급도 | "왜 지금 해결해야 하는가"가 있는가? |
-| 3 | 기술 제약 | 스택/호환성 요구사항이 있는가? (없으면 "제약 없음"으로 진행) |
-| 4 | 범위 | "이번에 할 것" vs "나중에 할 것" 구분이 있는가? |
-| 5 | 성공 기준 | 완성 판정 방법이 있는가? |
+| 1 | Problem Definition | Is there a "what is the problem" + specific pain point? |
+| 2 | Urgency | Is there a "why must this be solved now"? |
+| 3 | Technical Constraints | Are there stack/compatibility requirements? (If none, proceed with "no constraints") |
+| 4 | Scope | Is there a distinction between "what to do now" vs "what to do later"? |
+| 5 | Success Criteria | Is there a method to determine completion? |
 
-- ❌인 항목만 질문. ✅인 항목은 건너뜀.
-- **1~2개씩, 총 2회 이내로 완료.** 미응답 항목은 "[미확인]" 표기 후 진행.
+- Only ask about items marked ❌. Skip items marked ✅.
+- **Ask 1~2 items at a time, complete within 2 rounds total.** Mark unanswered items as "[unconfirmed]" and proceed.
 
-## Step 2: 기존 자산 조회
+## Step 2: Existing Asset Query
 
-문제에서 태그 3~5개 추출 (기술 스택 → 문제 도메인 → 작업 유형 순).
+Extract 3~5 tags from the problem (tech stack → problem domain → task type order).
 
 ```bash
 if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]]; then
   bash "${HARNISH_ROOT}/scripts/query-assets.sh" \
-    --tags "{추출 태그}" --format inject \
+    --tags "{extracted tags}" --format inject \
     --base-dir "$(pwd)/.harnish"
 fi
 ```
 
-- 자산 발견 → guardrail은 §7에, decision은 §2 보강, failure는 §5에 반영
-- 빈 결과 → 자산 없이 진행
+- Assets found → reflect guardrails in §7, decisions in §2 reinforcement, failures in §5
+- Empty result → proceed without assets
 
-## Step 3: 설계 대안 탐색
+## Step 3: Design Alternative Exploration
 
-**반드시 2개 이상** 대안 생성. "명백한 정답"이 있어도 대안을 만든다.
+**Generate at least 2 alternatives.** Create alternatives even if there is an "obvious right answer."
 
-대안 발굴: 기존 도구? 직접 구현? 아키텍처 변경? 현상 유지? 단계적 접근?
+Alternative discovery: Existing tools? Build from scratch? Architecture change? Status quo? Phased approach?
 
-각 대안마다:
+For each alternative:
 ```
-## 대안 {A/B/C}: {이름}
-| 측면 | 평가 |
+## Alternative {A/B/C}: {name}
+| Aspect | Evaluation |
 |------|------|
-| 장점 | (정량화 가능하면 정량화) |
-| 단점 | (비용, 리스크, 한계) |
-| 구현 난이도 | 낮음/중간/높음 + 이유 |
-| 적합한 상황 | 언제 이것이 최선인가 |
-| 기각 조건 | 언제 이것을 쓰면 안 되는가 |
+| Pros | (quantify if possible) |
+| Cons | (cost, risk, limitations) |
+| Implementation difficulty | Low/Medium/High + reason |
+| Suitable situation | When is this the best choice |
+| Rejection condition | When should this NOT be used |
 ```
 
-상세: `references/design-decision.md`
+Details: `references/design-decision.md`
 
-## Step 4: 선택 + PRD 작성
+## Step 4: Selection + PRD Writing
 
-### 선택 근거 — 반드시 조건형으로:
+### Selection Rationale — must be conditional:
 
-나쁜 예: "A가 더 낫다"
-좋은 예: "팀 React 경험 2년 + 기존 코드 80% → 학습 비용 제로. Vue는 3주 학습 필요. 따라서 React."
+Bad example: "A is better"
+Good example: "Team has 2 years React experience + 80% existing code → zero learning cost. Vue requires 3 weeks of learning. Therefore React."
 
-필수: 현재 상황 명시 → 선택으로 얻는 것 → **유효 조건** ("이 조건이 변하면 재검토")
+Required: State current situation → what the selection gains → **validity conditions** ("revisit if this condition changes")
 
-### PRD 규모 판단 → 섹션 결정
+### PRD Scale Assessment → Section Decision
 
-| 규모 | 기준 | 필수 섹션 | 선택 |
+| Scale | Criteria | Required Sections | Optional |
 |------|------|----------|------|
-| 소 (1~2일) | <500줄 | §1, §2, §4, §6, §7 | §3, §5 |
-| 중 (1~2주) | 500~2000줄 | §1~§8 전체 | §9 |
-| 대 (1개월+) | 2000줄+ | §1~§8 + 페이즈 분할 | 일정표 |
+| Small (1~2 days) | <500 lines | §1, §2, §4, §6, §7 | §3, §5 |
+| Medium (1~2 weeks) | 500~2000 lines | §1~§8 full | §9 |
+| Large (1 month+) | 2000+ lines | §1~§8 + phase splitting | Schedule |
 
-불명확하면 **중규모** 가정. `references/prd-template.md`를 읽고 작성.
+If unclear, assume **medium scale**. Read `references/prd-template.md` and write accordingly.
 
-## Step 5: 저장 + 자산 기록
+## Step 5: Save + Asset Recording
 
 ```bash
 mkdir -p docs/
-# PRD 저장: docs/prd-{slug}.md
+# PRD save: docs/prd-{slug}.md
 ```
 
-자산 기록 (harnish 생태계 모드):
+Asset recording (harnish ecosystem mode):
 ```bash
 if [[ -n "${CLAUDE_PLUGIN_ROOT}" ]]; then
-  # Decision 기록
+  # Decision recording
   bash "${HARNISH_ROOT}/scripts/record-asset.sh" \
-    --type decision --tags "{태그}" \
-    --title "{결정 한 줄}" --content "{선택 근거}" \
+    --type decision --tags "{tags}" \
+    --title "{one-line decision}" --content "{selection rationale}" \
     --base-dir "$(pwd)/.harnish"
 
-  # Guardrail 기록 (도출된 제약이 있을 때)
+  # Guardrail recording (when derived constraints exist)
   bash "${HARNISH_ROOT}/scripts/record-asset.sh" \
-    --type guardrail --tags "{태그}" \
-    --title "{규칙 한 줄}" --content "{위반 시 결과}" \
+    --type guardrail --tags "{tags}" \
+    --title "{one-line rule}" --content "{consequence of violation}" \
     --base-dir "$(pwd)/.harnish"
 fi
 ```
 
-## Step 6: 완료
+## Step 6: Completion
 
 ```
-✅ PRD 완성: docs/prd-{slug}.md
-포함: §4 구현 명세 / §6 테스트 기준 / §7 가드레일
-다음: 검토 후 "구현 시작" 또는 /ralpi로 정합성 확인.
+✅ PRD complete: docs/prd-{slug}.md
+Includes: §4 Implementation spec / §6 Test criteria / §7 Guardrails
+Next: "start implementation" after review, or /ralpi for consistency check.
 ```
 
-## drafti-feature와의 구분
+## Distinction from drafti-feature
 
-| 사용자 요청 | 판단 | 스킬 |
+| User Request | Judgment | Skill |
 |-----------|------|------|
-| "이 기획서 기반으로 PRD" | 기획 문서 있음 | → drafti-feature |
-| "이 문제 어떻게 설계할까" | 기획 없음, 설계 판단 필요 | → drafti-architect |
+| "Create PRD based on this planning doc" | Planning document exists | → drafti-feature |
+| "How should I design this problem" | No planning doc, design decision needed | → drafti-architect |
 
-기획 문서 유/무로 판단. 의심스러우면 사용자에게 "기획 문서가 있나요?"
+Decide based on presence/absence of a planning document. If uncertain, ask the user "Do you have a planning document?"
 
-## 금지
+## Prohibited
 
-- 대안 1개만으로 끝내기 (최소 2개)
-- "~가 더 낫다" 식 근거 없는 선택
-- 유효 조건 없이 결정 확정
-- reference 2개 동시 로드 (1개씩, 시점별 전환)
+- Finishing with only 1 alternative (minimum 2)
+- Groundless selection like "~is better"
+- Finalizing a decision without validity conditions
+- Loading 2 references simultaneously (load 1 at a time, switch per phase)

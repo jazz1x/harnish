@@ -1,41 +1,41 @@
-# 임계치 · 압축 · 스킬화 규칙
+# Thresholds, Compression, and Skillification Rules
 
-## 압축 트리거
+## Compression Triggers
 
-| 조건 | 동작 |
-|------|------|
-| 동일 태그 자산 5건 이상 | 압축 권장 (중복 제거, 핵심만 추출) |
-| 동일 유형 자산 10건 이상 (전체) | 유형별 정리 권장 |
-| 가드레일 3건 이상 동일 domain | 도메인별 가드레일 통합 문서 생성 권장 |
+| Condition | Action |
+|-----------|--------|
+| 5+ assets with the same tag | Compression recommended (deduplicate, extract essentials only) |
+| 10+ assets of the same type (total) | Type-based cleanup recommended |
+| 3+ guardrails in the same domain | Domain-specific guardrail consolidated document creation recommended |
 
-## 스킬화 트리거
+## Skillification Triggers
 
-| 조건 | 동작 |
-|------|------|
-| 동일 패턴 stability >= 3 | 스킬화 권장 |
-| 압축된 자산 그룹이 완결적 워크플로우를 형성 | 스킬화 권장 |
-| 사용자가 "이걸 스킬로" 요청 | 즉시 스킬화 시작 |
+| Condition | Action |
+|-----------|--------|
+| Same pattern with stability >= 3 | Skillification recommended |
+| Compressed asset group forms a complete workflow | Skillification recommended |
+| User requests "make this a skill" | Start skillification immediately |
 
-## stability 갱신 규칙
+## Stability Update Rules
 
-- 동일 태그의 패턴/스니펫이 다른 세션에서 재사용되면 stability +1
-- 실패 후 해당 패턴을 적용하여 성공하면 stability +1
-- 패턴의 변형이 발생하면 (같은 문제, 다른 해결) stability를 1로 리셋하고 새 자산으로 기록
+- If a pattern/snippet with the same tag is reused in a different session, stability +1
+- If a pattern is applied after a failure and succeeds, stability +1
+- If a pattern variation occurs (same problem, different solution), reset stability to 1 and record as a new asset
 
-## 압축 프로세스
+## Compression Process
 
-1. 대상 자산 그룹 선택 (태그 또는 유형 기준)
-2. 중복 자산 식별 및 병합
-3. 핵심 내용만 추출하여 하나의 요약 문서로
-4. 원본 레코드에 `compressed: true` 추가
-5. 요약본 1건 harnish-rag.jsonl에 append
+1. Select target asset group (by tag or type)
+2. Identify and merge duplicate assets
+3. Extract only essential content into a single summary document
+4. Add `compressed: true` to original records
+5. Append 1 summary entry to harnish-rag.jsonl
 
-## 스킬화 프로세스
+## Skillification Process
 
-1. 압축된 자산 또는 stability >= 3 패턴 선택
-2. skill-creator 스킬의 패턴을 따라 SKILL.md 초안 작성
-3. 자산의 가드레일 → 스킬의 주의사항으로 매핑
-4. 자산의 스니펫 → 스킬의 scripts/로 매핑
-5. 자산의 결정근거 → 스킬의 설계 원칙으로 매핑
-6. 사용자 검토 및 승인
-7. `.claude/skills/`에 배치 (또는 .skill로 패키징)
+1. Select compressed assets or patterns with stability >= 3
+2. Draft SKILL.md following the skill-creator skill pattern
+3. Map asset guardrails → skill precautions
+4. Map asset snippets → skill scripts/
+5. Map asset decision rationales → skill design principles
+6. User review and approval
+7. Place in `.claude/skills/` (or package as .skill)

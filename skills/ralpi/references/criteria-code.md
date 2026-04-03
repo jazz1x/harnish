@@ -1,111 +1,111 @@
-# 코드 검증 기준
+# Code Verification Criteria
 
-> ralpi가 구현 코드를 검증할 때 참조하는 기준.
-> 다른 스킬의 존재를 전제하지 않는다. 주어진 아티팩트만으로 판단한다.
-> **언어에 종속되지 않는다.** 파일 확장자로 언어를 감지하고 해당 도구를 선택한다.
+> Criteria referenced by ralpi when verifying implementation code.
+> Does not assume the existence of other skills. Judges based solely on the given artifact.
+> **Language-agnostic.** Detects language by file extension and selects the appropriate tools.
 
-## 0. 언어 감지 → 도구 매핑
+## 0. Language Detection → Tool Mapping
 
-파일 확장자로 언어를 감지한 뒤, 해당 언어의 도구를 사용한다.
-프로젝트 설정 파일이 우선. 없으면 아래 기본 도구.
+Detect language by file extension, then use the tools for that language.
+Project config files take priority. If absent, use the default tools below.
 
-| 확장자 | 언어 | 타입 체크 | lint | 테스트 러너 | 의존성 위치 |
-|--------|------|----------|------|-----------|-----------|
+| Extension | Language | Type Check | Lint | Test Runner | Dependency Location |
+|-----------|----------|-----------|------|-------------|-------------------|
 | `.py` | Python | `mypy`, `pyright` | `ruff`, `flake8` | `pytest` | `venv/`, `.venv/` |
 | `.ts`, `.tsx` | TypeScript | `tsc --noEmit` | `eslint`, `biome` | `vitest`, `jest`, `npm test` | `node_modules/` |
 | `.js`, `.jsx` | JavaScript | — | `eslint`, `biome` | `vitest`, `jest`, `npm test` | `node_modules/` |
 | `.java` | Java | `javac` | `checkstyle`, `spotbugs` | `mvn test`, `gradle test` | `target/`, `build/` |
 | `.kt`, `.kts` | Kotlin | `kotlinc` | `ktlint`, `detekt` | `gradle test` | `build/` |
-| `.go` | Go | `go vet` | `golangci-lint` | `go test ./...` | `vendor/` (선택) |
+| `.go` | Go | `go vet` | `golangci-lint` | `go test ./...` | `vendor/` (optional) |
 | `.rs` | Rust | `cargo check` | `cargo clippy` | `cargo test` | `target/` |
 | `.swift` | Swift | `swiftc` | `swiftlint` | `swift test` | `.build/` |
 | `.dart` | Dart | `dart analyze` | `dart analyze` | `dart test` | `.dart_tool/` |
 
-**도구 선택 규칙:**
+**Tool Selection Rules:**
 
-1. 프로젝트 설정 파일 확인 (`pyproject.toml`, `package.json`, `Cargo.toml`, `go.mod`, `build.gradle` 등)
-2. 설정에 명시된 도구 우선 사용
-3. 설정 없으면 위 표의 기본 도구 사용
-4. 도구가 설치되어 있지 않으면 해당 검사 SKIP + 경고
+1. Check project config files (`pyproject.toml`, `package.json`, `Cargo.toml`, `go.mod`, `build.gradle`, etc.)
+2. Prefer tools specified in config
+3. If no config, use default tools from the table above
+4. If tool is not installed, SKIP that check + warn
 
-**테스트 파일 패턴:**
+**Test File Patterns:**
 
-| 언어 | 테스트 파일 패턴 |
-|------|--------------|
+| Language | Test File Pattern |
+|----------|-----------------|
 | Python | `test_*.py`, `*_test.py`, `tests/` |
 | TypeScript/JS | `*.test.ts`, `*.spec.ts`, `__tests__/` |
 | Java | `*Test.java`, `*Tests.java`, `src/test/` |
 | Kotlin | `*Test.kt`, `src/test/` |
-| Go | `*_test.go` (동일 패키지) |
-| Rust | `#[cfg(test)]` 모듈, `tests/` |
+| Go | `*_test.go` (same package) |
+| Rust | `#[cfg(test)]` modules, `tests/` |
 | Swift | `*Tests.swift`, `Tests/` |
 
-## 1. 구조적 완성도 (정적 분석)
+## 1. Structural Completeness (Static Analysis)
 
-### 1.1 파일 자체 품질
+### 1.1 File Quality
 
-- 타입 체크 통과 (§0 도구 매핑 참조)
-- lint 통과 (§0 도구 매핑 참조 — 프로젝트 설정 존재 시)
-- 하드코딩된 시크릿 없음 (API 키, 비밀번호, 토큰 패턴 grep)
-- 매직 넘버 없음 (설정 가능한 값은 config로 분리됐는가)
-- dead code 없음 (미사용 import, 미호출 함수)
+- Type check passes (see §0 tool mapping)
+- Lint passes (see §0 tool mapping — when project config exists)
+- No hardcoded secrets (grep for API key, password, token patterns)
+- No magic numbers (are configurable values separated into config?)
+- No dead code (unused imports, uncalled functions)
 
-### 1.2 에러 핸들링
+### 1.2 Error Handling
 
-- 외부 호출(DB, API, 파일 I/O)에 에러 처리 존재
+- Error handling exists for external calls (DB, API, file I/O)
   - Python: `try/except`
   - TypeScript/JavaScript/Java/Kotlin/Swift/Dart: `try/catch`
   - Go: `if err != nil`
-  - Rust: `Result<T, E>` / `?` 연산자
-- 에러 시 적절한 응답/로깅 (빈 에러 핸들러 금지)
-- 예상 가능한 실패 경로가 핸들링됨
+  - Rust: `Result<T, E>` / `?` operator
+- Proper response/logging on error (empty error handlers prohibited)
+- Foreseeable failure paths are handled
 
-### 1.3 엣지 케이스
+### 1.3 Edge Cases
 
-- null/nil/None/zero value 입력 처리 (언어별 null 표현에 대응)
-- 빈 컬렉션/빈 문자열 처리
-- 경계값 (0, 음수, 최대값) 처리
-- 동시성 이슈 (해당되는 경우)
+- null/nil/None/zero value input handling (corresponding to each language's null representation)
+- Empty collection/empty string handling
+- Boundary values (0, negative, maximum) handling
+- Concurrency issues (when applicable)
 
-## 2. 기능적 완성도 (동적 실행)
+## 2. Functional Completeness (Dynamic Execution)
 
-### 2.1 테스트 존재 및 통과
+### 2.1 Test Existence and Passing
 
-- 대응하는 테스트 파일 존재 여부 (§0 테스트 파일 패턴 참조)
-- 테스트 실행 (§0 도구 매핑 참조)
-- 테스트 커버리지: 핵심 로직 경로가 테스트됨
+- Whether corresponding test file exists (see §0 test file patterns)
+- Test execution (see §0 tool mapping)
+- Test coverage: core logic paths are tested
 
-### 2.2 실제 동작 검증
+### 2.2 Actual Behavior Verification
 
-- 해당 코드의 진입점을 찾아 실행 가능한가
-- import/require/use/from 체인이 깨지지 않는가
-- 의존성이 모두 설치돼 있는가 (§0 의존성 위치 참조)
+- Can the entry point of the code be found and executed
+- Is the import/require/use/from chain unbroken
+- Are all dependencies installed (see §0 dependency location)
 
-## 3. 맥락 대조 (선택적 — 추가 아티팩트 제공 시)
+## 3. Context Cross-Reference (Optional — only when additional artifacts are provided)
 
-사용자가 코드와 함께 PRD나 harnish-current-work.json를 제공한 경우에만 수행.
-제공하지 않으면 §1, §2만으로 검증한다.
+Performed only when the user provides a PRD or harnish-current-work.json along with the code.
+If not provided, verify with §1 and §2 only.
 
-### 3.1 PRD 제공 시
+### 3.1 When PRD Is Provided
 
-- PRD §4 파일 목록에 명시된 파일이 실제로 존재하는가
-- PRD §6 테스트 기준이 테스트 코드에 반영됐는가
-- PRD §7 금지사항이 코드에서 위반되지 않았는가
+- Do files listed in PRD §4 actually exist
+- Are PRD §6 test criteria reflected in test code
+- Are PRD §7 prohibitions not violated in code
 
-### 3.2 harnish-current-work.json 제공 시
+### 3.2 When harnish-current-work.json Is Provided
 
-- Done 처리된 Task의 acceptance_criteria가 실제로 충족됐는가
-- 변경 파일 목록과 실제 변경이 일치하는가
+- Are acceptance_criteria of Tasks marked Done actually met
+- Do the changed file lists match actual changes
 
-## 4. 검증 순서
+## 4. Verification Order
 
 ```
-1. §0 언어 감지 + 도구 확인
-2. §1.1 파일 자체 품질 → 이슈 보고
-3. §1.2 에러 핸들링 → 이슈 보고
-4. §1.3 엣지 케이스 → 이슈 보고
-5. §2.1 테스트 존재 및 통과 → 실패 시 보고
-6. §2.2 실제 동작 검증 → 실패 시 보고
-7. (PRD/harnish-current-work.json 제공 시) §3 맥락 대조
-8. 이슈 종합 보고 → 사용자 판단 대기
+1. §0 Language detection + tool check
+2. §1.1 File quality → report issues
+3. §1.2 Error handling → report issues
+4. §1.3 Edge cases → report issues
+5. §2.1 Test existence and passing → report on failure
+6. §2.2 Actual behavior verification → report on failure
+7. (When PRD/harnish-current-work.json provided) §3 Context cross-reference
+8. Consolidated issue report → wait for user judgment
 ```
