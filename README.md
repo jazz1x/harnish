@@ -101,8 +101,11 @@ harnish/
 
 ```bash
 git clone https://github.com/jazz1x/harnish.git
-claude --plugin-dir ./harnish
+cd your-project
+claude --plugin-dir /path/to/harnish
 ```
+
+스킬은 `/harnish:harnish`, `/harnish:drafti-architect`, `/harnish:drafti-feature`, `/harnish:ralpi`로 등록됩니다.
 
 ## Development
 
