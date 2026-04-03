@@ -119,7 +119,11 @@ elif [[ ${#RCA_WARNINGS[@]} -gt 0 ]]; then
     RCA_QUALITY="fair"
 fi
 
-RCA_WARN_JSON=$(printf '%s\n' "${RCA_WARNINGS[@]}" 2>/dev/null | jq -R . | jq -s . 2>/dev/null || echo "[]")
+if [[ ${#RCA_WARNINGS[@]} -gt 0 ]]; then
+    RCA_WARN_JSON=$(printf '%s\n' "${RCA_WARNINGS[@]}" | jq -R . | jq -s .)
+else
+    RCA_WARN_JSON="[]"
+fi
 
 # --- 결과 ---
 jq -n -c \

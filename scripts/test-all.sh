@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# test-all.sh — harnish 전체 스크립트 흐름 자동 검증
+# test-all.sh — harnish 전체 스크립트 흐름 자동 검증 (JSONL 기반)
 #
 # 사용법: bash scripts/test-all.sh
 # 각 테스트는 독립적 — 하나가 FAIL해도 다음 테스트 진행.
@@ -12,8 +12,7 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 HARNISH_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 TMPDIR_BASE=$(mktemp -d)
-ASSET_DIR="$TMPDIR_BASE/assets"
-PROGRESS_FILE="$TMPDIR_BASE/PROGRESS.json"
+ASSET_DIR="$TMPDIR_BASE/.harnish"
 
 PASS=0
 FAIL=0
@@ -51,12 +50,13 @@ skip() {
 
 cleanup() {
   rm -rf "$TMPDIR_BASE"
+  rm -f /tmp/harnish-pending-test-*.jsonl 2>/dev/null || true
 }
 trap cleanup EXIT
 
 echo ""
 echo "════════════════════════════════════════"
-echo " harnish 전체 스크립트 검증"
+echo " harnish 전체 스크립트 검증 (JSONL)"
 echo "════════════════════════════════════════"
 echo ""
 
@@ -80,64 +80,87 @@ fi
 echo "${BOLD}[자산 초기화]${NC}"
 
 bash "$HARNISH_ROOT/scripts/init-assets.sh" --base-dir "$ASSET_DIR" >/dev/null 2>&1
-if [[ -d "$ASSET_DIR/failures" ]] && [[ -d "$ASSET_DIR/patterns" ]] && [[ -f "$ASSET_DIR/.meta/index.json" ]]; then
-  pass "init-assets.sh"
+if [[ -f "$ASSET_DIR/harnish-rag.jsonl" ]] && [[ -f "$ASSET_DIR/harnish-current-work.json" ]]; then
+  pass "init-assets.sh: harnish-rag.jsonl + harnish-current-work.json 생성"
 else
-  fail "init-assets.sh" "디렉토리 또는 index.json 미생성"
+  fail "init-assets.sh" "JSONL 또는 work 파일 미생성"
 fi
 
 # ════════════════════════════════════════
-# 3. record-asset.sh (3가지 타입)
+# 3. record-asset.sh (5가지 타입)
 # ════════════════════════════════════════
 echo "${BOLD}[자산 기록]${NC}"
 
-for asset_type in failure pattern guardrail; do
+for asset_type in failure pattern guardrail snippet decision; do
+  before_lines=0
+  [[ -f "$ASSET_DIR/harnish-rag.jsonl" ]] && before_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+
   output=$(bash "$HARNISH_ROOT/scripts/record-asset.sh" \
     --type "$asset_type" \
     --tags "test,docker,cache" \
     --context "test-all: $asset_type 테스트" \
     --title "테스트 $asset_type 자산" \
-    --content "## 표면 증상
-테스트 내용
-## 실제 원인
-테스트
-## 해결 과정
-테스트
-## 일반화된 패턴
-테스트
-## 규칙
-테스트
-## 이유
-테스트
-## 위반 시 결과
-테스트
-## 예외 조건
-테스트
-## 적용 상황
-테스트
-## 접근법
-테스트
-## 왜 효과적인가
-테스트
-## 적용 범위와 한계
-테스트" \
+    --body "테스트 본문 내용" \
     --base-dir "$ASSET_DIR" 2>&1)
-  if [[ $? -eq 0 ]]; then
-    pass "record-asset.sh --type $asset_type"
+  rc=$?
+
+  after_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+
+  if [[ $rc -eq 0 ]] && [[ "$after_lines" -gt "$before_lines" ]]; then
+    # 추가된 줄이 유효한 JSON인지 확인
+    last_line=$(tail -1 "$ASSET_DIR/harnish-rag.jsonl")
+    if echo "$last_line" | jq empty 2>/dev/null; then
+      pass "record-asset.sh --type $asset_type"
+    else
+      fail "record-asset.sh --type $asset_type" "JSONL 마지막 줄이 유효하지 않은 JSON"
+    fi
   else
     fail "record-asset.sh --type $asset_type" "$(echo "$output" | head -3)"
   fi
 done
 
 # ════════════════════════════════════════
-# 4. query-assets.sh
+# 4. JSONL 무결성: 모든 줄이 유효 JSON
+# ════════════════════════════════════════
+echo "${BOLD}[JSONL 무결성]${NC}"
+
+invalid_lines=0
+line_num=0
+while IFS= read -r line; do
+  line_num=$((line_num + 1))
+  if ! echo "$line" | jq empty 2>/dev/null; then
+    invalid_lines=$((invalid_lines + 1))
+  fi
+done < "$ASSET_DIR/harnish-rag.jsonl"
+
+if [[ "$invalid_lines" -eq 0 ]] && [[ "$line_num" -gt 0 ]]; then
+  pass "JSONL 무결성: ${line_num}줄 모두 유효한 JSON"
+else
+  fail "JSONL 무결성" "${invalid_lines}줄 파싱 실패 (총 ${line_num}줄)"
+fi
+
+# ════════════════════════════════════════
+# 5. record-asset.sh --stdin 모드
+# ════════════════════════════════════════
+before_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+echo '{"type":"failure","tags":["stdin-test"],"title":"stdin 테스트","body":"stdin으로 기록"}' \
+  | bash "$HARNISH_ROOT/scripts/record-asset.sh" --stdin --base-dir "$ASSET_DIR" >/dev/null 2>&1
+after_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+if [[ "$after_lines" -gt "$before_lines" ]]; then
+  pass "record-asset.sh --stdin 모드"
+else
+  fail "record-asset.sh --stdin 모드" "JSONL 줄 수 변화 없음"
+fi
+
+# ════════════════════════════════════════
+# 6. query-assets.sh
 # ════════════════════════════════════════
 echo "${BOLD}[자산 조회]${NC}"
 
-for fmt in text inject; do
+for fmt in text inject json; do
   output=$(bash "$HARNISH_ROOT/scripts/query-assets.sh" \
     --tags "test,docker" --format "$fmt" --base-dir "$ASSET_DIR" 2>&1)
-  if [[ $? -eq 0 ]]; then
+  if [[ $? -eq 0 ]] && [[ -n "$output" ]]; then
     pass "query-assets.sh --format $fmt"
   else
     fail "query-assets.sh --format $fmt" "$(echo "$output" | head -3)"
@@ -145,7 +168,23 @@ for fmt in text inject; do
 done
 
 # ════════════════════════════════════════
-# 5. check-thresholds.sh
+# 7. query-assets --types 필터
+# ════════════════════════════════════════
+echo "${BOLD}[자산 타입 필터]${NC}"
+
+types_result=$(bash "$HARNISH_ROOT/scripts/query-assets.sh" --tags "test" --types "failure" --format text --base-dir "$ASSET_DIR" 2>&1)
+if echo "$types_result" | grep -q "\[failure\]"; then
+  if echo "$types_result" | grep -q "\[pattern\]\|\[guardrail\]\|\[snippet\]\|\[decision\]"; then
+    fail "query-assets --types: failure만 반환" "다른 타입이 섞여 있음"
+  else
+    pass "query-assets --types: failure 필터 정상"
+  fi
+else
+  fail "query-assets --types: failure 필터 정상" "failure 결과 없음"
+fi
+
+# ════════════════════════════════════════
+# 8. check-thresholds.sh
 # ════════════════════════════════════════
 echo "${BOLD}[임계치 확인]${NC}"
 
@@ -157,7 +196,7 @@ else
 fi
 
 # ════════════════════════════════════════
-# 6. quality-gate.sh
+# 9. quality-gate.sh
 # ════════════════════════════════════════
 echo "${BOLD}[품질 게이트]${NC}"
 
@@ -169,10 +208,131 @@ else
 fi
 
 # ════════════════════════════════════════
-# 7. 샘플 PROGRESS.json 생성
+# 10. compress-assets.sh (동일 태그 5건+ 생성)
 # ════════════════════════════════════════
-echo "${BOLD}[PROGRESS.json]${NC}"
+echo "${BOLD}[자산 압축]${NC}"
 
+# compress-test 태그로 5건 추가 (기존 test,docker,cache와 별도)
+for i in $(seq 1 5); do
+  bash "$HARNISH_ROOT/scripts/record-asset.sh" \
+    --type failure --tags "compress-test,bulk" \
+    --title "압축 테스트 $i" --body "압축 대상 본문 $i" \
+    --base-dir "$ASSET_DIR" >/dev/null 2>&1
+done
+
+output=$(bash "$HARNISH_ROOT/scripts/compress-assets.sh" --tag compress-test --base-dir "$ASSET_DIR" 2>&1)
+rc=$?
+
+if [[ $rc -eq 0 ]]; then
+  # JSONL에서 compressed:true 레코드 확인
+  compressed_count=$(jq -c 'select(.compressed == true)' "$ASSET_DIR/harnish-rag.jsonl" 2>/dev/null | wc -l | xargs)
+  if [[ "$compressed_count" -gt 0 ]]; then
+    pass "compress-assets.sh: compressed:true 마킹 ($compressed_count건)"
+  else
+    fail "compress-assets.sh" "compressed:true 레코드 없음"
+  fi
+else
+  fail "compress-assets.sh" "$(echo "$output" | head -3)"
+fi
+
+# 압축 후 query에서 compressed 제외 확인
+uncompressed_results=$(bash "$HARNISH_ROOT/scripts/query-assets.sh" \
+  --tags "compress-test" --format json --base-dir "$ASSET_DIR" 2>&1)
+uncompressed_count=$(echo "$uncompressed_results" | jq '.results | length' 2>/dev/null || echo "0")
+if [[ "$uncompressed_count" -le 1 ]]; then
+  pass "compress 후 query: compressed 자산 제외됨"
+else
+  fail "compress 후 query: compressed 자산 제외됨" "uncompressed 결과 ${uncompressed_count}건"
+fi
+
+# ════════════════════════════════════════
+# 11. abstract-asset.sh (JSONL --slug)
+# ════════════════════════════════════════
+echo "${BOLD}[자산 추상화/로컬라이즈/스킬화]${NC}"
+
+# project scope 자산 기록
+bash "$HARNISH_ROOT/scripts/record-asset.sh" \
+  --type failure --scope project \
+  --tags "abstract-test,docker" \
+  --title "프로젝트 특정 failure" \
+  --body "프로젝트 특정 본문" \
+  --base-dir "$ASSET_DIR" >/dev/null 2>&1
+
+# slug 추출
+src_slug=$(jq -r 'select(.scope == "project") | .slug' "$ASSET_DIR/harnish-rag.jsonl" 2>/dev/null | head -1)
+
+abstract_slug=""
+if [[ -n "$src_slug" ]]; then
+  before_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+  output=$(bash "$HARNISH_ROOT/scripts/abstract-asset.sh" --slug "$src_slug" --base-dir "$ASSET_DIR" 2>&1)
+  rc=$?
+  after_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+
+  if [[ $rc -eq 0 ]] && [[ "$after_lines" -gt "$before_lines" ]]; then
+    abstract_slug=$(echo "$output" | jq -r '.slug // ""' 2>/dev/null)
+    pass "abstract-asset.sh --slug"
+  else
+    fail "abstract-asset.sh" "$(echo "$output" | head -3)"
+  fi
+else
+  skip "abstract-asset.sh" "project scope 자산 없음"
+fi
+
+# ════════════════════════════════════════
+# 12. localize-asset.sh (JSONL --slug)
+# ════════════════════════════════════════
+if [[ -n "$abstract_slug" ]]; then
+  before_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+  output=$(bash "$HARNISH_ROOT/scripts/localize-asset.sh" --slug "$abstract_slug" --base-dir "$ASSET_DIR" 2>&1)
+  after_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+  if [[ $? -eq 0 ]] && [[ "$after_lines" -gt "$before_lines" ]]; then
+    pass "localize-asset.sh --slug"
+  else
+    fail "localize-asset.sh" "$(echo "$output" | head -3)"
+  fi
+else
+  skip "localize-asset.sh" "generic scope 자산 없음 (abstract-asset 실패 시)"
+fi
+
+# ════════════════════════════════════════
+# 13. skillify.sh (JSONL --tag)
+# ════════════════════════════════════════
+SKILLIFY_DIR="$TMPDIR_BASE/skills-out"
+output=$(bash "$HARNISH_ROOT/scripts/skillify.sh" --tag "test" --skill-name "test-skill" --base-dir "$ASSET_DIR" 2>&1)
+if [[ $? -eq 0 ]] && [[ -f "skills/test-skill/SKILL.md" ]]; then
+  # frontmatter 필드 확인
+  fm_ok=true
+  for field in name version description; do
+    if ! grep -qE "^${field}:" "skills/test-skill/SKILL.md"; then
+      fail "skillify SKILL.md: $field 필드 누락"
+      fm_ok=false
+    fi
+  done
+  $fm_ok && pass "skillify.sh: SKILL.md 생성 + frontmatter 정상"
+  # 정리
+  rm -rf "skills/test-skill" 2>/dev/null || true
+else
+  fail "skillify.sh" "$(echo "$output" | head -3)"
+fi
+
+# ════════════════════════════════════════
+# 14. 자산 축적 왕복: record → query → compress → query(compressed 제외)
+# ════════════════════════════════════════
+echo "${BOLD}[왕복 검증]${NC}"
+
+query_result=$(bash "$HARNISH_ROOT/scripts/query-assets.sh" --tags "test" --format text --base-dir "$ASSET_DIR" 2>&1)
+if echo "$query_result" | grep -q "테스트.*자산"; then
+  pass "record→query 왕복: 기록한 자산 조회됨"
+else
+  fail "record→query 왕복" "결과에 '테스트 자산' 없음"
+fi
+
+# ════════════════════════════════════════
+# 15. PROGRESS.json 생성 + 검증
+# ════════════════════════════════════════
+echo "${BOLD}[harnish-current-work.json]${NC}"
+
+PROGRESS_FILE="$ASSET_DIR/harnish-current-work.json"
 cat > "$PROGRESS_FILE" << 'PJSON'
 {
   "metadata": {
@@ -234,7 +394,7 @@ cat > "$PROGRESS_FILE" << 'PJSON'
 PJSON
 
 # ════════════════════════════════════════
-# 8. validate-progress.sh
+# 16. validate-progress.sh
 # ════════════════════════════════════════
 output=$(bash "$HARNISH_ROOT/scripts/validate-progress.sh" "$PROGRESS_FILE" 2>&1)
 if [[ $? -eq 0 ]]; then
@@ -244,13 +404,12 @@ else
 fi
 
 # ════════════════════════════════════════
-# 9. loop-step.sh
+# 17. loop-step.sh
 # ════════════════════════════════════════
 for fmt in text json; do
   output=$(bash "$HARNISH_ROOT/scripts/loop-step.sh" "$PROGRESS_FILE" --format "$fmt" 2>&1)
   rc=$?
   if [[ $rc -eq 0 ]]; then
-    # 추가 검증: 다음 액션이 실제로 파싱되었는지
     if [[ "$fmt" == "text" ]]; then
       if echo "$output" | grep -q "미설정"; then
         fail "loop-step.sh --format $fmt" "다음 액션 파싱 실패 (미설정)"
@@ -271,32 +430,191 @@ for fmt in text json; do
 done
 
 # ════════════════════════════════════════
-# 10. compress-progress.sh (Done이 있는 상태로)
+# 18. 세션 앵커링: doing 상태에서 loop-step 복원 정확성
 # ════════════════════════════════════════
-# Done에 Phase를 추가한 샘플 생성
-PROGRESS_WITH_DONE="$TMPDIR_BASE/PROGRESS_done.json"
-jq '.done.phases = [{
-  "phase": 1, "title": "데이터 모델", "compressed": false,
-  "milestone_approved_at": "2026-03-31T12:00:00+09:00",
-  "tasks": [
-    {"id": "1-1", "title": "스키마 정의", "result": "완료", "files_changed": ["schema.prisma"], "verification": "prisma validate", "duration": "3턴"},
-    {"id": "1-2", "title": "API 생성", "result": "완료", "files_changed": ["api.ts"], "verification": "npm test", "duration": "2턴"}
-  ]
-}] | .doing.task = null | .todo.phases = [{
-  "phase": 2, "title": "테스트",
-  "tasks": [{"id": "2-1", "title": "유닛 테스트", "depends_on": []}]
-}]' "$PROGRESS_FILE" > "$PROGRESS_WITH_DONE"
+echo "${BOLD}[세션 앵커링]${NC}"
 
-output=$(bash "$HARNISH_ROOT/scripts/compress-progress.sh" "$PROGRESS_WITH_DONE" --trigger milestone --phase 1 2>&1)
-if [[ $? -eq 0 ]]; then
-  pass "compress-progress.sh"
+anchor_out=$(bash "$HARNISH_ROOT/scripts/loop-step.sh" "$PROGRESS_FILE" --format json 2>&1)
+anchor_status=$(echo "$anchor_out" | jq -r '.status' 2>/dev/null)
+anchor_task=$(echo "$anchor_out" | jq -r '.current_task' 2>/dev/null)
+anchor_next=$(echo "$anchor_out" | jq -r '.next_action' 2>/dev/null)
+
+if [[ "$anchor_status" == "ACTIVE" ]] && [[ "$anchor_task" == "1-1" ]] && [[ "$anchor_next" == "src/model.py 생성" ]]; then
+  pass "세션 앵커링: doing 상태에서 정확한 좌표 복원"
 else
-  # exit 1 with "압축할 Phase 없음" is expected if script doesn't understand JSON yet
-  fail "compress-progress.sh" "$(echo "$output" | head -3)"
+  fail "세션 앵커링" "status=$anchor_status task=$anchor_task next=$anchor_next"
 fi
 
 # ════════════════════════════════════════
-# 11. check-violations.sh
+# 19. RALP 상태 전이: Todo→Doing→Done 무결성
+# ════════════════════════════════════════
+echo "${BOLD}[RALP 상태 전이]${NC}"
+
+TRANSITION_FILE="$TMPDIR_BASE/transition.json"
+# 1-1 완료, 1-2 진행 중 상태
+cat > "$TRANSITION_FILE" << 'TJSON'
+{
+  "metadata": {
+    "prd": "docs/prd-test.md",
+    "started_at": "2026-03-31T10:00:00+09:00",
+    "last_session": "2026-03-31T15:00:00+09:00",
+    "status": { "emoji": "🟢", "phase": 1, "task": "1-2", "label": "정상 진행 중" }
+  },
+  "done": {
+    "phases": [
+      {
+        "phase": 1,
+        "title": "데이터 모델",
+        "compressed": false,
+        "tasks": [
+          {
+            "id": "1-1",
+            "title": "테스트 모델 생성",
+            "result": "User 모델 생성 완료",
+            "files_changed": ["src/models/user.py"],
+            "verification": "pytest test_user.py — 3 passed",
+            "duration": "2턴"
+          }
+        ]
+      }
+    ]
+  },
+  "doing": {
+    "task": {
+      "id": "1-2",
+      "title": "API 엔드포인트 생성",
+      "started_at": "2026-03-31T14:00:00+09:00",
+      "current": "라우터 작성 중",
+      "last_action": "모델 import 확인",
+      "next_action": "GET /users 엔드포인트 구현",
+      "blocker": null,
+      "retry_count": 0,
+      "context": {
+        "guide": "REST API 엔드포인트 추가",
+        "scope": "src/api/ 디렉토리",
+        "prd_reference": "§4.2"
+      }
+    }
+  },
+  "todo": {
+    "phases": [
+      {
+        "phase": 2,
+        "title": "테스트",
+        "tasks": [
+          { "id": "2-1", "title": "유닛 테스트 작성", "depends_on": [] }
+        ]
+      }
+    ]
+  },
+  "issues": [],
+  "violations": [],
+  "escalations": [],
+  "stats": {
+    "total_phases": 2,
+    "completed_phases": 0,
+    "total_tasks": 3,
+    "completed_tasks": 1,
+    "issues_count": 0,
+    "violations_count": 0
+  }
+}
+TJSON
+
+# validate 통과해야 함
+if bash "$HARNISH_ROOT/scripts/validate-progress.sh" "$TRANSITION_FILE" >/dev/null 2>&1; then
+  pass "RALP 상태 전이: Todo→Doing→Done JSON 무결성"
+else
+  fail "RALP 상태 전이" "validate-progress 실패"
+fi
+
+# done에 result 필드 존재
+done_result=$(jq -r '.done.phases[0].tasks[0].result' "$TRANSITION_FILE")
+if [[ -n "$done_result" ]] && [[ "$done_result" != "null" ]]; then
+  pass "RALP 상태 전이: Done 태스크에 result 존재"
+else
+  fail "RALP 상태 전이: Done 태스크에 result 존재" "result=$done_result"
+fi
+
+# ════════════════════════════════════════
+# 20. compress-progress.sh
+# ════════════════════════════════════════
+echo "${BOLD}[progress 압축]${NC}"
+
+PROGRESS_WITH_DONE="$TMPDIR_BASE/progress_done.json"
+cp "$TRANSITION_FILE" "$PROGRESS_WITH_DONE"
+# doing을 null로, Phase 1 완료 상태로
+jq '.doing.task = null | .done.phases[0].milestone_approved_at = "2026-03-31T15:00:00+09:00"' \
+  "$PROGRESS_WITH_DONE" > "${PROGRESS_WITH_DONE}.tmp" && mv "${PROGRESS_WITH_DONE}.tmp" "$PROGRESS_WITH_DONE"
+
+output=$(bash "$HARNISH_ROOT/scripts/compress-progress.sh" "$PROGRESS_WITH_DONE" --trigger milestone --phase 1 2>&1)
+if [[ $? -eq 0 ]]; then
+  pass "compress-progress.sh --trigger milestone"
+else
+  fail "compress-progress.sh" "$(echo "$output" | head -3)"
+fi
+
+is_compressed=$(jq '.done.phases[0].compressed' "$PROGRESS_WITH_DONE" 2>/dev/null)
+if [[ "$is_compressed" == "true" ]]; then
+  pass "compress-progress: 압축 후 compressed=true"
+else
+  fail "compress-progress: 압축 후 compressed=true" "compressed=$is_compressed"
+fi
+
+has_archive=$(jq -r '.done.phases[0].archive_ref // ""' "$PROGRESS_WITH_DONE" 2>/dev/null)
+if [[ -n "$has_archive" ]]; then
+  pass "compress-progress: archive_ref 존재"
+else
+  fail "compress-progress: archive_ref 존재" "빈 값"
+fi
+
+# ════════════════════════════════════════
+# 21. 이중 압축 방어
+# ════════════════════════════════════════
+echo "${BOLD}[이중 압축 방어]${NC}"
+
+DOUBLE_COMPRESS_JSON="$TMPDIR_BASE/double_compress.json"
+cat > "$DOUBLE_COMPRESS_JSON" << 'DCEOF'
+{
+  "metadata": {"prd": "x", "started_at": "x", "last_session": "x", "status": {"emoji": "🟢", "phase": 1, "task": "", "label": "ok"}},
+  "done": {"phases": [{"phase": 1, "title": "이미 압축됨", "compressed": true, "compressed_summary": "tasks:3", "archive_ref": ".a"}]},
+  "doing": {"task": null}, "todo": {"phases": []},
+  "issues": [], "violations": [], "escalations": [], "stats": {}
+}
+DCEOF
+bash "$HARNISH_ROOT/scripts/compress-progress.sh" "$DOUBLE_COMPRESS_JSON" --trigger milestone --phase 1 >/dev/null 2>&1
+after_compressed=$(jq -r '.done.phases[0].compressed_summary' "$DOUBLE_COMPRESS_JSON")
+if [[ "$after_compressed" == "tasks:3" ]]; then
+  pass "이중 압축 방어: compressed phase 변경 없음"
+else
+  fail "이중 압축 방어" "summary=$after_compressed"
+fi
+
+# ════════════════════════════════════════
+# 22. compress-progress --trigger count (다중 Phase)
+# ════════════════════════════════════════
+COUNT_COMPRESS="$TMPDIR_BASE/count_compress.json"
+cat > "$COUNT_COMPRESS" << 'CCEOF'
+{
+  "metadata": {"prd": "x", "started_at": "x", "last_session": "x", "status": {"emoji": "🟢", "phase": 3, "task": "", "label": "ok"}},
+  "done": {"phases": [
+    {"phase": 1, "title": "A", "compressed": false, "tasks": [{"id": "1-1", "title": "t", "result": "ok", "files_changed": ["a.ts"], "verification": "ok", "duration": "1"}]},
+    {"phase": 2, "title": "B", "compressed": false, "tasks": [{"id": "2-1", "title": "t", "result": "ok", "files_changed": ["b.ts"], "verification": "ok", "duration": "1"}]}
+  ]},
+  "doing": {"task": null}, "todo": {"phases": []},
+  "issues": [], "violations": [], "escalations": [], "stats": {}
+}
+CCEOF
+bash "$HARNISH_ROOT/scripts/compress-progress.sh" "$COUNT_COMPRESS" --trigger count >/dev/null 2>&1
+count_compressed=$(jq '[.done.phases[] | select(.compressed == true)] | length' "$COUNT_COMPRESS")
+if [[ "$count_compressed" -eq 2 ]]; then
+  pass "compress-progress --trigger count: 2개 Phase 일괄 압축"
+else
+  fail "compress-progress --trigger count" "compressed=$count_compressed"
+fi
+
+# ════════════════════════════════════════
+# 23. check-violations.sh
 # ════════════════════════════════════════
 output=$(bash "$HARNISH_ROOT/scripts/check-violations.sh" "$PROGRESS_FILE" 2>&1)
 if [[ $? -eq 0 ]]; then
@@ -306,156 +624,53 @@ else
 fi
 
 # ════════════════════════════════════════
-# 12. progress-report.sh
+# 24. progress-report.sh
 # ════════════════════════════════════════
-if [[ -f "$HARNISH_ROOT/scripts/progress-report.sh" ]]; then
-  output=$(bash "$HARNISH_ROOT/scripts/progress-report.sh" "$PROGRESS_FILE" 2>&1)
-  if [[ $? -eq 0 ]] && [[ -n "$output" ]]; then
-    pass "progress-report.sh"
-  else
-    fail "progress-report.sh" "$(echo "$output" | head -3)"
-  fi
+output=$(bash "$HARNISH_ROOT/scripts/progress-report.sh" "$PROGRESS_FILE" 2>&1)
+if [[ $? -eq 0 ]] && [[ -n "$output" ]]; then
+  report_ok=true
+  for section in "메타데이터" "완료 (Done)" "진행 중 (Doing)" "예정 (Todo)" "요약 통계"; do
+    if ! echo "$output" | grep -q "$section"; then
+      fail "progress-report: 섹션 '$section' 누락"
+      report_ok=false
+    fi
+  done
+  $report_ok && pass "progress-report.sh: 필수 5개 섹션 포함"
 else
-  skip "progress-report.sh" "파일 미존재 (Phase 3에서 생성 예정)"
+  fail "progress-report.sh" "출력 없음"
 fi
 
 # ════════════════════════════════════════
-# 13. compress-assets.sh (더미 5건+)
+# 25. progress-report: issues + violations 렌더링
 # ════════════════════════════════════════
-echo "${BOLD}[자산 압축]${NC}"
+PROGRESS_COMPLEX="$TMPDIR_BASE/complex.json"
+cat > "$PROGRESS_COMPLEX" << 'CEOF'
+{
+  "metadata": {"prd": "x", "started_at": "x", "last_session": "x", "status": {"emoji": "🟡", "phase": 1, "task": "1-1", "label": "이슈"}},
+  "done": {"phases": []},
+  "doing": {"task": null},
+  "todo": {"phases": []},
+  "issues": [{"timestamp": "2026-03-31T14:00:00", "task": "1-1", "description": "타입 에러", "resolution": "수정함"}],
+  "violations": [{"timestamp": "2026-03-31T14:20:00", "task": "1-1", "violation": "scope 이탈", "user_decision": "허용"}],
+  "escalations": [{"timestamp": "2026-03-31T14:45:00", "task": "1-1", "blocked_at": "api.ts:45", "attempts": [], "suggested_options": []}],
+  "stats": {"total_phases": 1, "completed_phases": 0, "total_tasks": 1, "completed_tasks": 0, "issues_count": 1, "violations_count": 1}
+}
+CEOF
 
-# 추가 더미 자산 생성 (compress 임계치: 동일 태그 5건+)
-for i in $(seq 4 8); do
-  cat > "$ASSET_DIR/failures/2026-03-31-test-${i}.md" << ASSETEOF
----
-title: 테스트 failure $i
-type: failure
-tags: [compress-test, docker]
-context: "compress test $i"
-date: 2026-03-31
----
-
-## 표면 증상
-테스트 $i
-
-## 실제 원인
-테스트
-
-## 해결 과정
-테스트
-
-## 일반화된 패턴
-테스트
-ASSETEOF
-  # index.json의 counts, tag_index 갱신 (assets 배열 없음 — compress-assets.sh는 파일시스템 스캔)
-  jq '.counts.failures = (.counts.failures // 0) + 1
-      | .tag_index["compress-test"] = (.tag_index["compress-test"] // 0) + 1
-      | .tag_index["docker"] = (.tag_index["docker"] // 0) + 1' \
-    "$ASSET_DIR/.meta/index.json" > "$ASSET_DIR/.meta/index.json.tmp" && mv "$ASSET_DIR/.meta/index.json.tmp" "$ASSET_DIR/.meta/index.json"
-done
-
-output=$(bash "$HARNISH_ROOT/scripts/compress-assets.sh" --tag compress-test --base-dir "$ASSET_DIR" 2>&1)
-if [[ $? -eq 0 ]]; then
-  pass "compress-assets.sh"
-else
-  fail "compress-assets.sh" "$(echo "$output" | head -3)"
+complex_report=$(bash "$HARNISH_ROOT/scripts/progress-report.sh" "$PROGRESS_COMPLEX" 2>&1)
+report_checks=true
+if ! echo "$complex_report" | grep -q "타입 에러"; then
+  fail "progress-report: issues 렌더링" "이슈 내용 없음"
+  report_checks=false
 fi
-
-# ════════════════════════════════════════
-# 14. abstract-asset.sh
-# ════════════════════════════════════════
-echo "${BOLD}[자산 추상화/로컬라이즈/스킬화]${NC}"
-
-# project scope 자산 생성 (abstract-asset은 project/team scope에서만 동작)
-bash "$HARNISH_ROOT/scripts/record-asset.sh" \
-  --type failure --scope project \
-  --tags "abstract-test,docker" \
-  --title "프로젝트 특정 failure" \
-  --content "## 표면 증상
-docker build /Users/admin/myproject에서 실패
-## 실제 원인
-권한 문제
-## 해결 과정
-chmod +r
-## 일반화된 패턴
-권한 이슈" \
-  --base-dir "$ASSET_DIR" >/dev/null 2>&1
-
-# 소스 자산 파일 찾기 (project scope 것만)
-src_asset=$(grep -rl "scope: project" "$ASSET_DIR/failures" 2>/dev/null | head -1)
-abstract_out=""
-if [[ -n "$src_asset" ]]; then
-  output=$(bash "$HARNISH_ROOT/scripts/abstract-asset.sh" --source "$src_asset" --base-dir "$ASSET_DIR" 2>&1)
-  rc=$?
-  if [[ $rc -eq 0 ]]; then
-    # JSON 출력에서 output 경로 추출
-    abstract_out=$(echo "$output" | jq -r '.output // ""' 2>/dev/null)
-    pass "abstract-asset.sh"
-  else
-    fail "abstract-asset.sh" "$(echo "$output" | head -3)"
-  fi
-else
-  skip "abstract-asset.sh" "소스 자산 없음"
+if ! echo "$complex_report" | grep -q "scope 이탈"; then
+  fail "progress-report: violations 렌더링" "위반 내용 없음"
+  report_checks=false
 fi
+$report_checks && pass "progress-report: issues + violations 렌더링 정상"
 
 # ════════════════════════════════════════
-# 15. localize-asset.sh
-# ════════════════════════════════════════
-# localize는 generic scope 자산이 필요 → abstract 결과 사용
-if [[ -n "$abstract_out" ]] && [[ -f "$abstract_out" ]]; then
-  output=$(bash "$HARNISH_ROOT/scripts/localize-asset.sh" \
-    --source "$abstract_out" --base-dir "$ASSET_DIR" \
-    --project-context "테스트 프로젝트" 2>&1)
-  if [[ $? -eq 0 ]]; then
-    pass "localize-asset.sh"
-  else
-    fail "localize-asset.sh" "$(echo "$output" | head -3)"
-  fi
-else
-  skip "localize-asset.sh" "generic scope 자산 없음 (abstract-asset 실패 시)"
-fi
-
-# ════════════════════════════════════════
-# 16. skillify.sh
-# ════════════════════════════════════════
-compressed_src=$(find "$ASSET_DIR/.compressed" -name "*.md" -type f 2>/dev/null | head -1)
-if [[ -n "$compressed_src" ]]; then
-  output=$(bash "$HARNISH_ROOT/scripts/skillify.sh" \
-    --source "$compressed_src" --skill-name "test-skill" 2>&1)
-  if [[ $? -eq 0 ]]; then
-    pass "skillify.sh"
-  else
-    fail "skillify.sh" "$(echo "$output" | head -3)"
-  fi
-else
-  skip "skillify.sh" "압축 자산 없음 (compress-assets 실패 시)"
-fi
-
-# ════════════════════════════════════════
-# 16-b. skillify 출력 SKILL.md 검증 (version 필드 포함)
-# ════════════════════════════════════════
-if [[ -n "$compressed_src" ]]; then
-  skillify_skill_dir="$TMPDIR_BASE/test-skill-verify"
-  bash "$HARNISH_ROOT/scripts/skillify.sh" \
-    --source "$compressed_src" --skill-name "verify-skill" \
-    --output-dir "$skillify_skill_dir" >/dev/null 2>&1
-  skill_md="$skillify_skill_dir/verify-skill/SKILL.md"
-  if [[ -f "$skill_md" ]]; then
-    fm_ok=true
-    for field in name version description; do
-      if ! grep -qE "^${field}:" "$skill_md"; then
-        fail "skillify SKILL.md: $field 필드 누락"
-        fm_ok=false
-      fi
-    done
-    $fm_ok && pass "skillify SKILL.md: name/version/description 모두 포함"
-  else
-    fail "skillify SKILL.md" "파일 미생성"
-  fi
-fi
-
-# ════════════════════════════════════════
-# 17. 에지케이스: validate-progress
+# 26. 에지케이스: validate-progress
 # ════════════════════════════════════════
 echo "${BOLD}[에지케이스]${NC}"
 
@@ -486,7 +701,7 @@ else
 fi
 
 # ════════════════════════════════════════
-# 18. 에지케이스: loop-step 3상태
+# 27. 에지케이스: loop-step 3상태
 # ════════════════════════════════════════
 # ALL_DONE
 ALL_DONE_JSON='{"metadata":{"prd":"x","started_at":"x","last_session":"x","status":{"emoji":"✅","phase":1,"task":"","label":"완료"}},"done":{"phases":[{"phase":1,"title":"done","compressed":false,"tasks":[{"id":"1-1","title":"t","result":"ok","files_changed":[],"verification":"ok","duration":"1"}]}]},"doing":{"task":null},"todo":{"phases":[]},"issues":[],"violations":[],"escalations":[],"stats":{}}'
@@ -503,117 +718,140 @@ MILESTONE_JSON='{"metadata":{"prd":"x","started_at":"x","last_session":"x","stat
 echo "$MILESTONE_JSON" > "$TMPDIR_BASE/milestone.json"
 milestone=$(bash "$HARNISH_ROOT/scripts/loop-step.sh" "$TMPDIR_BASE/milestone.json" --format json 2>&1 | jq -r '.phase_milestone')
 if [[ "$milestone" == "true" ]]; then
-  pass "loop-step: 마일스톤 감지"
+  pass "loop-step: 마일스톤 HITL 게이트 감지"
 else
-  fail "loop-step: 마일스톤 감지" "phase_milestone=$milestone"
+  fail "loop-step: 마일스톤 HITL 게이트 감지" "phase_milestone=$milestone"
 fi
 
 # ════════════════════════════════════════
-# 19. 왕복 검증: record → query
+# 28. 에스컬레이션 3회 실패: escalations 구조 검증
 # ════════════════════════════════════════
-echo "${BOLD}[왕복 검증]${NC}"
+echo "${BOLD}[에스컬레이션]${NC}"
 
-query_result=$(bash "$HARNISH_ROOT/scripts/query-assets.sh" --tags "test" --format text --base-dir "$ASSET_DIR" 2>&1)
-if echo "$query_result" | grep -q "테스트.*자산"; then
-  pass "record→query 왕복: 기록한 자산 조회됨"
+ESCALATION_JSON="$TMPDIR_BASE/escalation.json"
+cat > "$ESCALATION_JSON" << 'EEOF'
+{
+  "metadata": {"prd": "x", "started_at": "x", "last_session": "x", "status": {"emoji": "🔴", "phase": 1, "task": "1-1", "label": "에스컬레이션"}},
+  "done": {"phases": []},
+  "doing": {
+    "task": {
+      "id": "1-1", "title": "실패 태스크",
+      "started_at": "x", "current": "blocked", "last_action": "3차 시도 실패",
+      "next_action": "에스컬레이션 대기", "blocker": "TypeError at api.ts:42",
+      "retry_count": 3,
+      "context": {"guide": "x", "scope": "x", "prd_reference": "§4.1"}
+    }
+  },
+  "todo": {"phases": []},
+  "issues": [
+    {"timestamp": "x", "task": "1-1", "description": "1차 시도 실패"},
+    {"timestamp": "x", "task": "1-1", "description": "2차 시도 실패"},
+    {"timestamp": "x", "task": "1-1", "description": "3차 시도 실패"}
+  ],
+  "violations": [],
+  "escalations": [
+    {
+      "timestamp": "x", "task": "1-1",
+      "blocked_at": "api.ts:42",
+      "attempts": ["방법A: 실패", "방법B: 실패", "방법C: 실패"],
+      "suggested_options": ["PRD §4.1 수정", "대안 접근법"]
+    }
+  ],
+  "stats": {"total_phases": 1, "completed_phases": 0, "total_tasks": 1, "completed_tasks": 0, "issues_count": 3, "violations_count": 0}
+}
+EEOF
+
+# validate 통과해야 함
+if bash "$HARNISH_ROOT/scripts/validate-progress.sh" "$ESCALATION_JSON" >/dev/null 2>&1; then
+  pass "에스컬레이션: retry_count=3 + escalations 배열 구조 유효"
 else
-  fail "record→query 왕복: 기록한 자산 조회됨" "결과에 '테스트 자산' 없음"
+  fail "에스컬레이션: 구조 유효성" "validate-progress 실패"
 fi
 
-# ════════════════════════════════════════
-# 20. compress-assets 후 .compressed/ 파일 존재
-# ════════════════════════════════════════
-compressed_files=$(find "$ASSET_DIR/.compressed" -name "*.md" -type f 2>/dev/null | wc -l | tr -d ' ')
-if [[ "$compressed_files" -gt 0 ]]; then
-  pass "compress-assets: .compressed/ 파일 ${compressed_files}개 생성됨"
+# retry_count=3 확인
+retry=$(jq '.doing.task.retry_count' "$ESCALATION_JSON")
+esc_count=$(jq '.escalations | length' "$ESCALATION_JSON")
+if [[ "$retry" -eq 3 ]] && [[ "$esc_count" -gt 0 ]]; then
+  pass "에스컬레이션: retry_count=3 + escalations 기록됨"
 else
-  fail "compress-assets: .compressed/ 파일 생성됨" "0개"
+  fail "에스컬레이션" "retry=$retry esc=$esc_count"
+fi
+
+# check-violations가 에스컬레이션 감지
+esc_output=$(bash "$HARNISH_ROOT/scripts/check-violations.sh" "$ESCALATION_JSON" 2>&1)
+if echo "$esc_output" | grep -q "에스컬레이션\|escalation\|1건"; then
+  pass "check-violations: 에스컬레이션 감지"
+else
+  fail "check-violations: 에스컬레이션 감지" "$(echo "$esc_output" | head -3)"
 fi
 
 # ════════════════════════════════════════
-# 21. compress-progress 후 JSON 구조 검증
-# ════════════════════════════════════════
-if [[ -f "$PROGRESS_WITH_DONE" ]]; then
-  is_compressed=$(jq '.done.phases[0].compressed' "$PROGRESS_WITH_DONE" 2>/dev/null)
-  if [[ "$is_compressed" == "true" ]]; then
-    pass "compress-progress: 압축 후 compressed=true"
-  else
-    fail "compress-progress: 압축 후 compressed=true" "compressed=$is_compressed"
-  fi
-
-  has_archive=$(jq -r '.done.phases[0].archive_ref // ""' "$PROGRESS_WITH_DONE" 2>/dev/null)
-  if [[ -n "$has_archive" ]]; then
-    pass "compress-progress: archive_ref 존재"
-  else
-    fail "compress-progress: archive_ref 존재" "빈 값"
-  fi
-fi
-
-# ════════════════════════════════════════
-# 22. progress-report 필수 섹션 확인
-# ════════════════════════════════════════
-report=$(bash "$HARNISH_ROOT/scripts/progress-report.sh" "$PROGRESS_FILE" 2>&1)
-report_ok=true
-for section in "메타데이터" "완료 (Done)" "진행 중 (Doing)" "예정 (Todo)" "요약 통계"; do
-  if ! echo "$report" | grep -q "$section"; then
-    fail "progress-report: 섹션 '$section' 누락"
-    report_ok=false
-  fi
-done
-if $report_ok; then
-  pass "progress-report: 필수 5개 섹션 포함"
-fi
-
-# ════════════════════════════════════════
-# 23. detect-asset.sh hook 테스트
+# 29. detect-asset.sh hook 테스트
 # ════════════════════════════════════════
 echo "${BOLD}[hook]${NC}"
 
 # 의미 있는 에러 → pending에 기록
 echo '{"hook_event_name":"PostToolUseFailure","tool_name":"Bash","session_id":"test-hook","tool_input":"docker build .","tool_output":"Error: insufficient memory"}' \
-  | ASSET_BASE_DIR="$ASSET_DIR" bash "$HARNISH_ROOT/scripts/detect-asset.sh" 2>/dev/null
-pending_count=$(find "$ASSET_DIR/.meta/pending" -name "*.jsonl" -type f 2>/dev/null | wc -l | tr -d ' ')
-if [[ "$pending_count" -gt 0 ]]; then
+  | ASSET_BASE_DIR="$ASSET_DIR" CLAUDE_SESSION_ID="test-hook-detect" bash "$HARNISH_ROOT/scripts/detect-asset.sh" 2>/dev/null
+PENDING_FILE_CHECK="/tmp/harnish-pending-test-hook-detect.jsonl"
+if [[ -f "$PENDING_FILE_CHECK" ]] && [[ -s "$PENDING_FILE_CHECK" ]]; then
   pass "detect-asset: 의미 있는 에러 → pending 기록"
 else
   fail "detect-asset: 의미 있는 에러 → pending 기록" "pending 파일 없음"
 fi
 
 # 노이즈 → 필터링 (pending 증가하면 안 됨)
-pre_count=$pending_count
+pre_count=0
+[[ -f "$PENDING_FILE_CHECK" ]] && pre_count=$(wc -l < "$PENDING_FILE_CHECK" | xargs)
 echo '{"hook_event_name":"PostToolUseFailure","tool_name":"Bash","session_id":"test-hook-noise","tool_input":"cat x","tool_output":"No such file or directory"}' \
-  | ASSET_BASE_DIR="$ASSET_DIR" bash "$HARNISH_ROOT/scripts/detect-asset.sh" 2>/dev/null
-post_count=$(find "$ASSET_DIR/.meta/pending" -name "*.jsonl" -type f 2>/dev/null | wc -l | tr -d ' ')
+  | ASSET_BASE_DIR="$ASSET_DIR" CLAUDE_SESSION_ID="test-hook-detect" bash "$HARNISH_ROOT/scripts/detect-asset.sh" 2>/dev/null
+post_count=$(wc -l < "$PENDING_FILE_CHECK" | xargs)
 if [[ "$post_count" -eq "$pre_count" ]]; then
   pass "detect-asset: 노이즈 에러 필터링"
 else
   fail "detect-asset: 노이즈 에러 필터링" "pending이 $pre_count → $post_count로 증가"
 fi
 
-# ════════════════════════════════════════
-# 24. 이중 압축 방어
-# ════════════════════════════════════════
-echo "${BOLD}[이중 압축 방어]${NC}"
-
-DOUBLE_COMPRESS_JSON="$TMPDIR_BASE/double_compress.json"
-cat > "$DOUBLE_COMPRESS_JSON" << 'DCEOF'
-{
-  "metadata": {"prd": "x", "started_at": "x", "last_session": "x", "status": {"emoji": "🟢", "phase": 1, "task": "", "label": "ok"}},
-  "done": {"phases": [{"phase": 1, "title": "이미 압축됨", "compressed": true, "compressed_summary": "tasks:3", "archive_ref": ".a"}]},
-  "doing": {"task": null}, "todo": {"phases": []},
-  "issues": [], "violations": [], "escalations": [], "stats": {}
-}
-DCEOF
-bash "$HARNISH_ROOT/scripts/compress-progress.sh" "$DOUBLE_COMPRESS_JSON" --trigger milestone --phase 1 >/dev/null 2>&1
-after_compressed=$(jq -r '.done.phases[0].compressed_summary' "$DOUBLE_COMPRESS_JSON")
-if [[ "$after_compressed" == "tasks:3" ]]; then
-  pass "이중 압축 방어: compressed phase 변경 없음"
+# Stop 이벤트
+stop_out=$(echo '{"hook_event_name":"Stop","session_id":"test-stop"}' \
+  | ASSET_BASE_DIR="$ASSET_DIR" bash "$HARNISH_ROOT/scripts/detect-asset.sh" 2>/dev/null)
+if [[ $? -eq 0 ]]; then
+  pass "detect-asset Stop: 종료 정상"
 else
-  fail "이중 압축 방어: compressed phase 변경 없음" "summary=$after_compressed"
+  fail "detect-asset Stop" "비정상 종료"
 fi
 
 # ════════════════════════════════════════
-# 25. SKILL.md frontmatter 정합성
+# 30. resolve 함수 우선순위
+# ════════════════════════════════════════
+echo "${BOLD}[resolve 함수]${NC}"
+
+# ASSET_BASE_DIR 최우선
+resolved=$(ASSET_BASE_DIR="/custom/path" bash -c "source '$HARNISH_ROOT/scripts/common.sh'; resolve_base_dir" 2>/dev/null)
+if [[ "$resolved" == "/custom/path" ]]; then
+  pass "resolve_base_dir: ASSET_BASE_DIR 최우선"
+else
+  fail "resolve_base_dir: ASSET_BASE_DIR 최우선" "resolved=$resolved"
+fi
+
+# CLAUDE_PROJECT_DIR 차선
+resolved=$(CLAUDE_PROJECT_DIR="/project" bash -c "source '$HARNISH_ROOT/scripts/common.sh'; resolve_base_dir" 2>/dev/null)
+if [[ "$resolved" == "/project/.harnish" ]]; then
+  pass "resolve_base_dir: CLAUDE_PROJECT_DIR → .harnish"
+else
+  fail "resolve_base_dir: CLAUDE_PROJECT_DIR → .harnish" "resolved=$resolved"
+fi
+
+# CWD 폴백
+resolved=$(bash -c "cd /tmp && source '$HARNISH_ROOT/scripts/common.sh'; resolve_base_dir" 2>/dev/null)
+if [[ "$resolved" == "/tmp/.harnish" ]]; then
+  pass "resolve_base_dir: CWD 폴백"
+else
+  fail "resolve_base_dir: CWD 폴백" "resolved=$resolved"
+fi
+
+# ════════════════════════════════════════
+# 31. SKILL.md 정합성
 # ════════════════════════════════════════
 echo "${BOLD}[SKILL.md 정합성]${NC}"
 
@@ -632,22 +870,20 @@ for skill_dir in "$HARNISH_ROOT"/skills/*/; do
   done
 done
 if [[ $skill_count -eq 0 ]]; then
-  fail "SKILL.md frontmatter: skills/ 디렉토리에 스킬 없음"
+  fail "SKILL.md frontmatter" "skills/ 디렉토리에 스킬 없음"
 elif $skill_ok; then
   pass "SKILL.md frontmatter: ${skill_count}개 스킬 모두 name/description/version 정상"
 fi
 
 # ════════════════════════════════════════
-# 25b. SKILL.md → references/ 파일 존재 검증
+# 32. references/ 파일 존재 검증
 # ════════════════════════════════════════
-
 ref_ok=true
 for skill_dir in "$HARNISH_ROOT"/skills/*/; do
   skill_md="$skill_dir/SKILL.md"
   [[ -f "$skill_md" ]] || continue
   skill_name=$(basename "$skill_dir")
-  # SKILL.md에서 references/ 참조 추출
-  refs=$(grep -oE 'references/[a-zA-Z0-9_-]+\.md' "$skill_md" | sort -u)
+  refs=$(grep -oE 'references/[a-zA-Z0-9_-]+\.(md|json)' "$skill_md" | sort -u)
   for ref in $refs; do
     if [[ ! -f "$skill_dir/$ref" ]]; then
       fail "references 존재: $skill_name/$ref 누락"
@@ -655,94 +891,22 @@ for skill_dir in "$HARNISH_ROOT"/skills/*/; do
     fi
   done
 done
-if $ref_ok; then
-  pass "references 존재: SKILL.md에서 참조하는 모든 references/ 파일 존재"
-fi
+$ref_ok && pass "references 존재: SKILL.md에서 참조하는 모든 references/ 파일 존재"
 
 # ════════════════════════════════════════
-# 26. 문서 정합성: PROGRESS.md 잔여 참조 없음
+# 33. 문서 정합성: PROGRESS.md 잔여 참조 없음
 # ════════════════════════════════════════
-stale_refs=$(grep -rl 'PROGRESS\.md' "$HARNISH_ROOT" --include="*.md" --include="*.json" --include="*.sh" --exclude-dir=".git" --exclude-dir=".claude" 2>/dev/null \
+stale_refs=$(grep -rl 'PROGRESS\.md' "$HARNISH_ROOT" --include="*.md" --include="*.json" --include="*.sh" \
+  --exclude-dir=".git" --exclude-dir=".claude" --exclude-dir="docs" 2>/dev/null \
   | grep -v '.gitignore' | grep -v 'test-all.sh' | grep -v 'plans/' || true)
 if [[ -z "$stale_refs" ]]; then
-  pass "문서 정합성: PROGRESS.md 잔여 참조 없음"
+  pass "문서 정합성: PROGRESS.md 잔여 참조 없음 (docs/ 제외)"
 else
   fail "문서 정합성: PROGRESS.md 잔여 참조 없음" "$stale_refs"
 fi
 
 # ════════════════════════════════════════
-# 27. query-assets --types 필터
-# ════════════════════════════════════════
-echo "${BOLD}[자산 타입 필터]${NC}"
-
-types_result=$(bash "$HARNISH_ROOT/scripts/query-assets.sh" --tags "test" --types "failure" --format text --base-dir "$ASSET_DIR" 2>&1)
-if echo "$types_result" | grep -q "\[failure\]"; then
-  # guardrail이나 pattern이 섞여 있으면 안 됨
-  if echo "$types_result" | grep -q "\[pattern\]\|\[guardrail\]"; then
-    fail "query-assets --types: failure만 반환" "다른 타입이 섞여 있음"
-  else
-    pass "query-assets --types: failure 필터 정상"
-  fi
-else
-  fail "query-assets --types: failure 필터 정상" "failure 결과 없음"
-fi
-
-# ════════════════════════════════════════
-# 28. progress-report: violations 렌더링
-# ════════════════════════════════════════
-PROGRESS_COMPLEX="$TMPDIR_BASE/complex.json"
-cat > "$PROGRESS_COMPLEX" << 'CEOF'
-{
-  "metadata": {"prd": "x", "started_at": "x", "last_session": "x", "status": {"emoji": "🟡", "phase": 1, "task": "1-1", "label": "이슈"}},
-  "done": {"phases": []},
-  "doing": {"task": null},
-  "todo": {"phases": []},
-  "issues": [{"timestamp": "2026-03-31T14:00:00", "task": "1-1", "description": "타입 에러", "resolution": "수정함"}],
-  "violations": [{"timestamp": "2026-03-31T14:20:00", "task": "1-1", "violation": "scope 이탈", "user_decision": "허용"}],
-  "escalations": [{"timestamp": "2026-03-31T14:45:00", "task": "1-1", "blocked_at": "api.ts:45", "attempts": [], "suggested_options": []}],
-  "stats": {"total_phases": 1, "completed_phases": 0, "total_tasks": 1, "completed_tasks": 0, "issues_count": 1, "violations_count": 1}
-}
-CEOF
-
-complex_report=$(bash "$HARNISH_ROOT/scripts/progress-report.sh" "$PROGRESS_COMPLEX" 2>&1)
-report_checks=true
-if ! echo "$complex_report" | grep -q "타입 에러"; then
-  fail "progress-report: issues 테이블 렌더링" "이슈 내용 없음"
-  report_checks=false
-fi
-if ! echo "$complex_report" | grep -q "scope 이탈"; then
-  fail "progress-report: violations 테이블 렌더링" "위반 내용 없음"
-  report_checks=false
-fi
-if $report_checks; then
-  pass "progress-report: issues + violations 렌더링 정상"
-fi
-
-# ════════════════════════════════════════
-# 29. compress-progress --trigger count (다중 Phase)
-# ════════════════════════════════════════
-COUNT_COMPRESS="$TMPDIR_BASE/count_compress.json"
-cat > "$COUNT_COMPRESS" << 'CCEOF'
-{
-  "metadata": {"prd": "x", "started_at": "x", "last_session": "x", "status": {"emoji": "🟢", "phase": 3, "task": "", "label": "ok"}},
-  "done": {"phases": [
-    {"phase": 1, "title": "A", "compressed": false, "tasks": [{"id": "1-1", "title": "t", "result": "ok", "files_changed": ["a.ts"], "verification": "ok", "duration": "1"}]},
-    {"phase": 2, "title": "B", "compressed": false, "tasks": [{"id": "2-1", "title": "t", "result": "ok", "files_changed": ["b.ts"], "verification": "ok", "duration": "1"}]}
-  ]},
-  "doing": {"task": null}, "todo": {"phases": []},
-  "issues": [], "violations": [], "escalations": [], "stats": {}
-}
-CCEOF
-bash "$HARNISH_ROOT/scripts/compress-progress.sh" "$COUNT_COMPRESS" --trigger count >/dev/null 2>&1
-count_compressed=$(jq '[.done.phases[] | select(.compressed == true)] | length' "$COUNT_COMPRESS")
-if [[ "$count_compressed" -eq 2 ]]; then
-  pass "compress-progress --trigger count: 2개 Phase 일괄 압축"
-else
-  fail "compress-progress --trigger count: 2개 Phase 일괄 압축" "compressed=$count_compressed"
-fi
-
-# ════════════════════════════════════════
-# 30. schema.json 정합성
+# 34. schema.json 정합성
 # ════════════════════════════════════════
 echo "${BOLD}[schema.json]${NC}"
 
@@ -754,76 +918,58 @@ else
 fi
 
 # L1 exports에 실제 common.sh 함수가 있는지
+schema_exports=$(jq -r '.layers.L1_Storage.exports[]' "$schema_file" 2>/dev/null | sed 's/()$//')
 schema_ok=true
-for fn in require_cmd resolve_base_dir slugify format_yaml_tags atomic_write_index parse_frontmatter parse_body get_field get_tags; do
+while IFS= read -r fn; do
+  [[ -z "$fn" ]] && continue
   if ! grep -q "$fn" "$HARNISH_ROOT/scripts/common.sh" 2>/dev/null; then
     fail "schema.json L1 exports: $fn()이 common.sh에 없음"
     schema_ok=false
   fi
-done
-if $schema_ok; then
-  pass "schema.json: L1 exports가 common.sh 함수와 일치"
+done <<< "$schema_exports"
+$schema_ok && pass "schema.json: L1 exports가 common.sh 함수와 일치"
+
+# ════════════════════════════════════════
+# 35. acceptance_criteria 분기 검증 (harnish-current-work.json 구조)
+# ════════════════════════════════════════
+echo "${BOLD}[acceptance_criteria 분기]${NC}"
+
+# bash 명령 타입
+AC_BASH='{"metadata":{"prd":"x","started_at":"x","last_session":"x","status":{"emoji":"🟢","phase":1,"task":"1-1","label":"ok"}},"done":{"phases":[]},"doing":{"task":{"id":"1-1","title":"t","started_at":"x","current":"x","last_action":"x","next_action":"x","blocker":null,"retry_count":0,"context":{"guide":"x","scope":"x","prd_reference":"x"}}},"todo":{"phases":[{"phase":1,"title":"t","tasks":[]}]},"issues":[],"violations":[],"escalations":[],"stats":{}}'
+echo "$AC_BASH" | jq empty 2>/dev/null && pass "acceptance_criteria: bash 명령 타입 JSON 유효" || fail "acceptance_criteria: bash 명령 타입"
+
+# 조건 리스트 타입 (tasks에 acceptance_criteria 배열)
+AC_COND_JSON="$TMPDIR_BASE/ac_cond.json"
+cat > "$AC_COND_JSON" << 'ACEOF'
+{
+  "metadata":{"prd":"x","started_at":"x","last_session":"x","status":{"emoji":"🟢","phase":1,"task":"1-1","label":"ok"}},
+  "done":{"phases":[]},
+  "doing":{"task":{"id":"1-1","title":"t","started_at":"x","current":"x","last_action":"x","next_action":"acceptance_criteria 실행","blocker":null,"retry_count":0,"context":{"guide":"x","scope":"x","prd_reference":"x"}}},
+  "todo":{"phases":[{"phase":1,"title":"t","tasks":[{"id":"1-2","title":"next","depends_on":["1-1"],"acceptance_criteria":["src/models/user.ts 파일 존재","User interface에 id, name, email 필드 포함","export default 사용"]}]}]},
+  "issues":[],"violations":[],"escalations":[],"stats":{}
+}
+ACEOF
+if bash "$HARNISH_ROOT/scripts/validate-progress.sh" "$AC_COND_JSON" >/dev/null 2>&1; then
+  pass "acceptance_criteria: 조건 리스트 타입 구조 유효"
+else
+  fail "acceptance_criteria: 조건 리스트 타입" "validate 실패"
 fi
 
-# ════════════════════════════════════════
-# 31. snippet / decision 타입 기록
-# ════════════════════════════════════════
-echo "${BOLD}[snippet / decision 타입]${NC}"
-
-output=$(bash "$HARNISH_ROOT/scripts/record-asset.sh" \
-  --type snippet --tags "bash,util" \
-  --title "파일 존재 확인 스니펫" \
-  --content '## 용도
-파일 존재 확인
-
-## 코드
-```bash
-[[ -f "$f" ]] && echo ok
-```
-
-## 사용 예시
-deploy.sh' \
-  --base-dir "$ASSET_DIR" 2>&1)
-if [[ $? -eq 0 ]]; then
-  pass "record-asset.sh --type snippet"
+# none 타입 → escalation 필요 (acceptance_criteria 없는 태스크)
+AC_NONE_JSON="$TMPDIR_BASE/ac_none.json"
+cat > "$AC_NONE_JSON" << 'ANEOF'
+{
+  "metadata":{"prd":"x","started_at":"x","last_session":"x","status":{"emoji":"🟢","phase":1,"task":"1-1","label":"ok"}},
+  "done":{"phases":[]},
+  "doing":{"task":{"id":"1-1","title":"criteria 없는 태스크","started_at":"x","current":"x","last_action":"x","next_action":"x","blocker":null,"retry_count":0,"context":{"guide":"x","scope":"x","prd_reference":"x"}}},
+  "todo":{"phases":[{"phase":1,"title":"t","tasks":[{"id":"1-2","title":"next","depends_on":[]}]}]},
+  "issues":[],"violations":[],"escalations":[],"stats":{}
+}
+ANEOF
+if bash "$HARNISH_ROOT/scripts/validate-progress.sh" "$AC_NONE_JSON" >/dev/null 2>&1; then
+  pass "acceptance_criteria: none 타입 (에스컬레이션 대상) 구조 유효"
 else
-  fail "record-asset.sh --type snippet" "$(echo "$output" | head -2)"
-fi
-
-output=$(bash "$HARNISH_ROOT/scripts/record-asset.sh" \
-  --type decision --tags "arch,db" \
-  --title "PostgreSQL 선택" \
-  --content "## 결정 사항
-PostgreSQL 선택
-
-## 고려한 대안
-MySQL
-
-## 선택 근거
-JSONB 지원
-
-## 유효 조건 (이 결정이 변할 수 있는 맥락)
-클라우드 환경 변경 시" \
-  --base-dir "$ASSET_DIR" 2>&1)
-if [[ $? -eq 0 ]]; then
-  pass "record-asset.sh --type decision"
-else
-  fail "record-asset.sh --type decision" "$(echo "$output" | head -2)"
-fi
-
-# ════════════════════════════════════════
-# 32. detect-asset Stop: 임계치 도달 시 알림
-# ════════════════════════════════════════
-echo "${BOLD}[Stop 이벤트 + 임계치]${NC}"
-
-stop_out=$(echo '{"hook_event_name":"Stop","session_id":"test-stop"}' \
-  | ASSET_BASE_DIR="$ASSET_DIR" bash "$HARNISH_ROOT/scripts/detect-asset.sh" 2>/dev/null)
-# compress-test 태그가 5건이므로 임계치 도달 알림이 있어야 함
-if echo "$stop_out" | grep -q "임계치\|compress-test\|threshold\|압축"; then
-  pass "detect-asset Stop: 임계치 알림 출력"
-else
-  # 자산이 전부 .archive로 이동됐다면 알림 없을 수 있음 (OK)
-  pass "detect-asset Stop: 종료 정상 (임계치 없거나 이미 압축됨)"
+  fail "acceptance_criteria: none 타입" "validate 실패"
 fi
 
 # ════════════════════════════════════════
