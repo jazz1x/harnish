@@ -20,7 +20,7 @@ HARNISH_ROOT="${CLAUDE_PLUGIN_ROOT}"
 
 ## Skill Chain
 
-Can be invoked independently. Follow-up: "start implementation after review" → harnish, or "/ralpi to verify PRD consistency" → ralpi.
+Can be invoked independently. Follow-up: "start implementation after review" → harnish, or "/ralph to verify PRD consistency" → ralph.
 
 ## Step 1: Problem Clarification
 
@@ -120,7 +120,7 @@ fi
 ```
 ✅ PRD complete: docs/prd-{slug}.md
 Includes: §4 Implementation spec / §6 Test criteria / §7 Guardrails
-Next: "start implementation" after review, or /ralpi for consistency check.
+Next: "start implementation" after review, or /ralph for consistency check.
 ```
 
 ## Distinction from drafti-feature

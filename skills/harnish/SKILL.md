@@ -16,7 +16,7 @@ description: >
 ## Skill Chain
 
 ```
-drafti-architect (or drafti-feature) → harnish → ralpi
+drafti-architect (or drafti-feature) → harnish → ralph
 ```
 
 | Skill | Standalone Call | Prerequisites |
@@ -24,7 +24,7 @@ drafti-architect (or drafti-feature) → harnish → ralpi
 | drafti-architect | Yes | None (only needs a technical problem) |
 | drafti-feature | Yes | Requires a planning document |
 | harnish | Yes | docs/prd-*.md or existing harnish-current-work.json |
-| ralpi | Yes | Specify target files/directories to verify |
+| ralph | Yes | Specify target files/directories to verify |
 
 When harnish starts without a PRD: "No PRD found. Please create one first with /drafti-architect or /drafti-feature."
 

@@ -1,6 +1,6 @@
 # Script Verification Criteria
 
-> Detailed criteria referenced by ralpi when verifying shell scripts.
+> Detailed criteria referenced by ralph when verifying shell scripts.
 
 ## Required Elements
 

@@ -20,7 +20,7 @@ HARNISH_ROOT="${CLAUDE_PLUGIN_ROOT}"
 
 ## 스킬 체인
 
-독립 호출 가능 (기획서 필요). 후속: "검토 후 '구현 시작'" → harnish, 또는 "/ralpi로 PRD 정합성 확인" → ralpi.
+독립 호출 가능 (기획서 필요). 후속: "검토 후 '구현 시작'" → harnish, 또는 "/ralph로 PRD 정합성 확인" → ralph.
 
 ## Step 1: 요구사항 파싱
 
@@ -139,7 +139,7 @@ fi
 ```
 ✅ PRD 생성: docs/prd-{slug}.md
 포함: §4 구현 명세 / §6 테스트 기준 / §7 가드레일
-다음: 검토 후 "구현 시작" 또는 /ralpi로 정합성 확인.
+다음: 검토 후 "구현 시작" 또는 /ralph로 정합성 확인.
 ```
 
 ## drafti-architect와의 구분

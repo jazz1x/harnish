@@ -39,7 +39,7 @@ harnish/
     ├── drafti-architect/SKILL.md    ← frontmatter version: 0.0.1
     ├── drafti-feature/SKILL.md      ← frontmatter version: 0.0.1
     ├── harnish/SKILL.md             ← frontmatter version: 0.0.1
-    └── ralpi/SKILL.md              ← frontmatter version: 0.0.1
+    └── ralph/SKILL.md              ← frontmatter version: 0.0.1
 ```
 
 ## Git Tag
@@ -54,7 +54,7 @@ harnish/
 2. **섹션**: Added, Changed, Fixed, Removed, Deprecated, Security
 3. **스킬별 서브그룹**: `#### drafti-architect`, `#### harnish` 등
 4. **Unreleased**: 상시 유지. 릴리스 시 날짜와 함께 확정
-5. **스킬 버전 표기**: 섹션 제목에 스킬 버전 병기 (예: `#### ralpi \`0.0.2\``)
+5. **스킬 버전 표기**: 섹션 제목에 스킬 버전 병기 (예: `#### ralph \`0.0.2\``)
 
 ## 릴리스 절차
 

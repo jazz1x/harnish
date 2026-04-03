@@ -1,8 +1,8 @@
 ---
-name: ralpi
+name: ralph
 version: 0.0.1
 description: >
-  Inspection skill. Triggers: "점검해", "확인해", "검증해", "ralpi",
+  Inspection skill. Triggers: "점검해", "확인해", "검증해", "ralph",
   "셀프점검", "커버리지 확인", "테스트 갭",
   "고쳐", "수정해", "점검하고 고쳐", "자동으로 처리해",
   "inspect", "check", "verify", "self-check",
@@ -10,7 +10,7 @@ description: >
   "fix", "repair", "inspect and fix", "handle automatically"
 ---
 
-# ralpi — Inspection
+# ralph — Inspection
 
 ## Step 1: Mode Determination
 
@@ -79,7 +79,7 @@ Severity: `critical` (behavioral error) / `warning` (potential issue) / `coverag
 
 HITL:
 ```
-## ralpi Inspection Results
+## ralph Inspection Results
 Target: {path | "user-specified scope"}
 ### Findings ({N} items)
 1. [{severity}] {file:line} — {one-line cause}
@@ -88,7 +88,7 @@ Which issues should I fix first?
 
 Autonomous:
 ```
-## ralpi Inspection + Fix Results
+## ralph Inspection + Fix Results
 Target: {path | "user-specified scope"}
 ### Fixed ({M}/{N} items)
 1. [fixed] {file:line} — {one-line fix description}
@@ -97,7 +97,7 @@ Target: {path | "user-specified scope"}
 Tests: {PASS | FAIL (details)}
 ```
 
-No issues found → `ralpi inspection complete, no issues found.` Single line. No enumeration.
+No issues found → `ralph inspection complete, no issues found.` Single line. No enumeration.
 
 ## Prohibited
 

@@ -1,6 +1,6 @@
 # SKILL.md Verification Criteria
 
-> Detailed criteria referenced by ralpi when verifying SKILL.md artifacts.
+> Detailed criteria referenced by ralph when verifying SKILL.md artifacts.
 > To be enhanced after harnish M5.
 
 ## frontmatter

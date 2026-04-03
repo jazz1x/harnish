@@ -1,6 +1,6 @@
 # PRD Verification Criteria
 
-> Detailed criteria referenced by ralpi when verifying PRD artifacts.
+> Detailed criteria referenced by ralph when verifying PRD artifacts.
 > To be enhanced after harnish M5. Currently only minimum criteria are defined.
 
 ## Required Sections
