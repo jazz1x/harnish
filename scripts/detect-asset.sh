@@ -19,13 +19,87 @@ trap 'exit 0' ERR
 [[ -d "$BASE" ]] || exit 0
 
 # 세션 해시
-SESSION_HASH="${CLAUDE_SESSION_ID:-$(echo "$$" | md5sum | cut -c1-8)}"
+if [[ -n "${CLAUDE_SESSION_ID:-}" ]]; then
+    SESSION_HASH="$CLAUDE_SESSION_ID"
+else
+    SESSION_HASH=$(echo "$$" | md5 2>/dev/null | cut -c1-8 || echo "$$" | md5sum 2>/dev/null | cut -c1-8 || echo "unknown")
+fi
 PENDING_FILE="/tmp/harnish-pending-${SESSION_HASH}.jsonl"
 
-# pending 파일이 있으면 RAG에 자산 개수 보고
-if [[ -f "$PENDING_FILE" ]] && [[ -s "$PENDING_FILE" ]]; then
+# stdin에서 hook JSON 읽기 (없으면 빈 문자열)
+INPUT=""
+if [[ ! -t 0 ]]; then
+    INPUT=$(cat 2>/dev/null || true)
+fi
+
+# JSON이 아니면 무시
+if [[ -z "$INPUT" ]] || ! echo "$INPUT" | jq empty 2>/dev/null; then
+    # pending 파일이 있으면 보고만
+    if [[ -f "$PENDING_FILE" ]] && [[ -s "$PENDING_FILE" ]]; then
+        PENDING_COUNT=$(wc -l < "$PENDING_FILE" | xargs)
+        echo "harnish: ${PENDING_COUNT}건 pending 자산 감지됨"
+    fi
+    exit 0
+fi
+
+EVENT=$(echo "$INPUT" | jq -r '.hook_event_name // ""')
+TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // ""')
+TOOL_OUTPUT=$(echo "$INPUT" | jq -r '.tool_output // ""')
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
+
+# ── Stop 이벤트: 임계치 + 품질 게이트 ──
+if [[ "$EVENT" == "Stop" ]]; then
+    # 임계치 확인
+    if [[ -f "$RAG_FILE" ]] && [[ -s "$RAG_FILE" ]]; then
+        THRESHOLD_OUT=$(bash "$SCRIPT_DIR/check-thresholds.sh" --base-dir "$BASE" 2>/dev/null || true)
+        if [[ -n "$THRESHOLD_OUT" ]]; then
+            echo "$THRESHOLD_OUT"
+        fi
+    fi
+
+    # pending 보고
+    if [[ -f "$PENDING_FILE" ]] && [[ -s "$PENDING_FILE" ]]; then
+        PENDING_COUNT=$(wc -l < "$PENDING_FILE" | xargs)
+        echo "harnish: 세션 종료 — ${PENDING_COUNT}건 pending 자산 미처리"
+    fi
+    exit 0
+fi
+
+# ── PostToolUseFailure: 의미 있는 에러만 pending에 기록 ──
+if [[ "$EVENT" == "PostToolUseFailure" ]]; then
+    # 노이즈 필터: 단순/일반적 에러는 무시
+    NOISE_PATTERNS="No such file|permission denied|command not found|not a directory|Is a directory|syntax error near|unexpected token"
+    if echo "$TOOL_OUTPUT" | grep -qiE "$NOISE_PATTERNS" 2>/dev/null; then
+        exit 0
+    fi
+
+    # 빈 출력 무시
+    if [[ -z "$TOOL_OUTPUT" ]]; then
+        exit 0
+    fi
+
+    # 의미 있는 에러 → pending 기록
+    PENDING_RECORD=$(jq -n -c \
+        --arg event "$EVENT" \
+        --arg tool "$TOOL_NAME" \
+        --arg output "$TOOL_OUTPUT" \
+        --arg session "$SESSION_ID" \
+        --arg date "$(date +%Y-%m-%dT%H:%M:%S)" \
+        '{event:$event, tool:$tool, output:$output, session:$session, date:$date}')
+
+    echo "$PENDING_RECORD" >> "$PENDING_FILE"
     PENDING_COUNT=$(wc -l < "$PENDING_FILE" | xargs)
-    echo "harnish: ${PENDING_COUNT}건 pending 자산 감지됨"
+    echo "harnish: 에러 감지 → pending (${PENDING_COUNT}건)"
+    exit 0
+fi
+
+# ── PostToolUse: 성공 이벤트는 현재 보고만 ──
+if [[ "$EVENT" == "PostToolUse" ]]; then
+    if [[ -f "$PENDING_FILE" ]] && [[ -s "$PENDING_FILE" ]]; then
+        PENDING_COUNT=$(wc -l < "$PENDING_FILE" | xargs)
+        echo "harnish: ${PENDING_COUNT}건 pending 자산 감지됨"
+    fi
+    exit 0
 fi
 
 exit 0
