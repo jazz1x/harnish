@@ -1,6 +1,6 @@
 # SKILL.md 검증 기준
 
-> ralpi가 SKILL.md 아티팩트를 검증할 때 참조하는 상세 기준.
+> ralphi가 SKILL.md 아티팩트를 검증할 때 참조하는 상세 기준.
 > harnish M5 이후 고도화 예정.
 
 ## frontmatter

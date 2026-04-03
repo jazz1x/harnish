@@ -431,7 +431,7 @@ common.sh source 추가.
 6곳의 `--base-dir "$HARNISH_ROOT/_base/assets"` 삭제.
 `_base/assets` 텍스트 참조 → `.harnish/` 변경.
 
-#### 4.4.4 `skills/ralpi/references/criteria-code.md` 수정 (modify)
+#### 4.4.4 `skills/ralphi/references/criteria-code.md` 수정 (modify)
 
 `PROGRESS.json` 3곳 → `harnish-current-work.json`
 
