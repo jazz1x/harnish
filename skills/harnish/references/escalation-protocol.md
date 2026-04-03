@@ -1,120 +1,120 @@
-# 에스컬레이션 프로토콜
+# Escalation Protocol
 
-> harnish가 사용자에게 판단을 요청하는 절차.
-> 에스컬레이션은 "멈춰야 할 때 멈추는 것"이다. 무한 반복보다 빠르게 물어보는 것이 낫다.
-
----
-
-## 에스컬레이션 트리거
-
-### 1. 태스크 반복 실패 (3회)
-
-같은 태스크에서 같은 유형의 에러가 3회 반복되면 에스컬레이션한다.
-
-보고 형식:
-```
-⚠️ Task {id}: {제목}에서 반복 실패 (3회)
-
-문제: {구체적 에러 메시지/증상}
-
-시도한 것:
-1. {첫 번째 시도와 결과}
-2. {두 번째 시도와 결과}
-3. {세 번째 시도와 결과}
-
-가능한 원인:
-- {원인 A}
-- {원인 B}
-
-제안:
-- {해결책 제안, 있으면}
-- 또는 "PRD의 {섹션}을 수정해야 할 수 있습니다"
-
-어떻게 진행할까요?
-```
-
-### 2. 금지사항 위반 필요
-
-태스크를 완료하려면 금지사항에 해당하는 동작이 불가피해 보일 때.
-
-보고 형식:
-```
-🔴 금지사항 [{id}]에 해당하는 동작이 필요합니다
-
-금지사항: {규칙}
-현재 태스크: Task {id}: {제목}
-
-이유: {왜 이 동작이 필요한가}
-영향: {이 동작을 하면 무슨 일이 벌어지는가}
-
-대안: {금지사항을 위반하지 않는 다른 방법이 있으면 제시}
-
-예외를 허용하시겠습니까, 아니면 대안을 시도할까요?
-```
-
-### 3. PRD와 현실 불일치
-
-구현 중에 PRD의 가정이 틀렸음을 발견할 때.
-
-보고 형식:
-```
-⚠️ PRD와 현실이 다릅니다
-
-PRD §{N}의 가정: {PRD에서 가정한 것}
-실제 상황: {실제로 확인된 것}
-
-영향: {이 차이가 구현에 미치는 영향}
-
-제안:
-- PRD §{N}을 {이렇게} 수정
-- 또는 현재 구현을 {이렇게} 조정
-
-어떻게 진행할까요?
-```
-
-### 4. 범위 밖 작업 필요
-
-현재 태스크의 scope에 없는 파일/영역을 수정해야 할 때.
-
-보고 형식:
-```
-⚠️ 현재 태스크 scope 밖 작업이 필요합니다
-
-현재 태스크: Task {id}: {제목}
-scope: {guardrails.scope}
-
-필요한 변경:
-- 파일: {scope 밖 파일}
-- 이유: {왜 이 파일을 수정해야 하는가}
-
-선택지:
-1. 현재 태스크에서 scope를 확장하여 수정
-2. 별도 태스크로 분리 (선행 태스크로 추가)
-3. 수정하지 않고 다른 방법 시도
-
-어떤 방향으로 진행할까요?
-```
+> The procedure for harnish to request user judgment.
+> Escalation means "stopping when you should stop." Asking quickly is better than looping infinitely.
 
 ---
 
-## 에스컬레이션 원칙
+## Escalation Triggers
 
-### 멈출 때 멈추기
+### 1. Repeated Task Failure (3 times)
 
-에스컬레이션의 가장 큰 실패 모드는 "물어보지 않고 계속 시도하는 것"이다.
-3회 실패 규칙은 절대적이다 — 4번째 시도는 하지 않는다.
+Escalate when the same type of error repeats 3 times on the same task.
 
-### 구체적으로 보고하기
+Report format:
+```
+⚠️ Task {id}: Repeated failure on {title} (3 times)
 
-"에러가 발생했습니다"는 나쁜 에스컬레이션.
-"src/api.ts:42에서 TypeError: Cannot read property 'id' of undefined. 원인은 User 모델에 id 필드가 nullable인데 API에서 non-null로 가정하고 있기 때문"이 좋은 에스컬레이션.
+Problem: {specific error message/symptom}
 
-### 제안 포함하기
+Attempted:
+1. {first attempt and result}
+2. {second attempt and result}
+3. {third attempt and result}
 
-문제만 보고하는 것보다 해결책을 제안하는 것이 좋다.
-단, 확신이 없으면 "가능한 원인"과 "시도해볼 수 있는 것"으로 표현한다.
+Possible causes:
+- {cause A}
+- {cause B}
 
-### 중복 에스컬레이션 방지
+Suggestions:
+- {proposed solution, if any}
+- Or "PRD section {section} may need to be revised"
 
-같은 문제로 두 번 에스컬레이션하지 않는다.
-사용자의 답변을 harnish-current-work.json 이슈 로그에 기록하고, 같은 상황에서 참조한다.
+How should we proceed?
+```
+
+### 2. Prohibition Violation Required
+
+When completing a task appears to unavoidably require an action that falls under a prohibition.
+
+Report format:
+```
+🔴 An action matching prohibition [{id}] is required
+
+Prohibition: {rule}
+Current task: Task {id}: {title}
+
+Reason: {why this action is necessary}
+Impact: {what happens if this action is taken}
+
+Alternative: {present another method that does not violate the prohibition, if available}
+
+Should we allow an exception, or try the alternative?
+```
+
+### 3. PRD and Reality Mismatch
+
+When a PRD assumption is discovered to be incorrect during implementation.
+
+Report format:
+```
+⚠️ PRD does not match reality
+
+PRD §{N} assumption: {what the PRD assumed}
+Actual situation: {what was actually confirmed}
+
+Impact: {how this discrepancy affects implementation}
+
+Suggestions:
+- Revise PRD §{N} to {this}
+- Or adjust current implementation to {this}
+
+How should we proceed?
+```
+
+### 4. Out-of-Scope Work Required
+
+When files/areas not in the current task's scope need to be modified.
+
+Report format:
+```
+⚠️ Work outside current task scope is required
+
+Current task: Task {id}: {title}
+Scope: {guardrails.scope}
+
+Required changes:
+- File: {out-of-scope file}
+- Reason: {why this file needs to be modified}
+
+Options:
+1. Expand scope in the current task and modify
+2. Separate into a new task (add as a prerequisite task)
+3. Do not modify and try a different approach
+
+Which direction should we take?
+```
+
+---
+
+## Escalation Principles
+
+### Stop When You Should Stop
+
+The biggest failure mode of escalation is "continuing to try without asking."
+The 3-failure rule is absolute — do not make a 4th attempt.
+
+### Report Specifically
+
+"An error occurred" is a bad escalation.
+"TypeError: Cannot read property 'id' of undefined at src/api.ts:42. The cause is that the id field in the User model is nullable but the API assumes it to be non-null" is a good escalation.
+
+### Include Suggestions
+
+Suggesting solutions is better than only reporting problems.
+However, if uncertain, express them as "possible causes" and "things to try."
+
+### Prevent Duplicate Escalations
+
+Do not escalate twice for the same problem.
+Record the user's response in the harnish-current-work.json issue log and reference it in the same situation.

@@ -1,144 +1,144 @@
-# 피쳐플래그 설계 패턴 라이브러리
+# Feature Flag Design Pattern Library
 
-> drafti-feature 스킬이 피쳐플래그를 설계할 때 참조하는 패턴 모음.
-> 프로젝트에서 축적된 롤아웃 경험이 있으면 자산에서 먼저 조회한다.
+> Collection of patterns referenced by the drafti-feature skill when designing feature flags.
+> If the project has accumulated rollout experience, query assets first.
 
 ---
 
-## 1. 플래그 타입별 선택 가이드
+## 1. Flag Type Selection Guide
 
 ### Boolean (on/off)
 
 ```
-적합: 기능이 완전히 새롭고, 중간 상태가 없는 경우
-예시: 새 대시보드 페이지, 새 알림 유형
-장점: 단순, 디버깅 쉬움
-단점: 점진적 롤아웃 불가 (전체 ON 또는 전체 OFF)
+Suitable: When the feature is entirely new and has no intermediate state
+Examples: New dashboard page, new notification type
+Pros: Simple, easy to debug
+Cons: No gradual rollout possible (all ON or all OFF)
 ```
 
-### Percentage (비율 기반)
+### Percentage (ratio-based)
 
 ```
-적합: 성능 영향을 모니터링하면서 점진적으로 배포할 때
-예시: 새 추천 알고리즘, UI 대규모 개편
-장점: 리스크 제어, A/B 테스트 병행 가능
-주의: 같은 사용자가 요청마다 다른 버전을 보지 않도록 sticky 해시 필요
-구현: hash(user_id) % 100 < percentage → ON
+Suitable: When deploying gradually while monitoring performance impact
+Examples: New recommendation algorithm, large-scale UI overhaul
+Pros: Risk control, A/B testing in parallel possible
+Caution: Sticky hash needed to prevent same user seeing different versions per request
+Implementation: hash(user_id) % 100 < percentage → ON
 ```
 
-### Segment (사용자 세그먼트)
+### Segment (user segment)
 
 ```
-적합: 특정 사용자 그룹에게만 먼저 배포할 때
-예시: 프리미엄 사용자 전용 기능, 특정 지역 배포
-장점: 타겟 정밀, 비즈니스 로직 반영
-주의: 세그먼트 정의가 명확해야 함, 세그먼트 변경 시 동작 검증 필요
+Suitable: When deploying to specific user groups first
+Examples: Premium user exclusive features, region-specific deployment
+Pros: Precise targeting, reflects business logic
+Caution: Segment definition must be clear, behavior verification needed when segments change
 ```
 
-## 2. 롤아웃 전략 패턴
+## 2. Rollout Strategy Patterns
 
-### 패턴 A: 내부 → 베타 → 전체 (가장 일반적)
-
-```
-단계 1: 내부 QA/직원 (100%) — 3일~1주
-  게이트: 크리티컬 버그 0, 기능 동작 확인
-단계 2: 베타 사용자 (100%) — 1~2주
-  게이트: 에러율 < 0.5%, 사용자 피드백 수집
-단계 3: 전체 (10% → 25% → 50% → 100%) — 2~4주
-  게이트: 각 단계에서 킬스위치 미발동
-
-총 기간: 4~7주
-```
-
-### 패턴 B: 빠른 비율 롤아웃 (저위험 변경)
+### Pattern A: Internal → Beta → All Users (most common)
 
 ```
-단계 1: 1% — 1일
-  게이트: 에러 스파이크 없음
-단계 2: 10% — 2일
-  게이트: 메트릭 정상 범위
-단계 3: 50% — 2일
-  게이트: A/B 비교 결과 양호
-단계 4: 100%
+Phase 1: Internal QA/employees (100%) — 3 days~1 week
+  Gate: 0 critical bugs, feature behavior confirmed
+Phase 2: Beta users (100%) — 1~2 weeks
+  Gate: Error rate < 0.5%, user feedback collected
+Phase 3: All users (10% → 25% → 50% → 100%) — 2~4 weeks
+  Gate: Kill switch not triggered at each phase
 
-총 기간: 1~2주
+Total duration: 4~7 weeks
 ```
 
-### 패턴 C: 신중한 롤아웃 (결제/금융/데이터 마이그레이션)
+### Pattern B: Fast Percentage Rollout (low-risk changes)
 
 ```
-단계 1: 개발자 본인 (1명) — 3일
-  게이트: 수동 검증, 데이터 정합성 확인
-단계 2: 내부 QA (5~10명) — 1주
-  게이트: 통합 테스트 통과, 롤백 테스트 통과
-단계 3: 선정된 테스트 사용자 (50~100명) — 2주
-  게이트: 비즈니스 지표 이상 없음, CS 인입 모니터링
-단계 4: 전체 비율 (1% → 5% → 25% → 100%) — 4~6주
-  게이트: 각 단계 최소 3일 유지, 킬스위치 미발동
+Phase 1: 1% — 1 day
+  Gate: No error spikes
+Phase 2: 10% — 2 days
+  Gate: Metrics within normal range
+Phase 3: 50% — 2 days
+  Gate: A/B comparison results favorable
+Phase 4: 100%
 
-총 기간: 8~10주
+Total duration: 1~2 weeks
 ```
 
-## 3. 킬스위치 패턴
+### Pattern C: Cautious Rollout (payments/finance/data migration)
 
-### 자동 킬스위치 (권장)
+```
+Phase 1: Developer themselves (1 person) — 3 days
+  Gate: Manual verification, data integrity confirmed
+Phase 2: Internal QA (5~10 people) — 1 week
+  Gate: Integration tests pass, rollback tests pass
+Phase 3: Selected test users (50~100 people) — 2 weeks
+  Gate: No anomalies in business metrics, CS ticket monitoring
+Phase 4: All users by percentage (1% → 5% → 25% → 100%) — 4~6 weeks
+  Gate: Minimum 3 days at each phase, kill switch not triggered
+
+Total duration: 8~10 weeks
+```
+
+## 3. Kill Switch Patterns
+
+### Automatic Kill Switch (recommended)
 
 ```yaml
 kill_switch:
   metrics:
     - name: error_rate
       threshold: "> 1%"
-      window: "5분"
+      window: "5 min"
       action: auto_rollback
     - name: p99_latency
       threshold: "> 500ms"
-      window: "5분"
+      window: "5 min"
       action: auto_rollback
-  cooldown: "10분"  # 롤백 후 재활성화 방지
+  cooldown: "10 min"  # Prevent reactivation after rollback
 ```
 
-### 수동 킬스위치 (복잡한 경우)
+### Manual Kill Switch (for complex cases)
 
 ```yaml
 kill_switch:
   metrics:
     - name: conversion_rate
       threshold: "< baseline - 5%"
-      window: "1시간"
+      window: "1 hour"
       action: alert_then_manual
   alert_channel: "#feature-rollout"
 ```
 
-## 4. 데이터 마이그레이션과 플래그
+## 4. Data Migration and Flags
 
-### forward-compatible 패턴
-
-```
-원칙: OFF 상태에서도 새 스키마가 동작해야 한다.
-
-방법:
-1. 새 컬럼/필드는 nullable 또는 default 값으로 추가
-2. 기존 코드가 새 필드를 무시하도록 (backward compatible)
-3. 플래그 ON 시 새 필드를 활용하는 코드 분기
-4. 100% 롤아웃 확정 후 → 이전 코드 패스 제거 + NOT NULL 마이그레이션
-```
-
-### 롤백 안전 체크리스트
+### Forward-Compatible Pattern
 
 ```
-- [ ] ON 상태에서 생성된 데이터가 OFF 상태에서 조회 가능한가?
-- [ ] ON → OFF 전환 시 데이터 손실이 없는가?
-- [ ] OFF 상태에서 새 필드의 null/default 값이 기존 로직을 깨뜨리지 않는가?
-- [ ] 마이그레이션 역방향이 가능한가? (불가능하면 PRD에 명시)
+Principle: The new schema must work even in the OFF state.
+
+Method:
+1. Add new columns/fields as nullable or with default values
+2. Ensure existing code ignores new fields (backward compatible)
+3. Branch code to utilize new fields when flag is ON
+4. After 100% rollout is confirmed → remove old code path + NOT NULL migration
 ```
 
-## 5. 플래그 수명 관리
+### Rollback Safety Checklist
 
 ```
-생성 → 롤아웃 중 → 100% 도달 → 안정화 기간 (2~4주) → 플래그 제거
+- [ ] Can data created in ON state be queried in OFF state?
+- [ ] Is there no data loss when switching ON → OFF?
+- [ ] Do null/default values of new fields in OFF state not break existing logic?
+- [ ] Is reverse migration possible? (If not, specify in PRD)
+```
 
-"좀비 플래그" 방지:
-- 100% 도달 후 4주 내에 플래그 제거 태스크를 생성한다
-- 제거 시: if/else 분기 제거, OFF 코드 패스 삭제, 테스트 정리
-- 제거를 미루면 코드 복잡도가 누적된다 (guardrail로 기록)
+## 5. Flag Lifecycle Management
+
+```
+Creation → Rolling out → 100% reached → Stabilization period (2~4 weeks) → Flag removal
+
+"Zombie flag" prevention:
+- Create a flag removal task within 4 weeks of reaching 100%
+- On removal: remove if/else branches, delete OFF code paths, clean up tests
+- Delaying removal accumulates code complexity (record as guardrail)
 ```

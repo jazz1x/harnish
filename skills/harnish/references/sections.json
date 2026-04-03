@@ -1,49 +1,49 @@
 {
-  "_comment": "유형별 필수 섹션 정의. 템플릿 생성과 품질 검증에 공유된다.",
+  "_comment": "Required sections by type. Shared for template generation and quality verification.",
   "failure": {
-    "required_sections": ["표면 증상", "실제 원인", "해결 과정", "일반화된 패턴"],
+    "required_sections": ["Surface Symptom", "Root Cause", "Resolution Process", "Generalized Pattern"],
     "template": [
-      "## 표면 증상\n",
-      "## 실제 원인\n",
-      "## 해결 과정\n",
-      "## 일반화된 패턴\n"
+      "## Surface Symptom\n",
+      "## Root Cause\n",
+      "## Resolution Process\n",
+      "## Generalized Pattern\n"
     ]
   },
   "pattern": {
-    "required_sections": ["적용 상황", "접근법", "왜 효과적인가", "적용 범위와 한계"],
+    "required_sections": ["Applicable Situation", "Approach", "Why It Works", "Scope and Limitations"],
     "template": [
-      "## 적용 상황 (전제 조건)\n",
-      "## 접근법\n",
-      "## 왜 효과적인가\n",
-      "## 적용 범위와 한계\n"
+      "## Applicable Situation (Prerequisites)\n",
+      "## Approach\n",
+      "## Why It Works\n",
+      "## Scope and Limitations\n"
     ]
   },
   "guardrail": {
-    "required_sections": ["규칙", "이유"],
+    "required_sections": ["Rule", "Reason"],
     "template": [
-      "## 규칙\n",
-      "## 이유\n",
-      "## 위반 시 결과\n",
-      "## 예외 조건\n"
+      "## Rule\n",
+      "## Reason\n",
+      "## Consequences of Violation\n",
+      "## Exception Conditions\n"
     ]
   },
   "snippet": {
     "required_sections": [],
     "required_patterns": ["```"],
     "template": [
-      "## 용도\n",
-      "## 코드\n",
+      "## Purpose\n",
+      "## Code\n",
       "```\n```\n",
-      "## 사용 예시\n"
+      "## Usage Example\n"
     ]
   },
   "decision": {
-    "required_sections": ["결정 사항", "선택 근거"],
+    "required_sections": ["Decision", "Selection Rationale"],
     "template": [
-      "## 결정 사항\n",
-      "## 고려한 대안\n",
-      "## 선택 근거\n",
-      "## 유효 조건 (이 결정이 변할 수 있는 맥락)\n"
+      "## Decision\n",
+      "## Considered Alternatives\n",
+      "## Selection Rationale\n",
+      "## Validity Conditions (Context in which this decision may change)\n"
     ]
   }
 }

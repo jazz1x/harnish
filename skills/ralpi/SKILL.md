@@ -2,105 +2,108 @@
 name: ralpi
 version: 0.0.1
 description: >
-  점검 스킬. 트리거: "점검해", "확인해", "검증해", "ralpi",
+  Inspection skill. Triggers: "점검해", "확인해", "검증해", "ralpi",
   "셀프점검", "커버리지 확인", "테스트 갭",
-  "고쳐", "수정해", "점검하고 고쳐", "자동으로 처리해"
+  "고쳐", "수정해", "점검하고 고쳐", "자동으로 처리해",
+  "inspect", "check", "verify", "self-check",
+  "coverage check", "test gap",
+  "fix", "repair", "inspect and fix", "handle automatically"
 ---
 
-# ralpi — 점검
+# ralpi — Inspection
 
-## Step 1: 모드 판별
+## Step 1: Mode Determination
 
-발화에 "고쳐", "수정해", "fix", "처리해" 포함 → **자율** (수정까지 한다)
-그 외 → **HITL** (보고만 하고 대기)
+Utterance contains "고쳐", "수정해", "fix", "처리해" → **Autonomous** (proceeds to fix)
+Otherwise → **HITL** (report only and wait)
 
-## Step 2: 스코프 판별
+## Step 2: Scope Determination
 
-- 파일 경로가 주어짐 → **파일 스코프** → Step 3A
-- 디렉토리가 주어짐 → **디렉토리 스코프** → Step 3B
-- 아무것도 없음 → **사용자에게 범위를 묻는다. 추측 금지.** git diff를 멋대로 돌리지 않는다.
+- File path given → **File scope** → Step 3A
+- Directory given → **Directory scope** → Step 3B
+- Nothing given → **Ask the user for scope. No guessing.** Do not run git diff on your own.
 
-## Step 3A: 파일 점검
+## Step 3A: File Inspection
 
-1. 타입 감지 → criteria 파일 결정:
-   - `docs/prd-*.md` (§섹션 구조 확인) → `criteria-prd.md`
-   - `*/SKILL.md` (frontmatter name: 확인) → `criteria-skill.md`
-   - `*.sh` (shebang #!/ 확인) → `criteria-script.md`
-   - `.py .ts .js .go` 등 소스코드 → `criteria-code.md`
-   - 불명확 → **사용자에게 확인. 추측 금지.**
-2. `references/` 에서 위 criteria **1개만** 로드. 다른 criteria 읽지 않는다.
-3. 정적 분석 (구조, 포맷, 계약 위반)
-4. 동적 실행 (스크립트/코드인 경우)
-5. → Step 4로
+1. Detect type → determine criteria file:
+   - `docs/prd-*.md` (check §section structure) → `criteria-prd.md`
+   - `*/SKILL.md` (check frontmatter name:) → `criteria-skill.md`
+   - `*.sh` (check shebang #!/) → `criteria-script.md`
+   - `.py .ts .js .go` etc. source code → `criteria-code.md`
+   - Unclear → **Ask the user. No guessing.**
+2. Load only **1** criteria from `references/`. Do not read other criteria.
+3. Static analysis (structure, format, contract violations)
+4. Dynamic execution (if script/code)
+5. → Proceed to Step 4
 
-## Step 3B: 프로젝트/디렉토리 점검
+## Step 3B: Project/Directory Inspection
 
-1. 테스트 실행. 코드를 읽기 전에 테스트부터. 테스트 러너 모르면 **사용자에게 질문. 추측 금지.** 도구 미설치(command not found) → 해당 검사 SKIP + 경고. **설치 시도 금지.**
-2. 변경 파일 목록 (git diff)
-3. 각 파일의 **diff만** 분석. **파일 전체를 읽지 않는다.**
-4. 시나리오 워크스루 (의도 vs 구현). 해당 함수만 읽는다. 호출 그래프 추적 금지.
-5. 커버리지 갭 탐색
-6. → Step 4로
+1. Run tests. Tests before reading code. If test runner is unknown, **ask the user. No guessing.** Tool not installed (command not found) → SKIP that check + warn. **Do not attempt installation.**
+2. List changed files (git diff)
+3. Analyze **only the diff** of each file. **Do not read entire files.**
+4. Scenario walkthrough (intent vs implementation). Read only the relevant function. No call graph tracing.
+5. Coverage gap exploration
+6. → Proceed to Step 4
 
-## Step 4: 모드 분기
+## Step 4: Mode Branch
 
-### HITL인 경우
+### HITL Case
 
-Step 5 포맷으로 보고 → 사용자 판단 대기.
+Report in Step 5 format → wait for user judgment.
 
-#### 사용자 응답 해석 규칙
+#### User Response Interpretation Rules
 
-명확한 지시 (즉시 실행):
-- "1번 고쳐" → 해당 이슈만 수정 → 테스트 → 보고.
-- "1, 3 고쳐" → 해당 이슈들만 순차 수정, 매번 테스트.
-- "다 고쳐" → 전체 순차 수정, 매번 테스트.
-- "무시해" / "넘어가" → 해당 이슈 기록 후 종료.
+Clear instructions (execute immediately):
+- "Fix #1" → fix that issue only → test → report.
+- "Fix 1, 3" → fix those issues sequentially, test after each.
+- "Fix all" → fix all sequentially, test after each.
+- "Ignore" / "Skip" → record the issue and end.
 
-모호한 응답 (재질문 필수):
-- "응", "알겠어", "그래", "오케이" → **수정 허가로 해석 금지.**
-  → 재질문: "어떤 이슈를 수정할까요? 번호를 지정하거나 '다 고쳐'라고 해주세요."
-- 이슈와 무관한 응답 → 재질문.
+Ambiguous responses (must re-ask):
+- "Yeah", "Got it", "Sure", "OK" → **Do not interpret as permission to fix.**
+  → Re-ask: "Which issues should I fix? Specify numbers or say 'fix all'."
+- Response unrelated to issues → re-ask.
 
-### 자율인 경우
+### Autonomous Case
 
-critical→warning→coverage 순 즉시 수정 → 매 수정 후 테스트 → 전부 끝나면 Step 5 포맷으로 결과 보고.
-- 테스트 FAIL → 해당 수정 롤백, 미수정 "테스트 실패"
-- 의도 불명확 (코드 삭제, 로직 변경) → 미수정 "의도 불명확"
-- 구조 변경 필요 (파일 이동, 인터페이스 변경) → 미수정 "구조 변경 필요"
+Fix immediately in critical→warning→coverage order → test after each fix → report results in Step 5 format when all done.
+- Test FAIL → rollback that fix, unfixed "test failure"
+- Intent unclear (code deletion, logic change) → unfixed "intent unclear"
+- Structural change needed (file move, interface change) → unfixed "structural change needed"
 
-미수정 건이 있으면 사용자 판단으로 넘긴다.
+If there are unfixed items, hand off to user judgment.
 
-## Step 5: 보고
+## Step 5: Report
 
-심각도: `critical`(동작 오류) / `warning`(잠재 문제) / `coverage`(테스트 갭)
+Severity: `critical` (behavioral error) / `warning` (potential issue) / `coverage` (test gap)
 
 HITL:
 ```
-## ralpi 점검 결과
-대상: {경로 | "사용자 지정 범위"}
-### 발견 ({N}건)
-1. [{심각도}] {파일:라인} — {원인 한 줄}
-어떤 이슈부터 수정할까요?
+## ralpi Inspection Results
+Target: {path | "user-specified scope"}
+### Findings ({N} items)
+1. [{severity}] {file:line} — {one-line cause}
+Which issues should I fix first?
 ```
 
-자율:
+Autonomous:
 ```
-## ralpi 점검 + 수정 결과
-대상: {경로 | "사용자 지정 범위"}
-### 수정 완료 ({M}/{N}건)
-1. [fixed] {파일:라인} — {수정 내용 한 줄}
-### 미수정 ({K}건) ← 있을 때만
-1. [{심각도}] {파일:라인} — {원인} → {미수정 사유}
-테스트: {PASS | FAIL (상세)}
+## ralpi Inspection + Fix Results
+Target: {path | "user-specified scope"}
+### Fixed ({M}/{N} items)
+1. [fixed] {file:line} — {one-line fix description}
+### Unfixed ({K} items) ← only when present
+1. [{severity}] {file:line} — {cause} → {reason unfixed}
+Tests: {PASS | FAIL (details)}
 ```
 
-이슈 없음 → `ralpi 점검 완료, 이상 없음.` 한 줄. 나열 금지.
+No issues found → `ralpi inspection complete, no issues found.` Single line. No enumeration.
 
-## 금지
+## Prohibited
 
-- 변경 안 된 파일 읽기
-- criteria 2개 이상 동시 로드
-- HITL에서 지시 없이 수정
-- 프로젝트 스코프에서 파일 전체 읽기 (diff만)
-- "참고로..." 식 부가 정보
-- 장황한 보고
+- Reading unchanged files
+- Loading 2 or more criteria simultaneously
+- Fixing without instructions in HITL mode
+- Reading entire files in project scope (diff only)
+- "FYI..." style supplementary information
+- Verbose reports

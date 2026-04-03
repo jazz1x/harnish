@@ -1,64 +1,64 @@
-# 프로젝트 점검 기준
+# Project Inspection Criteria
 
-> ralpi가 디렉토리 스코프로 동작할 때 참조하는 기준.
-> 사용자가 지정한 범위의 파일들을 대상으로 한다.
+> Criteria referenced by ralpi when operating in directory scope.
+> Targets files within the scope specified by the user.
 
-## 0. 점검 순서
+## 0. Inspection Order
 
 ```
-1. 테스트 실행 (코드 읽기 전)
-2. 테스트 실패 분석
-3. 변경분 시나리오 워크스루
-4. 커버리지 갭 탐색
-5. 크로스플랫폼 호환성
+1. Run tests (before reading code)
+2. Test failure analysis
+3. Changed code scenario walkthrough
+4. Coverage gap exploration
+5. Cross-platform compatibility
 ```
 
-테스트 실행이 반드시 먼저. 실패가 가장 정확한 가이드.
+Tests must run first. Failures are the most accurate guide.
 
-## 1. 테스트 실패 분석
+## 1. Test Failure Analysis
 
-테스트 실행 → FAIL이 있으면:
+Run tests → if FAILs exist:
 
-- 실패 메시지에서 **파일:라인** 추출
-- 해당 지점의 **함수/블록만** 읽는다 (파일 전체 X)
-- 원인을 한 줄로 파악
+- Extract **file:line** from failure messages
+- Read only the **function/block** at that point (not the entire file)
+- Identify root cause in one line
 
-## 2. 의도 대비 구현 (가상 시나리오)
+## 2. Intent vs Implementation (Hypothetical Scenarios)
 
-변경된 각 파일의 diff에 대해 머릿속 실행:
+Mentally execute the diff of each changed file:
 
-- **정상 경로**: 기대 입력 → 각 분기 추적 → 기대 출력에 도달하는가?
-- **엣지 경로**: 빈 값, 특수문자, 대용량 입력 → 방어 코드가 잡는가?
-- **에러 경로**: 외부 실패(파일 없음, 네트워크 오류) → 적절히 핸들링되는가?
+- **Happy path**: expected input → trace each branch → does it reach expected output?
+- **Edge path**: empty values, special characters, large input → does defensive code catch it?
+- **Error path**: external failure (file not found, network error) → is it properly handled?
 
-의도와 다른 동작을 발견하면 이슈로 보고.
+Report as issue if behavior differs from intent.
 
-## 3. 커버리지 갭
+## 3. Coverage Gaps
 
-변경된 코드에서 테스트가 없는 경로를 찾는다.
+Find paths in changed code that have no tests.
 
-우선순위:
+Priority:
 
-1. **에러 분기** — exit 1, throw, return error 중 테스트 없는 것
-2. **플랫폼 분기** — OS별 조건문(`uname`, `OSTYPE`) 중 한쪽만 테스트된 것
-3. **입력 경계** — 빈 값, 특수문자, 경계값 테스트 부재
-4. **새 옵션/모드** — 추가했으나 테스트 안 한 플래그
+1. **Error branches** — exit 1, throw, return error with no test
+2. **Platform branches** — OS-specific conditionals (`uname`, `OSTYPE`) where only one side is tested
+3. **Input boundaries** — empty values, special characters, boundary value tests missing
+4. **New options/modes** — flags added but not tested
 
-찾는 법: diff에서 분기문(`if`, `case`, `||`, `&&`, `try/catch`)을 추출.
-→ 대응하는 테스트가 있는가?
+How to find: extract branch statements (`if`, `case`, `||`, `&&`, `try/catch`) from diff.
+→ Is there a corresponding test?
 
-## 4. 크로스플랫폼 호환성
+## 4. Cross-Platform Compatibility
 
-셸 스크립트가 변경분에 포함된 경우:
+When shell scripts are included in the changes:
 
-- `date -d` (GNU 전용) → macOS에서 동작하는가?
-- `sed -i ''` (BSD 전용) → Linux에서 동작하는가?
-- `grep -P` (Perl regex) → POSIX `grep -E`로 대체 가능한가?
-- `readarray`/`mapfile` → `while read` 루프로 대체했는가?
+- `date -d` (GNU only) → does it work on macOS?
+- `sed -i ''` (BSD only) → does it work on Linux?
+- `grep -P` (Perl regex) → can it be replaced with POSIX `grep -E`?
+- `readarray`/`mapfile` → replaced with `while read` loop?
 
-## 5. 읽기 범위 제한
+## 5. Read Scope Limitation
 
-- 변경되지 않은 파일은 읽지 않는다
-- 파일 전체를 읽지 않는다 — diff와 해당 함수/블록만
-- 프로젝트 구조, README, 설정 파일은 이미 아는 것으로 간주
-- 테스트 파일도 전체를 읽지 않는다 — 해당 테스트 케이스만
+- Do not read unchanged files
+- Do not read entire files — diff and relevant function/block only
+- Project structure, README, config files are assumed to be already known
+- Do not read entire test files either — only the relevant test cases
