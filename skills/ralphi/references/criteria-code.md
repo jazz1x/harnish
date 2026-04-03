@@ -1,6 +1,6 @@
 # Code Verification Criteria
 
-> Criteria referenced by ralpi when verifying implementation code.
+> Criteria referenced by ralphi when verifying implementation code.
 > Does not assume the existence of other skills. Judges based solely on the given artifact.
 > **Language-agnostic.** Detects language by file extension and selects the appropriate tools.
 

@@ -10,7 +10,7 @@
     {
       "name": "harnish",
       "source": ".",
-      "description": "자율 구현 엔진. PRD 생성(drafti) → 자율 구현(harnish) → 점검(ralpi).",
+      "description": "자율 구현 엔진. PRD 생성(drafti) → 자율 구현(harnish) → 점검(ralphi).",
       "version": "0.0.1"
     }
   ]

@@ -16,7 +16,7 @@ description: >
 ## 스킬 체인
 
 ```
-drafti-architect (또는 drafti-feature) → harnish → ralpi
+drafti-architect (또는 drafti-feature) → harnish → ralphi
 ```
 
 | 스킬 | 독립 호출 | 전제 조건 |
@@ -24,7 +24,7 @@ drafti-architect (또는 drafti-feature) → harnish → ralpi
 | drafti-architect | 가능 | 없음 (기술 문제만 있으면 됨) |
 | drafti-feature | 가능 | 기획서 필요 |
 | harnish | 가능 | docs/prd-*.md 또는 기존 harnish-current-work.json |
-| ralpi | 가능 | 검증 대상 파일/디렉토리 지정 |
+| ralphi | 가능 | 검증 대상 파일/디렉토리 지정 |
 
 harnish 시작 시 PRD 없으면: "PRD가 없습니다. /drafti-architect 또는 /drafti-feature로 먼저 생성하세요."
 

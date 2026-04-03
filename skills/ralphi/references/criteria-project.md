@@ -1,6 +1,6 @@
 # Project Inspection Criteria
 
-> Criteria referenced by ralpi when operating in directory scope.
+> Criteria referenced by ralphi when operating in directory scope.
 > Targets files within the scope specified by the user.
 
 ## 0. Inspection Order

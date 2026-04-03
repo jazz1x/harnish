@@ -13,7 +13,7 @@
 | **drafti-architect** | 0.0.1 | `/harnish:drafti-architect` | Tech-driven design PRD generation |
 | **drafti-feature** | 0.0.1 | `/harnish:drafti-feature` | Planning-based implementation spec PRD |
 | **harnish** | 0.0.1 | `/harnish:harnish` | Autonomous implementation engine (seeding + RALP loop + anchoring + experience) |
-| **ralpi** | 0.0.1 | `/harnish:ralpi` | Inspection (HITL reporting or autonomous fix) |
+| **ralphi** | 0.0.1 | `/harnish:ralphi` | Inspection (HITL reporting or autonomous fix) |
 
 Each skill operates in an **independent orbit**, connected only through **shared artifacts (files)**.
 
@@ -22,7 +22,7 @@ drafti  ──→  docs/prd-*.md  ──→  harnish  ──→  implementation 
                                      │
                                      └── .harnish/ (work coordinates + experience, in user project CWD)
 
-ralpi  ──→  inspects any artifact (PRD, SKILL.md, scripts, code)
+ralphi  ──→  inspects any artifact (PRD, SKILL.md, scripts, code)
               HITL (report → wait) or autonomous (fix immediately)
 ```
 
@@ -55,7 +55,7 @@ User: (in a new session) "Continue where I left off"
 → Restores coordinates from harnish-current-work.json, auto-resumes from break point
 ```
 
-### 3. Inspection (ralpi)
+### 3. Inspection (ralphi)
 
 ```
 User: "Inspect this PRD"
@@ -88,7 +88,7 @@ harnish/
 │   ├── drafti-architect/       # Tech design PRD generation
 │   ├── drafti-feature/         # Planning spec PRD generation
 │   ├── harnish/                # Autonomous implementation (seeding/RALP/anchoring/experience)
-│   └── ralpi/                  # Inspection (HITL/autonomous)
+│   └── ralphi/                  # Inspection (HITL/autonomous)
 ├── hooks/hooks.json            # Claude Code hooks
 ├── scripts/                    # Shared scripts (16)
 ├── docs/                       # PRD documents
@@ -105,7 +105,7 @@ cd your-project
 claude --plugin-dir /path/to/harnish
 ```
 
-Skills register as `/harnish:harnish`, `/harnish:drafti-architect`, `/harnish:drafti-feature`, `/harnish:ralpi`.
+Skills register as `/harnish:harnish`, `/harnish:drafti-architect`, `/harnish:drafti-feature`, `/harnish:ralphi`.
 
 ## Development
 
@@ -135,7 +135,7 @@ Details: [VERSIONING.md](./VERSIONING.md) | History: [CHANGELOG.md](./CHANGELOG.
 ## Naming
 
 - **harnish** = harness + ish (autonomous implementation engine)
-- **ralpi** = RALP (Recursive Autonomous Loop Process) + i (inspection)
+- **ralphi** = RALP (Recursive Autonomous Loop Process) + i (inspection)
 - **drafti** = draft + i (PRD generation — drafti-architect + drafti-feature)
 
 ## License

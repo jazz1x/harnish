@@ -1,6 +1,6 @@
 # 스크립트 검증 기준
 
-> ralpi가 shell script를 검증할 때 참조하는 상세 기준.
+> ralphi가 shell script를 검증할 때 참조하는 상세 기준.
 
 ## 필수 요소
 
