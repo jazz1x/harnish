@@ -834,20 +834,20 @@ else
   fail "resolve_base_dir: ASSET_BASE_DIR 최우선" "resolved=$resolved"
 fi
 
-# CLAUDE_PROJECT_DIR 차선
-resolved=$(CLAUDE_PROJECT_DIR="/project" bash -c "source '$HARNISH_ROOT/scripts/common.sh'; resolve_base_dir" 2>/dev/null)
-if [[ "$resolved" == "/project/.harnish" ]]; then
-  pass "resolve_base_dir: CLAUDE_PROJECT_DIR → .harnish"
+# CWD 기준 (CLAUDE_PROJECT_DIR 무시 — 워크트리 격리)
+resolved=$(CLAUDE_PROJECT_DIR="/project" bash -c "cd /tmp && source '$HARNISH_ROOT/scripts/common.sh'; resolve_base_dir" 2>/dev/null)
+if [[ "$resolved" == "/tmp/.harnish" ]]; then
+  pass "resolve_base_dir: CWD 기준 (CLAUDE_PROJECT_DIR 무시)"
 else
-  fail "resolve_base_dir: CLAUDE_PROJECT_DIR → .harnish" "resolved=$resolved"
+  fail "resolve_base_dir: CWD 기준 (CLAUDE_PROJECT_DIR 무시)" "resolved=$resolved"
 fi
 
-# CWD 폴백
+# CWD 기본
 resolved=$(bash -c "cd /tmp && source '$HARNISH_ROOT/scripts/common.sh'; resolve_base_dir" 2>/dev/null)
 if [[ "$resolved" == "/tmp/.harnish" ]]; then
-  pass "resolve_base_dir: CWD 폴백"
+  pass "resolve_base_dir: CWD 기본"
 else
-  fail "resolve_base_dir: CWD 폴백" "resolved=$resolved"
+  fail "resolve_base_dir: CWD 기본" "resolved=$resolved"
 fi
 
 # ════════════════════════════════════════

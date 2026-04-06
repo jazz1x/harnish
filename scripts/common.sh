@@ -29,12 +29,12 @@ require_cmd jq "brew install jq"
 # SCRIPT_DIR은 source하기 전에 설정되어야 한다.
 
 # 자산 루트 경로 해석
-# 우선순위: ASSET_BASE_DIR > CLAUDE_PROJECT_DIR/.harnish > CWD/.harnish
+# 우선순위: ASSET_BASE_DIR > CWD/.harnish
+# 워크트리 격리: CLAUDE_PROJECT_DIR 대신 CWD 기준으로 해석하여
+# 워크트리마다 독립된 .harnish/를 갖도록 한다.
 resolve_base_dir() {
     if [[ -n "${ASSET_BASE_DIR:-}" ]]; then
         echo "$ASSET_BASE_DIR"
-    elif [[ -n "${CLAUDE_PROJECT_DIR:-}" ]]; then
-        echo "${CLAUDE_PROJECT_DIR}/.harnish"
     else
         echo "$(pwd)/.harnish"
     fi

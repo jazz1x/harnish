@@ -132,6 +132,21 @@ Hybrid versioning: repo-level version (`VERSION`) + per-skill independent versio
 
 Details: [VERSIONING.md](./VERSIONING.md) | History: [CHANGELOG.md](./CHANGELOG.md)
 
+## Worktrees
+
+Each worktree gets its own `.harnish/` directory based on CWD. Work coordinates and experience are fully isolated per worktree — no shared state, no write conflicts.
+
+```
+/project/.harnish/                  ← main tree
+/project/.claude/worktrees/A/.harnish/  ← worktree A
+/other/path/worktree-B/.harnish/        ← worktree B (physical separation)
+```
+
+To reference experience from another worktree:
+```bash
+query-assets.sh --tags "docker" --base-dir /project/.harnish
+```
+
 ## Naming
 
 - **harnish** = harness + ish (autonomous implementation engine)

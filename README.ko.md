@@ -132,6 +132,21 @@ Pre-commit hook이 자동으로 검증합니다:
 
 상세: [VERSIONING.md](./VERSIONING.md) | 이력: [CHANGELOG.md](./CHANGELOG.md)
 
+## 워크트리
+
+워크트리마다 CWD 기준으로 독립된 `.harnish/` 디렉토리가 생성됩니다. 작업 좌표와 경험 자산 모두 워크트리별로 완전 격리되어, 공유 상태나 쓰기 충돌이 없습니다.
+
+```
+/project/.harnish/                      ← 메인 트리
+/project/.claude/worktrees/A/.harnish/  ← 워크트리 A
+/other/path/worktree-B/.harnish/        ← 워크트리 B (물리적 분리)
+```
+
+다른 워크트리의 경험을 참조하려면:
+```bash
+query-assets.sh --tags "docker" --base-dir /project/.harnish
+```
+
 ## Naming
 
 - **harnish** = harness + ish (자율 구현 엔진)
