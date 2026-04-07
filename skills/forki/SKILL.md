@@ -59,7 +59,7 @@ Compress to one sentence: *"Who executes X?"* / *"Who owns X?"* / *"What changes
 ## Step 3: Role Decomposition (D/E/V/R)
 
 **On entry**, output first line: `Step 3 attempt {n}/3`.
-`{n}` starts at 1; +1 on each back-jump from Step 5/6/7. On `attempt 4/3`, abort: *"forki could not converge after 3 back-jumps. Gather more context outside this skill."*
+`{n}` starts at 1 on first Step 3 entry; +1 on each back-jump from Step 5/6/7. On `attempt 3/3`, this is the **last** allowed run (2 back-jumps total). If forki would back-jump to Step 3 again from this attempt, abort instead: *"forki could not converge after 2 back-jumps. Gather more context outside this skill."*
 
 Fill all 4 roles per option:
 

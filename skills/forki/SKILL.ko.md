@@ -59,7 +59,7 @@ LLM은 제안, 사용자가 다음 단계 전 확인. 자율 모드 없음.
 ## Step 3: 역할 분해 (D/E/V/R)
 
 **진입 시** 첫 줄에 출력: `Step 3 attempt {n}/3`.
-`{n}`은 1부터, Step 5/6/7에서 back-jump마다 +1. `attempt 4/3`이면 종료: *"forki could not converge after 3 back-jumps. forki 밖의 추가 컨텍스트가 필요합니다."*
+`{n}`은 첫 Step 3 진입 시 1, Step 5/6/7에서 back-jump마다 +1. `attempt 3/3`이면 **마지막** 허용 진입 (back-jump 2회 한도). 이 상태에서 또 back-jump하려고 하면 → 종료: *"forki could not converge after 2 back-jumps. forki 밖의 추가 컨텍스트가 필요합니다."*
 
 각 옵션에 대해 4가지 역할 모두 채움:
 
