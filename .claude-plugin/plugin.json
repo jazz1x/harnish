@@ -9,5 +9,5 @@
   "repository": "https://github.com/jazz1x/harnish",
   "license": "MIT",
   "keywords": ["autonomous", "implementation", "prd", "verification", "skills"],
-  "commands": "./skills"
+  "skills": "./skills"
 }
