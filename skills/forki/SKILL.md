@@ -16,6 +16,12 @@ description: >
 Pattern: **binary → roles → trade-off → forced choice**.
 This is a decision skill, not an explanation skill.
 
+## Entry Check
+
+If invoked with no context (no decision topic, no problem description):
+→ Ask: "어떤 결정이 필요한가요? 고민 중인 상황을 설명해주세요."
+→ Wait for user response before proceeding to Step 0.
+
 ## Mode — HITL only
 
 | Category | Steps | LLM authority |
