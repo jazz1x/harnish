@@ -36,6 +36,12 @@ Each Bash tool invocation is a fresh subshell — variables do **not** survive a
 
 State counters (`TASK_COMPLETE_COUNT`, etc.) are tracked by the LLM in conversation memory, not in shell variables. `COMPRESS_EVERY_N = 5`.
 
+## Entry Check
+
+If invoked with no context (no PRD path, no task description, no experience command, no `harnish-current-work.json` in CWD):
+→ Ask: "무엇을 구현할까요? PRD 파일 경로나 작업 내용을 알려주세요."
+→ Wait for user response before proceeding to Step 1.
+
 ## Step 1: Mode Detection
 
 | Condition | Mode | Next | References to Load |
