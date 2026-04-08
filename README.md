@@ -34,6 +34,9 @@ ralphi  ──→  inspects any artifact (PRD, SKILL.md, scripts, code)
 ### 0. Decision Forcing (forki)
 
 ```
+User: /harnish:forki
+→ "어떤 결정이 필요한가요? 고민 중인 상황을 설명해주세요."
+
 User: "Should we use Postgres or MongoDB for this?"
 → forki frames as binary → asks user to confirm A/B
 → asks user to fill the D/E/V/R table (8 cells)
@@ -56,6 +59,9 @@ User: "Create a PRD from this planning doc" (with planning document attached)
 ### 2. Autonomous Implementation (harnish)
 
 ```
+User: /harnish:harnish
+→ "무엇을 구현할까요? PRD 파일 경로나 작업 내용을 알려주세요."
+
 User: "Start implementation" or "Decompose tasks"
 → Decomposes PRD into atomic tasks → generates harnish-current-work.json
 → "3 Phases, 12 Tasks seeded — review then 'run the loop'"
