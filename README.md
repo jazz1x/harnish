@@ -6,15 +6,32 @@
 
 [한국어](./README.ko.md)
 
+## Install
+
+### Via Plugin Marketplace (recommended)
+
+```
+/plugin marketplace add jazz1x/harnish
+/plugin install harnish@harnish
+```
+
+### Via --plugin-dir
+
+```bash
+git clone https://github.com/jazz1x/harnish.git
+cd your-project
+claude --plugin-dir /path/to/harnish
+```
+
 ## Skills
 
-| Skill | Version | Command | Role |
-|-------|---------|---------|------|
-| **forki** | 0.0.1 | `/harnish:forki` | Decision forcing (binary fork + D/E/V/R + trade-off, HITL only) |
-| **drafti-architect** | 0.0.1 | `/harnish:drafti-architect` | Tech-driven design PRD generation |
-| **drafti-feature** | 0.0.1 | `/harnish:drafti-feature` | Planning-based implementation spec PRD |
-| **harnish** | 0.0.1 | `/harnish:harnish` | Autonomous implementation engine (seeding + RALP loop + anchoring + experience) |
-| **ralphi** | 0.0.1 | `/harnish:ralphi` | Inspection (HITL reporting or autonomous fix) |
+| Skill | Command | Role |
+|-------|---------|------|
+| **forki** | `/harnish:forki` | Decision forcing (binary fork + D/E/V/R + trade-off, HITL only) |
+| **drafti-architect** | `/harnish:drafti-architect` | Tech-driven design PRD generation |
+| **drafti-feature** | `/harnish:drafti-feature` | Planning-based implementation spec PRD |
+| **harnish** | `/harnish:harnish` | Autonomous implementation engine (seeding + RALP loop + anchoring + experience) |
+| **ralphi** | `/harnish:ralphi` | Inspection (HITL reporting or autonomous fix) |
 
 Each skill operates in an **independent orbit**, connected only through **shared artifacts (files)**.
 
@@ -35,7 +52,7 @@ ralphi  ──→  inspects any artifact (PRD, SKILL.md, scripts, code)
 
 ```
 User: /harnish:forki
-→ "어떤 결정이 필요한가요? 고민 중인 상황을 설명해주세요."
+→ "What decision do you need to make? Describe the situation."
 
 User: "Should we use Postgres or MongoDB for this?"
 → forki frames as binary → asks user to confirm A/B
@@ -60,7 +77,7 @@ User: "Create a PRD from this planning doc" (with planning document attached)
 
 ```
 User: /harnish:harnish
-→ "무엇을 구현할까요? PRD 파일 경로나 작업 내용을 알려주세요."
+→ "What would you like to implement? Provide a PRD file path or describe the task."
 
 User: "Start implementation" or "Decompose tasks"
 → Decomposes PRD into atomic tasks → generates harnish-current-work.json
@@ -98,50 +115,17 @@ User: "Make this a skill"
 → Generates reusable SKILL.md draft from compressed assets
 ```
 
-## Structure
+## Hooks
 
-```
-harnish/
-├── .claude-plugin/plugin.json  # Plugin manifest
-├── skills/
-│   ├── forki/                  # Decision forcing (binary fork + D/E/V/R + trade-off, HITL only)
-│   ├── drafti-architect/       # Tech design PRD generation
-│   ├── drafti-feature/         # Planning spec PRD generation
-│   ├── harnish/                # Autonomous implementation (seeding/RALP/anchoring/experience)
-│   └── ralphi/                 # Inspection (HITL/autonomous)
-├── hooks/hooks.json            # Claude Code hooks
-├── scripts/                    # Shared scripts (16)
-├── docs/                       # PRD documents
-├── VERSION                     # Repo version
-├── CHANGELOG.md                # Release history
-└── VERSIONING.md               # Versioning policy
-```
+harnish registers the following hooks automatically on install. No configuration needed.
 
-## Install
+| Event | Trigger | What it does |
+|-------|---------|--------------|
+| `PostToolUse` | Bash, Edit, Write, NotebookEdit | Scans tool output for failure patterns, guardrails, and reusable snippets → records to `.harnish/` |
+| `PostToolUseFailure` | Bash, Edit, Write, NotebookEdit | Captures failure context → records as failure asset for future reference |
+| `Stop` | Session end | Runs quality gate + threshold check on accumulated assets |
 
-### Via Plugin Marketplace (recommended)
-
-```
-/plugin marketplace add jazz1x/harnish
-/plugin install harnish@harnish
-```
-
-For GitLab or other self-hosted git services:
-
-```
-/plugin marketplace add https://gitlab.com/your-org/harnish.git
-/plugin install harnish@harnish
-```
-
-### Via --plugin-dir
-
-```bash
-git clone https://github.com/jazz1x/harnish.git
-cd your-project
-claude --plugin-dir /path/to/harnish
-```
-
-Skills register as `/harnish:forki`, `/harnish:harnish`, `/harnish:drafti-architect`, `/harnish:drafti-feature`, `/harnish:ralphi`.
+Assets accumulate in `.harnish/` inside your project directory and persist across sessions. They are automatically referenced by `harnish`, `drafti-architect`, and `drafti-feature` when relevant.
 
 ## Fork & Customize
 
@@ -171,8 +155,6 @@ git commit -am "fork: rebrand"
 git push
 ```
 
-Users install yours with `claude --plugin-dir /path/to/your-fork`.
-
 ### C. Use this repo as a read-only upstream
 
 ```bash
@@ -182,46 +164,14 @@ claude --plugin-dir /path/to/harnish
 git -C /path/to/harnish pull   # update later
 ```
 
-No fork needed. Pull to get updates.
-
-## Development
-
-```bash
-git clone https://github.com/jazz1x/harnish.git
-cd harnish
-git config core.hooksPath .githooks
-```
-
-Pre-commit hooks automatically validate:
-- `shellcheck` — shell script lint
-- JSON syntax — `hooks.json`, etc.
-- SKILL.md frontmatter — `name`, `description`, `version` required fields
-- SKILL.md version — SemVer format (`X.Y.Z`)
-- Script permissions — `.sh` file execution permissions
-
-## Versioning
-
-Hybrid versioning: repo-level version (`VERSION`) + per-skill independent versions (`SKILL.md` frontmatter).
-
-- SemVer 2.0.0 compliant
-- Git tag on PR merge (`v0.0.1`)
-- Keep a Changelog format
-
-Details: [VERSIONING.md](./VERSIONING.md) | History: [CHANGELOG.md](./CHANGELOG.md)
-
 ## Worktrees
 
 Each worktree gets its own `.harnish/` directory based on CWD. Work coordinates and experience are fully isolated per worktree — no shared state, no write conflicts.
 
 ```
-/project/.harnish/                  ← main tree
+/project/.harnish/                      ← main tree
 /project/.claude/worktrees/A/.harnish/  ← worktree A
 /other/path/worktree-B/.harnish/        ← worktree B (physical separation)
-```
-
-To reference experience from another worktree:
-```bash
-query-assets.sh --tags "docker" --base-dir /project/.harnish
 ```
 
 ## Naming
