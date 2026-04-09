@@ -19,13 +19,13 @@ Claude Code 실행 후:
 
 ## Skills
 
-| Skill | Command | Role |
-|-------|---------|------|
-| **forki** | `/harnish:forki` | 의사결정 강제 (2지선택 + D/E/V/R + trade-off, HITL 전용) |
-| **drafti-architect** | `/harnish:drafti-architect` | 기술 주도 설계 PRD 생성 |
-| **drafti-feature** | `/harnish:drafti-feature` | 기획 기반 구현 명세 PRD 생성 |
-| **harnish** | `/harnish:harnish` | 자율 구현 엔진 (시딩 + RALP 루프 + 앵커링 + 경험축적) |
-| **ralphi** | `/harnish:ralphi` | 점검 (HITL 보고 또는 자율 수정) |
+| Skill | Command | Shortcut | Role |
+|-------|---------|----------|------|
+| **forki** | `/harnish:forki` | `/har-fork` | 의사결정 강제 (2지선택 + D/E/V/R + trade-off, HITL 전용) |
+| **drafti-architect** | `/harnish:drafti-architect` | `/har-arch` | 기술 주도 설계 PRD 생성 |
+| **drafti-feature** | `/harnish:drafti-feature` | `/har-feat` | 기획 기반 구현 명세 PRD 생성 |
+| **harnish** | `/harnish:harnish` | `/har-ship` | 자율 구현 엔진 (시딩 + RALP 루프 + 앵커링 + 경험축적) |
+| **ralphi** | `/harnish:ralphi` | `/har-scan` | 점검 (HITL 보고 또는 자율 수정) |
 
 각 스킬은 **독립 궤도**에서 동작하며, **공유 아티팩트(파일)**로만 연결된다.
 

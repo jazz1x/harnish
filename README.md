@@ -17,13 +17,13 @@ Run Claude Code, then:
 
 ## Skills
 
-| Skill | Command | Role |
-|-------|---------|------|
-| **forki** | `/harnish:forki` | Decision forcing (binary fork + D/E/V/R + trade-off, HITL only) |
-| **drafti-architect** | `/harnish:drafti-architect` | Tech-driven design PRD generation |
-| **drafti-feature** | `/harnish:drafti-feature` | Planning-based implementation spec PRD |
-| **harnish** | `/harnish:harnish` | Autonomous implementation engine (seeding + RALP loop + anchoring + experience) |
-| **ralphi** | `/harnish:ralphi` | Inspection (HITL reporting or autonomous fix) |
+| Skill | Command | Shortcut | Role |
+|-------|---------|----------|------|
+| **forki** | `/harnish:forki` | `/har-fork` | Decision forcing (binary fork + D/E/V/R + trade-off, HITL only) |
+| **drafti-architect** | `/harnish:drafti-architect` | `/har-arch` | Tech-driven design PRD generation |
+| **drafti-feature** | `/harnish:drafti-feature` | `/har-feat` | Planning-based implementation spec PRD |
+| **harnish** | `/harnish:harnish` | `/har-ship` | Autonomous implementation engine (seeding + RALP loop + anchoring + experience) |
+| **ralphi** | `/harnish:ralphi` | `/har-scan` | Inspection (HITL reporting or autonomous fix) |
 
 Each skill operates in an **independent orbit**, connected only through **shared artifacts (files)**.
 
