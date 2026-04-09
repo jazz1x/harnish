@@ -52,7 +52,7 @@ ralphi  ──→  inspects any artifact (PRD, SKILL.md, scripts, code)
 
 ```
 User: /harnish:forki
-→ "어떤 결정이 필요한가요? 고민 중인 상황을 설명해주세요."
+→ "What decision do you need to make? Describe the situation."
 
 User: "Should we use Postgres or MongoDB for this?"
 → forki frames as binary → asks user to confirm A/B
@@ -77,7 +77,7 @@ User: "Create a PRD from this planning doc" (with planning document attached)
 
 ```
 User: /harnish:harnish
-→ "무엇을 구현할까요? PRD 파일 경로나 작업 내용을 알려주세요."
+→ "What would you like to implement? Provide a PRD file path or describe the task."
 
 User: "Start implementation" or "Decompose tasks"
 → Decomposes PRD into atomic tasks → generates harnish-current-work.json
