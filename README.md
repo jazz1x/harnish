@@ -8,19 +8,11 @@
 
 ## Install
 
-### Via Plugin Marketplace (recommended)
+Run Claude Code, then:
 
 ```
-/plugin marketplace add jazz1x/harnish
-/plugin install harnish@harnish
-```
-
-### Via --plugin-dir
-
-```bash
-git clone https://github.com/jazz1x/harnish.git
-cd your-project
-claude --plugin-dir /path/to/harnish
+/plugin marketplace add https://github.com/jazz1x/harnish.git
+/plugin install harnish
 ```
 
 ## Skills

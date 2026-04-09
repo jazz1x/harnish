@@ -10,19 +10,11 @@
 
 ## 설치
 
-### 플러그인 마켓플레이스 방식 (권장)
+Claude Code 실행 후:
 
 ```
-/plugin marketplace add jazz1x/harnish
-/plugin install harnish@harnish
-```
-
-### --plugin-dir 방식
-
-```bash
-git clone https://github.com/jazz1x/harnish.git
-cd your-project
-claude --plugin-dir /path/to/harnish
+/plugin marketplace add https://github.com/jazz1x/harnish.git
+/plugin install harnish
 ```
 
 ## Skills
