@@ -1,6 +1,6 @@
 ---
 name: harnish
-version: 0.0.1
+version: 0.0.2
 description: >
   Autonomous implementation engine. PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
   triggers: "구현 시작", "start implementation", "태스크 분해", "decompose tasks", "루프 돌려", "run loop", "이어서 진행", "continue",
@@ -234,6 +234,57 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 | "자산 품질" / "asset quality" | quality-gate.sh |
 | "위반 확인" / "check violations" | check-violations.sh |
 
+## Step 6: Post-Completion Ceremony
+
+Trigger: Todo empty AND no Doing AND `.metadata.ceremony_done` is false/missing.
+
+Purpose: turn "all tasks done" into a deliberate closing beat — inspect, compress, summarize, suggest next — rather than a sudden STOP.
+
+### 6.1 Automatic Inspection (read-only)
+
+Invoke ralphi inspection on files changed since session start. Report findings inline. **DO NOT auto-fix** — fixing is a separate user trigger.
+
+```
+📋 Post-Done inspection (ralphi, read-only)
+Files changed this session: {N}
+Findings: {count by severity}
+```
+
+### 6.2 Asset Compression Check
+
+Run compress-assets.sh with `--dry-run`. If any tag accumulated ≥ `COMPRESS_EVERY_N` (5) entries, **suggest** compression (do not auto-apply):
+
+```bash
+HARNISH_ROOT="${CLAUDE_PLUGIN_ROOT}"
+bash "$HARNISH_ROOT/scripts/compress-assets.sh" --dry-run --all --base-dir "$(pwd)/.harnish"
+```
+
+### 6.3 Summary Generation
+
+3-line summary:
+
+```
+✅ Session summary
+Files changed: {count} ({short list})
+Key decisions: {1-2 one-liners from .harnish/harnish-rag.jsonl recorded this session}
+Suggested next: {e.g., ralphi fix | deploy | handoff | sibling plugin invocation}
+```
+
+### 6.4 HITL Before Persist
+
+> "Ceremony complete. Save session summary to `docs/session-{YYYY-MM-DD}.md`? (y / n / edit-slug)"
+
+- `y` → save + set `.metadata.ceremony_done: true` → STOP
+- `n` → set `.metadata.ceremony_done: true` → STOP without save
+- `edit-slug` → ask for slug, then `y` path
+
+### Prohibited in Step 6
+
+- Auto-fixing ralphi findings (report only)
+- Auto-applying asset compression (suggest only)
+- Modifying harnish-current-work.json beyond `.metadata.ceremony_done` (done object is frozen)
+- Re-entering the ceremony on a session that already ran it (single-fire per session)
+
 ## Context Budget
 
 | When | Reads |
@@ -246,6 +297,7 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 | Step 3 [PROGRESS] | Test outputs only |
 | Step 4 (Restore) | `harnish-current-work.json`, no source code |
 | Step 5 (Experience) | `references/thresholds.md`, asset query output |
+| Step 6 (Post-Completion) | ralphi output + compress-assets dry-run output + session assets |
 
 `Load at most 2 references at a time.` Other references must wait for a phase switch.
 
@@ -266,7 +318,7 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 
 ## Termination Conditions
 
-- Todo is empty and no Doing → completion report → STOP
+- Todo is empty and no Doing → **Step 6 Post-Completion Ceremony** → after 6.4 HITL → STOP
 - User says "stop" → record current state in harnish-current-work.json → STOP
 - On session end →
   ```bash

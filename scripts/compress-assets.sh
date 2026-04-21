@@ -11,13 +11,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
 BASE="$(resolve_base_dir)"
-TAG="" ALL=false THRESHOLD=5
+TAG="" ALL=false THRESHOLD=5 DRY_RUN=false
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --tag)       TAG="$2"; shift 2;;
         --all)       ALL=true; shift;;
         --threshold) THRESHOLD="$2"; shift 2;;
+        --dry-run)   DRY_RUN=true; shift;;
         --base-dir)  BASE="$2"; shift 2;;
         *) shift;;
     esac
@@ -44,6 +45,18 @@ fi
 
 if [[ -z "$TAGS_OVER" ]]; then
     echo '{"status":"no_targets","compressed":0}'
+    exit 0
+fi
+
+# 마킹/요약 append 로직 앞에:
+if $DRY_RUN; then
+    # candidates JSON 출력만, 파일 변경 없음
+    CANDIDATES=$(echo "$TAGS_OVER" | awk 'NF' | while read -r t; do
+        cnt=$(jq -c --arg t "$t" 'select(.compressed != true) | select(.tags[] == $t)' "$RAG_FILE" | wc -l | xargs)
+        jq -n -c --arg tag "$t" --argjson count "$cnt" --argjson threshold "$THRESHOLD" \
+            '{tag:$tag, count:$count, would_compress:($count >= $threshold)}'
+    done | jq -s .)
+    jq -n -c --argjson c "$CANDIDATES" '{status:"dry_run",candidates:$c}'
     exit 0
 fi
 

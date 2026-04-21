@@ -1,5 +1,6 @@
 ---
 name: har-feat
+version: 0.0.2
 description: >
   Shortcut for harnish:drafti-feature — planning-based implementation spec PRD generation.
   Takes a planning document, generates implementation spec PRD with docs/prd-*.md.

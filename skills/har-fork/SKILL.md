@@ -1,5 +1,6 @@
 ---
 name: har-fork
+version: 0.0.2
 description: >
   Shortcut for harnish:forki — decision forcing.
   Reduces a problem to a binary fork via D/E/V/R role decomposition, surfaces trade-offs, forces a single choice.

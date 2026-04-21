@@ -973,6 +973,114 @@ else
 fi
 
 # ════════════════════════════════════════
+# v0.0.2: compress-assets --dry-run 비파괴
+# ════════════════════════════════════════
+echo "${BOLD}[v0.0.2: compress-assets --dry-run]${NC}"
+
+DRY_FIXTURE="$TMPDIR_BASE/dry-fixture/.harnish"
+mkdir -p "$DRY_FIXTURE"
+for i in 1 2 3 4 5 6; do
+  jq -n -c --arg t "dry-test-tag" --argjson i "$i" \
+    '{schema_version:"0.0.2",type:"pattern",slug:"p\($i)",title:"t\($i)",tags:[$t],date:"2026-01-01",scope:"generic",body:"b",context:"c",session:"s",last_accessed_at:"2026-01-01T00:00:00Z",access_count:0}' \
+    >> "$DRY_FIXTURE/harnish-rag.jsonl"
+done
+HASH_BEFORE=$(shasum "$DRY_FIXTURE/harnish-rag.jsonl" | awk '{print $1}')
+DRY_OUT=$(bash "$HARNISH_ROOT/scripts/compress-assets.sh" --all --dry-run --base-dir "$DRY_FIXTURE" 2>&1)
+HASH_AFTER=$(shasum "$DRY_FIXTURE/harnish-rag.jsonl" | awk '{print $1}')
+if [[ "$HASH_BEFORE" == "$HASH_AFTER" ]] && echo "$DRY_OUT" | grep -q '"status":"dry_run"'; then
+  pass "compress-assets --dry-run 비파괴 + dry_run status"
+else
+  fail "compress-assets --dry-run 비파괴" "hash 변경 또는 status 누락: $DRY_OUT"
+fi
+
+# ════════════════════════════════════════
+# v0.0.2: migrate.sh 백필 정책
+# ════════════════════════════════════════
+echo "${BOLD}[v0.0.2: migrate.sh 백필]${NC}"
+
+MIG_FIX="$TMPDIR_BASE/mig-fix/.harnish"
+mkdir -p "$MIG_FIX"
+jq -n -c '{type:"pattern",slug:"legacy",title:"legacy","tags":["l"],"date":"2026-01-15",scope:"generic",body:"b",context:"c",session:"s"}' \
+  > "$MIG_FIX/harnish-rag.jsonl"
+bash "$HARNISH_ROOT/scripts/migrate.sh" --base-dir "$MIG_FIX" >/dev/null 2>&1 || true
+MIG_VER=$(jq -r '.schema_version' "$MIG_FIX/harnish-rag.jsonl")
+MIG_LA=$(jq -r '.last_accessed_at' "$MIG_FIX/harnish-rag.jsonl")
+MIG_AC=$(jq -r '.access_count' "$MIG_FIX/harnish-rag.jsonl")
+BAK_EXISTS=$(ls "$MIG_FIX"/harnish-rag.jsonl.bak* 2>/dev/null | wc -l | xargs)
+if [[ "$MIG_VER" == "0.0.2" ]] && [[ "$MIG_LA" == "2026-01-15" ]] && [[ "$MIG_AC" == "0" ]] && [[ "$BAK_EXISTS" -ge 1 ]]; then
+  pass "migrate.sh 백필: schema_version=0.0.2, last_accessed_at=date, access_count=0, .bak 생성"
+else
+  fail "migrate.sh 백필" "ver=$MIG_VER la=$MIG_LA ac=$MIG_AC bak=$BAK_EXISTS"
+fi
+
+# ════════════════════════════════════════
+# v0.0.2: purge-assets 기본 dry-run
+# ════════════════════════════════════════
+echo "${BOLD}[v0.0.2: purge-assets 기본 dry-run]${NC}"
+
+PURGE_FIX="$TMPDIR_BASE/purge-fix/.harnish"
+mkdir -p "$PURGE_FIX"
+OLD_DATE=$(date -u -v-400d +"%Y-%m-%d" 2>/dev/null || date -u -d "-400 days" +"%Y-%m-%d" 2>/dev/null || echo "2024-01-01")
+jq -n -c --arg d "$OLD_DATE" \
+  '{schema_version:"0.0.2",type:"decision",slug:"old-dec",title:"old",tags:["x"],date:$d,scope:"generic",body:"b",context:"c",session:"s",last_accessed_at:$d,access_count:0}' \
+  > "$PURGE_FIX/harnish-rag.jsonl"
+HASH_BEFORE=$(shasum "$PURGE_FIX/harnish-rag.jsonl" | awk '{print $1}')
+PURGE_OUT=$(bash "$HARNISH_ROOT/scripts/purge-assets.sh" --base-dir "$PURGE_FIX" 2>&1)
+HASH_AFTER=$(shasum "$PURGE_FIX/harnish-rag.jsonl" | awk '{print $1}')
+if [[ "$HASH_BEFORE" == "$HASH_AFTER" ]] && echo "$PURGE_OUT" | grep -q '"status":"dry_run"'; then
+  pass "purge-assets 기본 dry-run 비파괴 + status"
+else
+  fail "purge-assets 기본 dry-run" "hash 변경 또는 status 누락: $PURGE_OUT"
+fi
+
+# ════════════════════════════════════════
+# v0.0.2: 별칭 5개 SKILL.ko.md 존재
+# ════════════════════════════════════════
+echo "${BOLD}[v0.0.2: 별칭 Korean parity]${NC}"
+
+ALIAS_OK=true
+ALIAS_TRIGGERS=("구현 시작" "점검" "설계" "기획" "결정")
+ALIAS_NAMES=(har-ship har-scan har-arch har-feat har-fork)
+for i in 0 1 2 3 4; do
+  A="${ALIAS_NAMES[$i]}"
+  T="${ALIAS_TRIGGERS[$i]}"
+  if [[ ! -f "$HARNISH_ROOT/skills/$A/SKILL.ko.md" ]]; then
+    ALIAS_OK=false
+    fail "별칭 $A SKILL.ko.md" "파일 없음"
+  elif ! grep -q "$T" "$HARNISH_ROOT/skills/$A/SKILL.ko.md"; then
+    ALIAS_OK=false
+    fail "별칭 $A 한국어 trigger" "$T 미포함"
+  fi
+done
+if $ALIAS_OK; then
+  pass "별칭 5개 SKILL.ko.md + 한국어 trigger parity"
+fi
+
+# ════════════════════════════════════════
+# v0.0.2: 10개 원본 SKILL frontmatter version 일관성
+# ════════════════════════════════════════
+echo "${BOLD}[v0.0.2: SKILL version 일관성]${NC}"
+
+VERSION_OK=true
+for skill in harnish ralphi forki drafti-architect drafti-feature; do
+  for ext in md ko.md; do
+    V=$(awk '/^version:/ {print $2; exit}' "$HARNISH_ROOT/skills/$skill/SKILL.$ext" 2>/dev/null || echo "missing")
+    if [[ "$V" != "0.0.2" ]]; then
+      fail "$skill/SKILL.$ext version" "expected 0.0.2, got $V"
+      VERSION_OK=false
+    fi
+  done
+done
+PLUGIN_V=$(jq -r .version "$HARNISH_ROOT/.claude-plugin/plugin.json" 2>/dev/null || echo missing)
+if [[ "$PLUGIN_V" != "0.0.2" ]]; then
+  fail "plugin.json version" "expected 0.0.2, got $PLUGIN_V"
+  VERSION_OK=false
+fi
+if $VERSION_OK; then
+  pass "10개 원본 SKILL + plugin.json frontmatter version == 0.0.2"
+fi
+
+# ════════════════════════════════════════
 # 결과 요약
 # ════════════════════════════════════════
 echo ""

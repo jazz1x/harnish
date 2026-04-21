@@ -1,5 +1,6 @@
 ---
 name: har-scan
+version: 0.0.2
 description: >
   Shortcut for harnish:ralphi — inspection skill.
   Detects artifact type, runs analysis, reports issues (HITL) or fixes immediately (autonomous).

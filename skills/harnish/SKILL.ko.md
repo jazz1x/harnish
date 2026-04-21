@@ -1,6 +1,6 @@
 ---
 name: harnish
-version: 0.0.1
+version: 0.0.2
 description: >
   자율 구현 엔진. PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
   트리거: "구현 시작", "태스크 분해", "루프 돌려", "이어서 진행",
@@ -243,6 +243,57 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 - scope 밖 파일의 비관련 리팩토링 금지
 - harnish-current-work.json 삭제 또는 done 객체 직접 수정 금지
 
+## Step 6: 완료 의례 (Post-Completion Ceremony)
+
+Trigger: Todo 비어있음 AND Doing 비어있음 AND `.metadata.ceremony_done`이 false/missing.
+
+목적: "모든 task 완료"를 의도적인 종료 의식으로 변환 — 점검 + 압축 제안 + 요약 + HITL — 갑작스런 중단 대신.
+
+### 6.1 자동 점검 (읽기 전용)
+
+세션 시작 이후 변경된 파일에 ralphi 점검 호출. 결과를 inline 보고. **자동 수정 금지** — 수정은 별개 user trigger.
+
+```
+📋 완료 후 점검 (ralphi, 읽기 전용)
+이 세션에서 변경된 파일: {N}개
+발견: {심각도별 개수}
+```
+
+### 6.2 자산 압축 점검
+
+`--dry-run`으로 compress-assets.sh 실행. 어떤 tag도 `COMPRESS_EVERY_N` (5)개 이상 누적되면 압축 **제안** (자동 적용 금지):
+
+```bash
+HARNISH_ROOT="${CLAUDE_PLUGIN_ROOT}"
+bash "$HARNISH_ROOT/scripts/compress-assets.sh" --dry-run --all --base-dir "$(pwd)/.harnish"
+```
+
+### 6.3 요약 생성
+
+3줄 요약:
+
+```
+✅ 세션 요약
+변경된 파일: {개수} ({짧은 목록})
+핵심 결정: {이 세션에서 기록된 .harnish/harnish-rag.jsonl의 1-2줄 항목}
+다음 제안: {예: ralphi 수정 | 배포 | 인계 | 다른 플러그인 호출}
+```
+
+### 6.4 저장 전 HITL
+
+> "의례 완료. `docs/session-{YYYY-MM-DD}.md`에 요약 저장할까요? (y / n / edit-slug)"
+
+- `y` → 저장 + `.metadata.ceremony_done: true` 설정 → STOP
+- `n` → `.metadata.ceremony_done: true` 설정 → 저장 없이 STOP
+- `edit-slug` → slug 입력받고, `y` 경로 진행
+
+### Step 6에서 금지
+
+- ralphi 발견사항 자동 수정 (보고만)
+- 자산 압축 자동 적용 (제안만)
+- harnish-current-work.json을 `.metadata.ceremony_done` 이상으로 수정 (done 객체는 고정)
+- 이미 ceremony를 실행한 세션에서 재진입 (세션당 단일 실행)
+
 ## Context Budget
 
 | 시점 | 읽는 것 |
@@ -255,12 +306,13 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 | Step 3 [PROGRESS] | 테스트 출력만 |
 | Step 4 (복원) | `harnish-current-work.json`만, 소스 코드 X |
 | Step 5 (경험) | `references/thresholds.md`, asset query 출력 |
+| Step 6 (완료 의례) | ralphi 출력 + compress-assets dry-run 출력 + 세션 자산 |
 
 `reference는 동시에 2개까지`. 다른 reference는 phase 전환 시까지 대기.
 
 ## 종료 조건
 
-- Todo 비어있고 Doing 없음 → 완료 보고 → STOP
+- Todo 비어있고 Doing 없음 → **Step 6 완료 의례** → 6.4 HITL 후 → STOP
 - 사용자 "중단" → harnish-current-work.json에 현재 상태 기록 → STOP
 - 세션 종료 시 →
   ```bash

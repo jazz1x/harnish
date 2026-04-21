@@ -1,5 +1,6 @@
 ---
 name: har-ship
+version: 0.0.2
 description: >
   Shortcut for harnish:harnish — autonomous implementation engine.
   PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.

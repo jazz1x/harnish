@@ -1,5 +1,6 @@
 ---
 name: har-arch
+version: 0.0.2
 description: >
   Shortcut for harnish:drafti-architect — tech-driven design PRD generation.
   Explores 2-3 design alternatives with trade-off analysis, generates docs/prd-*.md.
