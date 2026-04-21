@@ -1,6 +1,6 @@
 ---
 name: ralphi
-version: 0.0.1
+version: 0.0.2
 description: >
   점검 스킬. 트리거: "점검해", "확인해", "검증해", "ralphi",
   "셀프점검", "커버리지 확인", "테스트 갭",

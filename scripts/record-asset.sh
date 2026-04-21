@@ -16,6 +16,7 @@ source "$SCRIPT_DIR/common.sh"
 
 BASE="$(resolve_base_dir)"
 DATE=$(date +"%Y-%m-%d")
+ISO_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
 # --- 인자 파싱 ---
 TYPE="" TAGS="" CONTEXT="" TITLE="" BODY="" BODY_FILE=""
@@ -93,7 +94,8 @@ RECORD=$(jq -n -c \
   --arg body "$BODY_CONTENT" \
   --arg context "$CONTEXT" \
   --arg session "$SESSION_ID" \
-  '{type:$type, slug:$slug, title:$title, tags:$tags, date:$date, scope:$scope, body:$body, context:$context, session:$session}')
+  --arg iso_ts "$ISO_TIMESTAMP" \
+  '{type:$type, slug:$slug, title:$title, tags:$tags, date:$date, scope:$scope, body:$body, context:$context, session:$session, schema_version: "0.0.2", last_accessed_at: $iso_ts, access_count: 0}')
 
 # 타입별 선택 필드
 case "$TYPE" in

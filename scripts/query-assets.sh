@@ -82,6 +82,18 @@ if [[ "$RESULT_COUNT" -eq 0 ]]; then
     empty_result
 fi
 
+# --- write-back: 매칭 레코드의 access_count 증분 + last_accessed_at 갱신 ---
+# 출력 전에 실행 (empty_result 분기 시 skip됨 = OK, 매칭 0이면 갱신 불필요)
+NOW_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+MATCHED_SLUGS=$(echo "$RESULTS" | jq -c '[.[].slug]')
+TMP_RAG=$(mktemp "${RAG_FILE}.XXXXXX")
+trap 'rm -f "$TMP_RAG"' EXIT
+jq -c --arg now "$NOW_UTC" --argjson slugs "$MATCHED_SLUGS" \
+  'if (.slug as $s | $slugs | any(. == $s))
+   then . + {last_accessed_at: $now, access_count: ((.access_count // 0) + 1)}
+   else . end' "$RAG_FILE" > "$TMP_RAG"
+mv "$TMP_RAG" "$RAG_FILE"
+
 # --- 출력 ---
 case "$FORMAT" in
     json)

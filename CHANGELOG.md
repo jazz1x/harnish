@@ -7,13 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-04-22
+
 ### Added
+- **Step 6: Post-Completion Ceremony** — 작업 완료 후 자동 점검(ralphi) + 자산 압축 제안 + 요약 + HITL 저장
+- **Asset TTL & Purge** — retention-policy 기반 자산 자동 정리 (decision/failure/snippet/pattern/guardrail별 보존 기간)
+- **Schema v0.0.2 Migration** — `migrate.sh` 백필 스크립트 (0.0.1→0.0.2 호환성 유지)
+- 한국어 단축키 5개: `/har-ship`, `/har-scan`, `/har-arch`, `/har-feat`, `/har-fork`
+- **compress-assets.sh --dry-run** — 비파괴 압축 후보 조회
+- **query-assets.sh write-back** — 자산 조회 시 access_count 자동 증가
+- **record-asset.sh v0.0.2 필드** — schema_version, last_accessed_at, access_count
+
+### Changed
 - 플러그인 매니페스트 (`.claude-plugin/plugin.json`) — `claude plugin add github:jazz1x/harnish`로 설치 가능
 - ralphi: HITL + 자율 수정 모드 (발화 기반 판별: "점검해"→HITL, "고쳐"→자율)
 - ralphi: `criteria-project.md` 추가 (프로젝트/디렉토리 스코프 점검 기준)
-- `.harnish/` 통합 마이그레이션 PRD (`docs/prd-harnish-dir-migration.md`)
-
-### Changed
+- `.harnish/` 디렉토리 컨벤션 통합 (CWD 기준 워크트리별 격리)
 - 전체 SKILL.md 저수준 모델 대응 압축 (1,208줄→587줄, -51%)
   - harnish: Step 선형화, ASCII 다이어그램 제거 (387→213줄)
   - drafti-architect: Mermaid 제거, 3중 반복 통합 (294→131줄)

@@ -72,6 +72,27 @@
     }
   },
 
+  "rag_record": {
+    "_comment": "harnish-rag.jsonl 각 레코드의 필드 정의. v0.0.2부터 3개 필드 필수.",
+    "required": {
+      "schema_version": {
+        "format": "X.Y.Z",
+        "default": "0.0.2",
+        "description": "레코드가 따르는 스키마 버전. 향후 마이그레이션 판별용."
+      },
+      "last_accessed_at": {
+        "format": "YYYY-MM-DDTHH:MM:SSZ",
+        "default_on_migration": "기존 레코드의 .date 값 (created_at 역할)",
+        "description": "마지막 조회 시각. query-assets.sh가 갱신."
+      },
+      "access_count": {
+        "type": "integer",
+        "default": 0,
+        "description": "조회 횟수 누적. purge 정책의 min_access_count 판정에 사용."
+      }
+    }
+  },
+
   "storage": {
     "_comment": "JSONL 기반 단일 파일 저장. .meta/index.json 불필요.",
     "rag_file": {

@@ -1,6 +1,6 @@
 ---
 name: drafti-architect
-version: 0.0.1
+version: 0.0.2
 description: >
   기술 설계 PRD 생성기. 기획 문서 없이 기술 문제 정의만으로 구현 가능한 PRD를 생성한다.
   트리거: "설계해", "아키텍처 PRD", "이 문제 어떻게 해결할지",
