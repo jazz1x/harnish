@@ -2,7 +2,7 @@
 name: harnish
 version: 0.0.1
 description: >
-  Autonomous implementation engine. PRD to task decomposition, RALP loop autonomous execution, cross-session context preservation, experience accumulation.
+  Autonomous implementation engine. PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
   triggers: "구현 시작", "start implementation", "태스크 분해", "decompose tasks", "루프 돌려", "run loop", "이어서 진행", "continue",
   "다음 태스크", "next task", "진행 상태", "progress status", "자산 현황", "asset status", "자산 압축", "compress assets",
   "이 패턴 기억해", "remember this pattern", "스킬로 만들어", "make it a skill",
@@ -73,7 +73,7 @@ Load **at most 2 references** at a time. (See Context Budget below.)
 6. Report to user: "Seeding complete — {N} Phases, {M} Tasks — review and say 'run loop'"
 7. → Proceed to Step 3
 
-## Step 3: Implementation Loop (RALP)
+## Step 3: Implementation Loop (ralph)
 
 ### Entry
 

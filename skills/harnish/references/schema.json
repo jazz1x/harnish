@@ -80,7 +80,7 @@
     },
     "work_file": {
       "path": ".harnish/harnish-current-work.json",
-      "description": "RALP 루프 작업 좌표 (세션 앵커)"
+      "description": "ralph 루프 작업 좌표 (세션 앵커)"
     },
     "thresholds": {
       "compression_trigger": 5,
@@ -130,7 +130,7 @@
     },
     "quality-gate.sh": {
       "input": "--base-dir, [--date, --format json|text]",
-      "output": "{ralp_gate, summary, verdict, question, issues}"
+      "output": "{gate, summary, verdict, question, issues}"
     },
     "check-thresholds.sh": {
       "input": "--base-dir, [--format json|text, --rebuild]",

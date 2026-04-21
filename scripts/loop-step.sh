@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# loop-step.sh — RALP 단일 스텝 상태 리포터
+# loop-step.sh — ralph 루프 단일 스텝 상태 리포터
 # 용도: 현재 harnish-current-work.json에서 루프 좌표를 추출하여 저수준 모델에 주입할 컨텍스트를 출력한다
 # 사용법: bash loop-step.sh [harnish-current-work.json 경로] [--format json|text]
 
@@ -123,7 +123,7 @@ if [[ "$FORMAT" == "json" ]]; then
     }'
 else
   echo "════════════════════════════════════"
-  echo " RALP 루프 현재 좌표"
+  echo " ralph 루프 현재 좌표"
   echo "════════════════════════════════════"
   echo " STATUS      : $STATUS"
   echo " Phase       : ${CURRENT_PHASE:-미설정}"
