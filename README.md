@@ -22,7 +22,7 @@ Run Claude Code, then:
 | **forki** | `/harnish:forki` | `/har-fork` | Decision forcing (binary fork + D/E/V/R + trade-off, HITL only) |
 | **drafti-architect** | `/harnish:drafti-architect` | `/har-arch` | Tech-driven design PRD generation |
 | **drafti-feature** | `/harnish:drafti-feature` | `/har-feat` | Planning-based implementation spec PRD |
-| **harnish** | `/harnish:harnish` | `/har-ship` | Autonomous implementation engine (seeding + RALP loop + anchoring + experience) |
+| **harnish** | `/harnish:harnish` | `/har-ship` | Autonomous implementation engine (seeding + ralph loop + anchoring + experience) |
 | **ralphi** | `/harnish:ralphi` | `/har-scan` | Inspection (HITL reporting or autonomous fix) |
 
 Each skill operates in an **independent orbit**, connected only through **shared artifacts (files)**.
@@ -76,7 +76,7 @@ User: "Start implementation" or "Decompose tasks"
 → "3 Phases, 12 Tasks seeded — review then 'run the loop'"
 
 User: "Run the loop"
-→ RALP loop auto-executes (Read → Act → Log → Progress → repeat)
+→ ralph loop auto-executes (Read → Act → Log → Progress → repeat)
 → Updates harnish-current-work.json every 3 actions, milestone report on phase completion
 
 User: (in a new session) "Continue where I left off"
@@ -169,7 +169,8 @@ Each worktree gets its own `.harnish/` directory based on CWD. Work coordinates 
 ## Naming
 
 - **harnish** = harness + ish (autonomous implementation engine)
-- **ralphi** = RALP (Recursive Autonomous Loop Process) + i (inspection)
+- **ralphi** = ralph + i (inspection)
+  - Origin: named after Ralph Wiggum from The Simpsons — keep trying, don't give up
 - **drafti** = draft + i (PRD generation — drafti-architect + drafti-feature)
 - **forki** = fork + i (decision forcing — binary fork + D/E/V/R + trade-off, HITL only)
 

@@ -446,9 +446,9 @@ else
 fi
 
 # ════════════════════════════════════════
-# 19. RALP 상태 전이: Todo→Doing→Done 무결성
+# 19. ralph 상태 전이: Todo→Doing→Done 무결성
 # ════════════════════════════════════════
-echo "${BOLD}[RALP 상태 전이]${NC}"
+echo "${BOLD}[ralph 상태 전이]${NC}"
 
 TRANSITION_FILE="$TMPDIR_BASE/transition.json"
 # 1-1 완료, 1-2 진행 중 상태
@@ -523,17 +523,17 @@ TJSON
 
 # validate 통과해야 함
 if bash "$HARNISH_ROOT/scripts/validate-progress.sh" "$TRANSITION_FILE" >/dev/null 2>&1; then
-  pass "RALP 상태 전이: Todo→Doing→Done JSON 무결성"
+  pass "ralph 상태 전이: Todo→Doing→Done JSON 무결성"
 else
-  fail "RALP 상태 전이" "validate-progress 실패"
+  fail "ralph 상태 전이" "validate-progress 실패"
 fi
 
 # done에 result 필드 존재
 done_result=$(jq -r '.done.phases[0].tasks[0].result' "$TRANSITION_FILE")
 if [[ -n "$done_result" ]] && [[ "$done_result" != "null" ]]; then
-  pass "RALP 상태 전이: Done 태스크에 result 존재"
+  pass "ralph 상태 전이: Done 태스크에 result 존재"
 else
-  fail "RALP 상태 전이: Done 태스크에 result 존재" "result=$done_result"
+  fail "ralph 상태 전이: Done 태스크에 result 존재" "result=$done_result"
 fi
 
 # ════════════════════════════════════════
