@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.2] - 2026-04-22
+
+### Added
+- Test suite + GitHub Actions CI — 25 bats tests (manifest schema + script smoke + sandboxing) and a deep tier wrapping `scripts/test-all.sh`. Matrix runs on `ubuntu-latest` + `macos-latest`.
+- Self-name triggers on every skill description — `"forki"`, `"impl"`, `"harnish"` (and variants), `"drafti-architect"`, `"drafti"`, `"drafti-feature"` are now first-class triggers, so natural-language calls auto-invoke without the slash form.
+
+### Changed
+- **BREAKING:** Main implementation skill renamed `harnish` → `impl` (`/harnish:harnish` → `/harnish:impl`). The "harnish" engine concept is preserved — `impl` keeps `"harnish"`, `"harnish 시작"`, `"harnish 돌려"`, `"harnish 이어서"` in its trigger list, so existing natural-language calls keep working.
+- `scripts/test-all.sh` — dropped obsolete `har-*` shortcut parity section (those skills were removed in v0.0.1 cycle); SKILL version check now derives the expected version from `plugin.json` instead of hard-coding it (no more drift on bumps).
+- `scripts/test-all.sh` — brace-wrapped variable refs adjacent to Korean characters (`${var}개` instead of `$var개`) to fix CI macOS bash 3.2 + C locale parsing under `set -u`.
+- `scripts/common.sh` — `resolve_skill_dir()` now points to `skills/impl`.
+
 ## [0.0.1] - 2026-04-22
 
 First public release. 5 skills + shared script suite + asset infrastructure + auto-registered hooks.
@@ -83,5 +95,6 @@ First public release. 5 skills + shared script suite + asset infrastructure + au
 - README 구조 정리 (galmuri 동일 톤): badges, install steps, quickstart, usage, hooks, assets, worktrees, fork & customize, naming, triad
 - VERSIONING.md, references/* 가이드
 
-[Unreleased]: https://github.com/jazz1x/harnish/compare/v0.0.1...HEAD
+[Unreleased]: https://github.com/jazz1x/harnish/compare/v0.0.2...HEAD
+[0.0.2]: https://github.com/jazz1x/harnish/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/jazz1x/harnish/releases/tag/v0.0.1
