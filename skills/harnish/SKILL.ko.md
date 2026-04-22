@@ -1,6 +1,6 @@
 ---
 name: harnish
-version: 0.0.2
+version: 0.0.1
 description: >
   자율 구현 엔진. PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
   트리거: "구현 시작", "태스크 분해", "루프 돌려", "이어서 진행",

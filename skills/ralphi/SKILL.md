@@ -1,6 +1,6 @@
 ---
 name: ralphi
-version: 0.0.2
+version: 0.0.1
 description: >
   Inspection skill. Triggers: "점검해", "확인해", "검증해", "ralphi",
   "셀프점검", "커버리지 확인", "테스트 갭",

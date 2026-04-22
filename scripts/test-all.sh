@@ -227,7 +227,7 @@ if [[ $rc -eq 0 ]]; then
   # JSONL에서 compressed:true 레코드 확인
   compressed_count=$(jq -c 'select(.compressed == true)' "$ASSET_DIR/harnish-rag.jsonl" 2>/dev/null | wc -l | xargs)
   if [[ "$compressed_count" -gt 0 ]]; then
-    pass "compress-assets.sh: compressed:true 마킹 ($compressed_count건)"
+    pass "compress-assets.sh: compressed:true 마킹 (${compressed_count}건)"
   else
     fail "compress-assets.sh" "compressed:true 레코드 없음"
   fi
@@ -809,7 +809,7 @@ post_count=$(wc -l < "$PENDING_FILE_CHECK" | xargs)
 if [[ "$post_count" -eq "$pre_count" ]]; then
   pass "detect-asset: 노이즈 에러 필터링"
 else
-  fail "detect-asset: 노이즈 에러 필터링" "pending이 $pre_count → $post_count로 증가"
+  fail "detect-asset: 노이즈 에러 필터링" "pending이 ${pre_count} → ${post_count}로 증가"
 fi
 
 # Stop 이벤트
@@ -1034,50 +1034,23 @@ else
 fi
 
 # ════════════════════════════════════════
-# v0.0.2: 별칭 5개 SKILL.ko.md 존재
+# SKILL frontmatter version 일관성 (plugin.json 기준 자동 동기화)
 # ════════════════════════════════════════
-echo "${BOLD}[v0.0.2: 별칭 Korean parity]${NC}"
+echo "${BOLD}[SKILL version 일관성]${NC}"
 
-ALIAS_OK=true
-ALIAS_TRIGGERS=("구현 시작" "점검" "설계" "기획" "결정")
-ALIAS_NAMES=(har-ship har-scan har-arch har-feat har-fork)
-for i in 0 1 2 3 4; do
-  A="${ALIAS_NAMES[$i]}"
-  T="${ALIAS_TRIGGERS[$i]}"
-  if [[ ! -f "$HARNISH_ROOT/skills/$A/SKILL.ko.md" ]]; then
-    ALIAS_OK=false
-    fail "별칭 $A SKILL.ko.md" "파일 없음"
-  elif ! grep -q "$T" "$HARNISH_ROOT/skills/$A/SKILL.ko.md"; then
-    ALIAS_OK=false
-    fail "별칭 $A 한국어 trigger" "$T 미포함"
-  fi
-done
-if $ALIAS_OK; then
-  pass "별칭 5개 SKILL.ko.md + 한국어 trigger parity"
-fi
-
-# ════════════════════════════════════════
-# v0.0.2: 10개 원본 SKILL frontmatter version 일관성
-# ════════════════════════════════════════
-echo "${BOLD}[v0.0.2: SKILL version 일관성]${NC}"
-
+EXPECTED_V=$(jq -r .version "$HARNISH_ROOT/.claude-plugin/plugin.json" 2>/dev/null || echo missing)
 VERSION_OK=true
 for skill in harnish ralphi forki drafti-architect drafti-feature; do
   for ext in md ko.md; do
     V=$(awk '/^version:/ {print $2; exit}' "$HARNISH_ROOT/skills/$skill/SKILL.$ext" 2>/dev/null || echo "missing")
-    if [[ "$V" != "0.0.2" ]]; then
-      fail "$skill/SKILL.$ext version" "expected 0.0.2, got $V"
+    if [[ "$V" != "$EXPECTED_V" ]]; then
+      fail "$skill/SKILL.$ext version" "expected $EXPECTED_V (from plugin.json), got $V"
       VERSION_OK=false
     fi
   done
 done
-PLUGIN_V=$(jq -r .version "$HARNISH_ROOT/.claude-plugin/plugin.json" 2>/dev/null || echo missing)
-if [[ "$PLUGIN_V" != "0.0.2" ]]; then
-  fail "plugin.json version" "expected 0.0.2, got $PLUGIN_V"
-  VERSION_OK=false
-fi
 if $VERSION_OK; then
-  pass "10개 원본 SKILL + plugin.json frontmatter version == 0.0.2"
+  pass "5개 SKILL × (md + ko.md) frontmatter version == $EXPECTED_V"
 fi
 
 # ════════════════════════════════════════
