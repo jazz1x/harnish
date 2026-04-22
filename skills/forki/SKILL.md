@@ -4,7 +4,7 @@ version: 0.0.1
 description: >
   Decision-forcing skill. Reduces a problem to a binary fork via role decomposition
   (Decision / Execution / Validation / Recovery), surfaces trade-offs, forces a single choice.
-  Triggers: "결정", "선택", "어느 쪽", "두 길", "갈피", "trade-off", "둘 중 뭐",
+  Triggers: "forki", "결정", "선택", "어느 쪽", "두 길", "갈피", "trade-off", "둘 중 뭐",
   "이전에 결정한", "다시 결정", "결정 기록",
   "decide", "decision", "choose between", "fork", "torn between",
   "past decision", "decided before", "record decision".

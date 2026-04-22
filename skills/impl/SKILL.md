@@ -1,15 +1,16 @@
 ---
-name: harnish
+name: impl
 version: 0.0.1
 description: >
-  Autonomous implementation engine. PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
-  triggers: "구현 시작", "start implementation", "태스크 분해", "decompose tasks", "루프 돌려", "run loop", "이어서 진행", "continue",
+  Autonomous implementation engine (the "harnish" engine). PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
+  Triggers: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
+  "구현 시작", "start implementation", "태스크 분해", "decompose tasks", "루프 돌려", "run loop", "이어서 진행", "continue",
   "다음 태스크", "next task", "진행 상태", "progress status", "자산 현황", "asset status", "자산 압축", "compress assets",
   "이 패턴 기억해", "remember this pattern", "스킬로 만들어", "make it a skill",
   Request to resume work when harnish-current-work.json exists.
 ---
 
-# harnish — Autonomous Implementation Engine
+# impl — Autonomous Implementation Engine (the "harnish" engine)
 
 > Do not judge. Follow the rules. When lost, return to harnish-current-work.json. When stuck, escalate. No invention.
 

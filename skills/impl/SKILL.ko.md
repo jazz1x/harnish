@@ -1,15 +1,16 @@
 ---
-name: harnish
+name: impl
 version: 0.0.1
 description: >
-  자율 구현 엔진. PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
-  트리거: "구현 시작", "태스크 분해", "루프 돌려", "이어서 진행",
+  자율 구현 엔진 ("harnish" 엔진). PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
+  트리거: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
+  "구현 시작", "태스크 분해", "루프 돌려", "이어서 진행",
   "다음 태스크", "진행 상태", "자산 현황", "자산 압축",
   "이 패턴 기억해", "스킬로 만들어",
   harnish-current-work.json 존재 시 작업 재개 요청.
 ---
 
-# harnish — 자율 구현 엔진
+# impl — 자율 구현 엔진 ("harnish" 엔진)
 
 > 판단하지 않는다. 규칙을 따른다. 길을 잃으면 harnish-current-work.json로 돌아온다. 막히면 에스컬레이션한다. 발명 금지.
 

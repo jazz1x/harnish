@@ -17,7 +17,7 @@
 | **forki** | `/harnish:forki` | Decision forcing (binary fork + D/E/V/R + trade-off, HITL only) |
 | **drafti-architect** | `/harnish:drafti-architect` | Tech-driven design PRD generation |
 | **drafti-feature** | `/harnish:drafti-feature` | Planning-based implementation spec PRD |
-| **harnish** | `/harnish:harnish` | Autonomous implementation engine (seeding + ralph loop + anchoring + experience) |
+| **impl** | `/harnish:impl` | Autonomous implementation engine — the "harnish" engine (seeding + ralph loop + anchoring + experience) |
 | **ralphi** | `/harnish:ralphi` | Inspection (HITL reporting or autonomous fix) |
 
 Each skill operates in an **independent orbit**, connected only through **shared artifacts (files)**.
@@ -58,7 +58,7 @@ Expected output:
 Expected output:
 
 ```
-✓ Installed harnish@0.0.1 — 5 skills registered (forki, drafti-architect, drafti-feature, harnish, ralphi)
+✓ Installed harnish@0.0.1 — 5 skills registered (forki, drafti-architect, drafti-feature, impl, ralphi)
 ```
 
 ### 3. Verify
@@ -73,7 +73,7 @@ You should see `harnish` in the list. The five slash commands below should be in
 /harnish:forki
 /harnish:drafti-architect
 /harnish:drafti-feature
-/harnish:harnish
+/harnish:impl
 /harnish:ralphi
 ```
 
@@ -98,13 +98,13 @@ Once installed, the fastest path end-to-end:
 
 ```
 # Inside a Claude Code session, in any project that has a PRD or planning doc
-/harnish:harnish
+/harnish:impl
 ```
 
 Sample flow (simplified):
 
 ```
-user   > /harnish:harnish docs/prd-redis-cache.md
+user   > /harnish:impl docs/prd-redis-cache.md
 
 step 1 > Reading PRD → 3 phases, 12 atomic tasks identified
 step 2 > Seeding → .harnish/harnish-current-work.json created
@@ -156,7 +156,7 @@ User: "Create a PRD from this planning doc" (with planning document attached)
 ### 2. Autonomous Implementation (harnish)
 
 ```
-User: /harnish:harnish
+User: /harnish:impl
 → "What would you like to implement? Provide a PRD file path or describe the task."
 
 User: "Start implementation" or "Decompose tasks"
@@ -229,7 +229,7 @@ bash scripts/compress-assets.sh --dry-run --all        # preview compression
 bash scripts/quality-gate.sh                           # rerun the Stop-event quality check
 ```
 
-`.harnish/` lives inside your project CWD and persists across sessions. `harnish`, `drafti-architect`, and `drafti-feature` reference relevant assets automatically (tag-based query in Step 2 of each skill).
+`.harnish/` lives inside your project CWD and persists across sessions. `impl`, `drafti-architect`, and `drafti-feature` reference relevant assets automatically (tag-based query in Step 2 of each skill).
 
 ## Worktrees
 
@@ -252,7 +252,7 @@ mkdir -p .claude/skills
 cp -r /path/to/harnish/skills/forki .claude/skills/
 ```
 
-The skill is available as `forki` (no plugin namespace). Replace `forki` with any of: `harnish`, `ralphi`, `drafti-architect`, `drafti-feature`.
+The skill is available as `forki` (no plugin namespace). Replace `forki` with any of: `impl`, `ralphi`, `drafti-architect`, `drafti-feature`.
 
 ### B. Fork as your own plugin marketplace
 
