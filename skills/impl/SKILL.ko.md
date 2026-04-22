@@ -17,7 +17,7 @@ description: >
 ## 스킬 체인
 
 ```
-drafti-architect (또는 drafti-feature) → harnish → ralphi
+drafti-architect (또는 drafti-feature) → impl → ralphi
 ```
 
 | 스킬 | 독립 호출 | 전제 조건 |

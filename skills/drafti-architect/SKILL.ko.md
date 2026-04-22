@@ -18,7 +18,7 @@ description: >
 
 ## 스킬 체인
 
-독립 호출 가능. 후속: "검토 후 '구현 시작'" → harnish, 또는 "/ralphi로 PRD 정합성 확인" → ralphi.
+독립 호출 가능. 후속: "검토 후 '구현 시작'" → impl, 또는 "/ralphi로 PRD 정합성 확인" → ralphi.
 
 ## Step 1: 문제 명확화
 
