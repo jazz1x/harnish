@@ -52,7 +52,7 @@ resolve_rag_file() {
 
 # 스킬 디렉토리 (references/ 접근용)
 resolve_skill_dir() {
-    echo "$(cd "${SCRIPT_DIR:-$(pwd)}/../skills/harnish" && pwd)"
+    echo "$(cd "${SCRIPT_DIR:-$(pwd)}/../skills/impl" && pwd)"
 }
 
 # sections.json 경로

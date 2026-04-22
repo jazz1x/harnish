@@ -4,7 +4,7 @@ version: 0.0.1
 description: >
   의사결정 강제 스킬. 문제를 역할 분해(Decision/Execution/Validation/Recovery)로
   2지선택으로 환원, trade-off를 드러내고 단일 선택을 강제.
-  트리거: "결정", "선택", "어느 쪽", "두 길", "갈피", "trade-off", "둘 중 뭐",
+  트리거: "forki", "결정", "선택", "어느 쪽", "두 길", "갈피", "trade-off", "둘 중 뭐",
   "이전에 결정한", "다시 결정", "결정 기록",
   "decide", "decision", "choose between", "fork", "torn between",
   "past decision", "decided before", "record decision".

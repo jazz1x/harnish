@@ -33,7 +33,7 @@ First public release. 5 skills + shared script suite + asset infrastructure + au
 - HARNISH_ROOT 감지: 모노리포/독립 모드 자동 판별
 - references: feature-flag-patterns.md, prd-template.md
 
-#### harnish `0.0.1`
+#### impl `0.0.1` (the "harnish" engine)
 - 자율 구현 엔진 (시딩 + ralph 루프 + 앵커링 + 경험 축적)
 - 모드 A: PRD → 원자적 태스크 분해 → `harnish-current-work.json` 생성
 - 모드 B: ralph 루프 (Read → Act → Log → Progress → repeat)
