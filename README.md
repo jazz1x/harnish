@@ -2,7 +2,7 @@
 
 > Claude Code plugin — autonomous implementation engine
 
-![version](https://img.shields.io/badge/version-0.0.2-blue)
+![version](https://img.shields.io/badge/version-0.0.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
 
@@ -58,7 +58,7 @@ Expected output:
 Expected output:
 
 ```
-✓ Installed harnish@0.0.2 — 5 skills registered (forki, drafti-architect, drafti-feature, harnish, ralphi)
+✓ Installed harnish@0.0.1 — 5 skills registered (forki, drafti-architect, drafti-feature, harnish, ralphi)
 ```
 
 ### 3. Verify
