@@ -1,6 +1,6 @@
 ---
 name: forki
-version: 0.0.1
+version: 0.0.2
 description: >
   의사결정 강제 스킬. 문제를 역할 분해(Decision/Execution/Validation/Recovery)로
   2지선택으로 환원, trade-off를 드러내고 단일 선택을 강제.
