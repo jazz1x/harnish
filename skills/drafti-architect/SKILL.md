@@ -1,6 +1,6 @@
 ---
 name: drafti-architect
-version: 0.0.2
+version: 0.0.1
 description: >
   Technical design PRD generator. Creates an implementation-ready PRD from a technical problem definition alone, without a planning document.
   Triggers: "설계해", "design this", "아키텍처 PRD", "architecture PRD", "이 문제 어떻게 해결할지", "how to solve this problem",

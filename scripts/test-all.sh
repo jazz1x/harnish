@@ -1034,50 +1034,23 @@ else
 fi
 
 # ════════════════════════════════════════
-# v0.0.2: 별칭 5개 SKILL.ko.md 존재
+# SKILL frontmatter version 일관성 (plugin.json 기준 자동 동기화)
 # ════════════════════════════════════════
-echo "${BOLD}[v0.0.2: 별칭 Korean parity]${NC}"
+echo "${BOLD}[SKILL version 일관성]${NC}"
 
-ALIAS_OK=true
-ALIAS_TRIGGERS=("구현 시작" "점검" "설계" "기획" "결정")
-ALIAS_NAMES=(har-ship har-scan har-arch har-feat har-fork)
-for i in 0 1 2 3 4; do
-  A="${ALIAS_NAMES[$i]}"
-  T="${ALIAS_TRIGGERS[$i]}"
-  if [[ ! -f "$HARNISH_ROOT/skills/$A/SKILL.ko.md" ]]; then
-    ALIAS_OK=false
-    fail "별칭 $A SKILL.ko.md" "파일 없음"
-  elif ! grep -q "$T" "$HARNISH_ROOT/skills/$A/SKILL.ko.md"; then
-    ALIAS_OK=false
-    fail "별칭 $A 한국어 trigger" "$T 미포함"
-  fi
-done
-if $ALIAS_OK; then
-  pass "별칭 5개 SKILL.ko.md + 한국어 trigger parity"
-fi
-
-# ════════════════════════════════════════
-# v0.0.2: 10개 원본 SKILL frontmatter version 일관성
-# ════════════════════════════════════════
-echo "${BOLD}[v0.0.2: SKILL version 일관성]${NC}"
-
+EXPECTED_V=$(jq -r .version "$HARNISH_ROOT/.claude-plugin/plugin.json" 2>/dev/null || echo missing)
 VERSION_OK=true
 for skill in harnish ralphi forki drafti-architect drafti-feature; do
   for ext in md ko.md; do
     V=$(awk '/^version:/ {print $2; exit}' "$HARNISH_ROOT/skills/$skill/SKILL.$ext" 2>/dev/null || echo "missing")
-    if [[ "$V" != "0.0.2" ]]; then
-      fail "$skill/SKILL.$ext version" "expected 0.0.2, got $V"
+    if [[ "$V" != "$EXPECTED_V" ]]; then
+      fail "$skill/SKILL.$ext version" "expected $EXPECTED_V (from plugin.json), got $V"
       VERSION_OK=false
     fi
   done
 done
-PLUGIN_V=$(jq -r .version "$HARNISH_ROOT/.claude-plugin/plugin.json" 2>/dev/null || echo missing)
-if [[ "$PLUGIN_V" != "0.0.2" ]]; then
-  fail "plugin.json version" "expected 0.0.2, got $PLUGIN_V"
-  VERSION_OK=false
-fi
 if $VERSION_OK; then
-  pass "10개 원본 SKILL + plugin.json frontmatter version == 0.0.2"
+  pass "5개 SKILL × (md + ko.md) frontmatter version == $EXPECTED_V"
 fi
 
 # ════════════════════════════════════════

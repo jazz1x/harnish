@@ -1,6 +1,6 @@
 ---
 name: drafti-feature
-version: 0.0.2
+version: 0.0.1
 description: >
   기획 기반 구현 명세 PRD 생성기. 기획 요구사항을 구현 가능한 명세로 변환한다.
   트리거: "이 기획서로 PRD 만들어", "피쳐 PRD", "기획서 기반 구현 명세",

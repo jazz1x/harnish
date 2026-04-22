@@ -1,6 +1,6 @@
 ---
 name: harnish
-version: 0.0.2
+version: 0.0.1
 description: >
   Autonomous implementation engine. PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
   triggers: "구현 시작", "start implementation", "태스크 분해", "decompose tasks", "루프 돌려", "run loop", "이어서 진행", "continue",
