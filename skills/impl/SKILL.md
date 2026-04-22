@@ -17,7 +17,7 @@ description: >
 ## Skill Chain
 
 ```
-drafti-architect (or drafti-feature) → harnish → ralphi
+drafti-architect (or drafti-feature) → impl → ralphi
 ```
 
 | Skill | Standalone Call | Prerequisites |

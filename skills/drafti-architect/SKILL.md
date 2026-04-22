@@ -19,7 +19,7 @@ Each Bash tool invocation is a fresh subshell. Every bash block re-declares `HAR
 
 ## Skill Chain
 
-Can be invoked independently. Follow-up: "start implementation after review" → harnish, or "/ralphi to verify PRD consistency" → ralphi.
+Can be invoked independently. Follow-up: "start implementation after review" → impl, or "/ralphi to verify PRD consistency" → ralphi.
 
 ## Step 1: Problem Clarification
 
