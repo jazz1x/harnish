@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.3] - 2026-04-23
+
+### Fixed
+- impl skill: Mid-loop interruption guard — explicit prose prohibition on stopping outside milestone HITL, 3-failure escalation, or hard-guardrail violation (see docs/prd-impl-midloop-guard.md)
+
 ## [0.0.2] - 2026-04-22
 
 ### Added
@@ -95,6 +100,7 @@ First public release. 5 skills + shared script suite + asset infrastructure + au
 - README 구조 정리 (galmuri 동일 톤): badges, install steps, quickstart, usage, hooks, assets, worktrees, fork & customize, naming, triad
 - VERSIONING.md, references/* 가이드
 
-[Unreleased]: https://github.com/jazz1x/harnish/compare/v0.0.2...HEAD
+[Unreleased]: https://github.com/jazz1x/harnish/compare/v0.0.3...HEAD
+[0.0.3]: https://github.com/jazz1x/harnish/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/jazz1x/harnish/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/jazz1x/harnish/releases/tag/v0.0.1

@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.0.2
+version: 0.0.3
 description: >
   자율 구현 엔진 ("harnish" 엔진). PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
   트리거: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -178,6 +178,20 @@ bash "$HARNISH_ROOT/scripts/compress-progress.sh" .harnish/harnish-current-work.
 선택지: A. {A} / B. {B}
 ```
 
+### 루프 중단 금지
+
+Step 3 내부에서 허용되는 중단 지점은 다음 셋뿐입니다:
+1. **Milestone HITL** — phase 경계 ("On Phase Completion" 참고)
+2. **Escalation** — acceptance_criteria 3회 연속 실패
+3. **Hard guardrail 위반** — Guardrails 참고
+
+그 외 모든 중단은 금지 — 다음을 포함하되 이에 한정되지 않음:
+- 블로커 없이 "계속 진행해도 되는지" 사용자에게 묻기
+- 컨텍스트 크기나 태스크 수를 이유로 mid-phase 요약/체크포인트 제안
+- 정의된 phase 경계 없이 "태스크를 많이 완료했으니" 중단
+
+컨텍스트 피로는 중단 사유가 아닙니다. 컨텍스트가 빠듯하면 `compress-progress.sh`를 쓰고 계속 진행합니다.
+
 ## Step 4: 세션 복원 (앵커링)
 
 harnish-current-work.json 존재 + 새 세션 시작 시:
@@ -243,6 +257,7 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 - 하드코딩된 시크릿 삽입 금지
 - scope 밖 파일의 비관련 리팩토링 금지
 - harnish-current-work.json 삭제 또는 done 객체 직접 수정 금지
+- milestone HITL / 3회 실패 escalation / hard-guardrail 위반 외의 mid-loop 중단 금지
 
 ## Step 6: 완료 의례 (Post-Completion Ceremony)
 

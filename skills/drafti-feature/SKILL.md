@@ -1,6 +1,6 @@
 ---
 name: drafti-feature
-version: 0.0.2
+version: 0.0.3
 description: >
   Planning-based implementation spec PRD generator. Converts planning requirements into an implementation-ready spec.
   Triggers: "drafti-feature", "drafti", "drafti 피쳐", "이 기획서로 PRD 만들어", "create PRD from this planning doc",
