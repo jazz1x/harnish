@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.0.2
+version: 0.0.3
 description: >
   Autonomous implementation engine (the "harnish" engine). PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
   Triggers: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -184,6 +184,20 @@ Attempts: 1. {attempt}: {result} / 2. ... / 3. ...
 Options: A. {A} / B. {B}
 ```
 
+### Prohibited Mid-Loop
+
+The only permitted stop points inside Step 3 are:
+1. **Milestone HITL** — at phase boundary (see "On Phase Completion")
+2. **Escalation** — 3 consecutive acceptance_criteria failures
+3. **Hard guardrail violation** — see Guardrails
+
+Any other interruption is prohibited — including but not limited to:
+- Asking the user for permission to continue without a blocker
+- Proposing a mid-phase summary/checkpoint due to context size or task count
+- Stopping because "many tasks completed" without a defined phase boundary
+
+Context fatigue is not a stop condition. If context is tight, rely on `compress-progress.sh` and continue.
+
 ## Step 4: Session Restore (Anchoring)
 
 When harnish-current-work.json exists + new session starts:
@@ -316,6 +330,7 @@ Suggested next: {e.g., ralphi fix | deploy | handoff | sibling plugin invocation
 - Inserting hardcoded secrets prohibited
 - Unrelated refactoring of files outside scope prohibited
 - Deleting harnish-current-work.json or directly modifying the done object prohibited
+- Mid-loop interruption outside milestone HITL / 3-failure escalation / hard-guardrail violation prohibited
 
 ## Termination Conditions
 
