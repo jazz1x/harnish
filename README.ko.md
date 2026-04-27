@@ -2,9 +2,10 @@
 
 > Claude Code 플러그인 — 자율 구현 엔진
 
-![version](https://img.shields.io/badge/version-0.0.3-blue)
+![version](https://img.shields.io/badge/version-0.0.4-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
+![tests](https://img.shields.io/badge/tests-74%20passing-brightgreen)
 
 **harnish** (harness + ish) = "대충 하네스 비스무리한 것" — 작업할수록 똑똑해지는 구현 환경. 실패가 가드레일이 되고, 패턴이 축적되며, 세션과 워크트리가 바뀌어도 맥락이 유실되지 않는다.
 
@@ -58,7 +59,7 @@ Claude Code 세션 안에서 실행:
 예상 출력:
 
 ```
-✓ Installed harnish@0.0.3 — 5 skills registered (forki, drafti-architect, drafti-feature, impl, ralphi)
+✓ Installed harnish@0.0.4 — 5 skills registered (forki, drafti-architect, drafti-feature, impl, ralphi)
 ```
 
 ### 3. 확인
@@ -203,7 +204,7 @@ harnish 의 훅은 `hooks/hooks.json` 으로 설치 시 자동 등록된다. 별
 |-------|---------|--------------|
 | `PostToolUse` | Bash, Edit, Write, NotebookEdit | 툴 결과에서 실패 패턴·가드레일·재사용 스니펫 감지 → `.harnish/` 에 자산으로 기록 |
 | `PostToolUseFailure` | Bash, Edit, Write, NotebookEdit | 의미 있는 실패 컨텍스트 캡처 (노이즈 패턴 필터링) → failure 자산으로 기록 |
-| `Stop` | 세션 종료 | 누적 자산 품질 게이트 + 임계치 확인 |
+| `Stop` | 세션 종료 | 누적 자산 품질 게이트 + 임계치 확인, 세션 pending 파일 정리 |
 
 실패는 신호/노이즈로 분류된다 — 단순 에러(`No such file`, `permission denied`, `command not found` 등)는 필터되고 의미 있는 실패만 자산이 된다.
 
@@ -223,10 +224,12 @@ harnish 의 훅은 `hooks/hooks.json` 으로 설치 시 자동 등록된다. 별
 자산 조회 / 관리:
 
 ```bash
-bash scripts/check-thresholds.sh                       # 현재 자산 수 vs 압축 임계치
+bash scripts/check-thresholds.sh [--threshold N]              # 현재 자산 수 vs 압축 임계치
 bash scripts/query-assets.sh --tags api,retry --format text   # 태그로 조회
-bash scripts/compress-assets.sh --dry-run --all        # 압축 dry-run
-bash scripts/quality-gate.sh                           # Stop 이벤트 품질 게이트 재실행
+bash scripts/compress-assets.sh --dry-run --all               # 압축 dry-run
+bash scripts/quality-gate.sh                                  # Stop 이벤트 품질 게이트 재실행
+bash scripts/purge-assets.sh                                  # dry-run purge (--execute로 실제 적용)
+bash scripts/migrate.sh                                       # 스키마 최신 버전으로 백필
 ```
 
 `.harnish/` 는 프로젝트 CWD 안에 위치하며 세션 간 유지된다. `impl`, `drafti-architect`, `drafti-feature` 가 각 스킬의 Step 2에서 태그 기반으로 관련 자산을 자동 참조한다.

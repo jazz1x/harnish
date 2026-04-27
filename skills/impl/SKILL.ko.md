@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.0.3
+version: 0.0.4
 description: >
   자율 구현 엔진 ("harnish" 엔진). PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
   트리거: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -24,7 +24,7 @@ drafti-architect (또는 drafti-feature) → impl → ralphi
 |------|----------|----------|
 | drafti-architect | 가능 | 없음 (기술 문제만 있으면 됨) |
 | drafti-feature | 가능 | 기획서 필요 |
-| harnish | 가능 | docs/prd-*.md 또는 기존 harnish-current-work.json |
+| impl | 가능 | docs/prd-*.md 또는 기존 harnish-current-work.json |
 | ralphi | 가능 | 검증 대상 파일/디렉토리 지정 |
 
 harnish 시작 시 PRD 없으면: "PRD가 없습니다. /drafti-architect 또는 /drafti-feature로 먼저 생성하세요."

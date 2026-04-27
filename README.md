@@ -2,9 +2,10 @@
 
 > Claude Code plugin — autonomous implementation engine
 
-![version](https://img.shields.io/badge/version-0.0.3-blue)
+![version](https://img.shields.io/badge/version-0.0.4-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
+![tests](https://img.shields.io/badge/tests-74%20passing-brightgreen)
 
 **harnish** (harness + ish) — an implementation environment that gets smarter as you work. Failures become guardrails, patterns accumulate, and context persists across sessions and worktrees.
 
@@ -58,7 +59,7 @@ Expected output:
 Expected output:
 
 ```
-✓ Installed harnish@0.0.3 — 5 skills registered (forki, drafti-architect, drafti-feature, impl, ralphi)
+✓ Installed harnish@0.0.4 — 5 skills registered (forki, drafti-architect, drafti-feature, impl, ralphi)
 ```
 
 ### 3. Verify
@@ -203,7 +204,7 @@ harnish registers the following hooks automatically on install via `hooks/hooks.
 |-------|---------|--------------|
 | `PostToolUse` | Bash, Edit, Write, NotebookEdit | Scans tool output for failure patterns, guardrails, and reusable snippets → records to `.harnish/` |
 | `PostToolUseFailure` | Bash, Edit, Write, NotebookEdit | Captures meaningful failure context (noise patterns filtered) → records as failure asset for future reference |
-| `Stop` | Session end | Runs quality gate + threshold check on accumulated assets |
+| `Stop` | Session end | Runs quality gate + threshold check on accumulated assets, then cleans up session pending files |
 
 Failures are classified by signal-to-noise: simple errors (`No such file`, `permission denied`, `command not found`, etc.) are filtered out so only meaningful failures become assets.
 
@@ -223,10 +224,12 @@ Every accumulated learning is recorded in `.harnish/harnish-rag.jsonl` (one JSON
 Inspect / manage assets:
 
 ```bash
-bash scripts/check-thresholds.sh                       # current count vs. compression threshold
+bash scripts/check-thresholds.sh [--threshold N]              # current count vs. compression threshold
 bash scripts/query-assets.sh --tags api,retry --format text   # query by tag
-bash scripts/compress-assets.sh --dry-run --all        # preview compression
-bash scripts/quality-gate.sh                           # rerun the Stop-event quality check
+bash scripts/compress-assets.sh --dry-run --all               # preview compression
+bash scripts/quality-gate.sh                                  # rerun the Stop-event quality check
+bash scripts/purge-assets.sh                                  # dry-run purge (--execute to apply)
+bash scripts/migrate.sh                                       # backfill schema to latest version
 ```
 
 `.harnish/` lives inside your project CWD and persists across sessions. `impl`, `drafti-architect`, and `drafti-feature` reference relevant assets automatically (tag-based query in Step 2 of each skill).

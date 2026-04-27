@@ -131,7 +131,9 @@ done
 
 # ── 변경 적용 ──
 if [[ "$DRY_RUN" == false ]]; then
-  echo "$CURRENT_JSON" > "${PROGRESS_FILE}.tmp" && mv "${PROGRESS_FILE}.tmp" "$PROGRESS_FILE"
+  TMP_PROGRESS=$(mktemp "${PROGRESS_FILE}.XXXXXX")
+  trap 'rm -f "$TMP_PROGRESS"' EXIT
+  echo "$CURRENT_JSON" > "$TMP_PROGRESS" && mv "$TMP_PROGRESS" "$PROGRESS_FILE"
 
   echo ""
   echo "🗜  압축 완료"

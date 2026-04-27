@@ -57,11 +57,16 @@ if [[ "$EVENT" == "Stop" ]]; then
         fi
     fi
 
-    # pending 보고
+    # pending 보고 + 삭제
     if [[ -f "$PENDING_FILE" ]] && [[ -s "$PENDING_FILE" ]]; then
         PENDING_COUNT=$(wc -l < "$PENDING_FILE" | xargs)
         echo "harnish: 세션 종료 — ${PENDING_COUNT}건 pending 자산 미처리"
+        rm -f "$PENDING_FILE"
     fi
+
+    # 7일 이상 된 stale pending 파일 정리
+    find /tmp -maxdepth 1 -name 'harnish-pending-*.jsonl' -mtime +7 -delete 2>/dev/null || true
+
     exit 0
 fi
 

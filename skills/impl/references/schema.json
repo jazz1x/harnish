@@ -150,28 +150,32 @@
       "output": "{status, type, slug, tags, alerts, rca}"
     },
     "quality-gate.sh": {
-      "input": "--base-dir, [--date, --format json|text]",
-      "output": "{gate, summary, verdict, question, issues}"
+      "input": "[--base-dir, --format json|text]",
+      "output": "json: {status, issue_count, issues[]} | text: 품질 게이트 PASS 또는 보완 필요 목록"
     },
     "check-thresholds.sh": {
-      "input": "--base-dir, [--format json|text, --rebuild]",
-      "output": "{status, counts, total, tag_index, alerts}"
+      "input": "[--base-dir, --threshold N]",
+      "output": "text: tag(N건) [⚠ 압축 권장] 목록 (exit 0)"
     },
     "compress-assets.sh": {
-      "input": "--tag|--type|--all, --base-dir",
-      "output": "{label, count, output, needs_summary} 또는 {status: empty}"
+      "input": "--tag TAG | --all, [--threshold N, --dry-run, --base-dir]",
+      "output": "{status: compressed, compressed: N} | {status: no_targets} | {status: empty} | dry-run: {status: dry_run, candidates: []}"
     },
     "localize-asset.sh": {
-      "input": "--source, --project-context|--context-file|--team-context, [--scope, --base-dir]",
-      "output": "{status, source, output, direction, type, next_step}"
+      "input": "--slug SLUG, [--base-dir]",
+      "output": "{status: localized, slug: SLUG-local}"
     },
     "abstract-asset.sh": {
-      "input": "--source, [--replace|--keep-original, --base-dir]",
-      "output": "{status, source, output, direction, detected_specifics, replace_original, next_step}"
+      "input": "--slug SLUG, [--base-dir]",
+      "output": "{status: abstracted, slug: SLUG-generic}"
     },
     "skillify.sh": {
-      "input": "--source, --skill-name, [--output-dir]",
-      "output": "{status, skill_name, skill_dir, source_summarized, files, next_steps}"
+      "input": "--tag TAG, --skill-name NAME, [--output-dir DIR, --base-dir]",
+      "output": "{status: generated, skill_dir: DIR/NAME, asset_count: N}"
+    },
+    "purge-assets.sh": {
+      "input": "[--execute, --base-dir] (기본 dry-run; --execute 없으면 {status:dry_run,candidates,count} 출력만)",
+      "output": "dry-run: {status:dry_run, candidates:[], count:N} | execute: {status:purged, purged:N, archive:PATH} | no-op: {status:no-op|no_candidates}"
     },
     "validate-progress.sh": {
       "input": "[harnish-current-work.json 경로]",
@@ -212,7 +216,7 @@
       "depends_on": ["L1_Storage", "L0_Contract"]
     },
     "L3_Aggregate": {
-      "files": ["scripts/check-thresholds.sh", "scripts/compress-assets.sh", "scripts/skillify.sh"],
+      "files": ["scripts/check-thresholds.sh", "scripts/compress-assets.sh", "scripts/skillify.sh", "scripts/purge-assets.sh"],
       "rule": "다중 자산 분석·변환. L1 source 가능, L2 호출 가능.",
       "depends_on": ["L1_Storage", "L2_Operation", "L0_Contract"]
     },

@@ -8,16 +8,18 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
-PROGRESS_FILE="${1:-$(resolve_progress_file)}"
-FORMAT="${2:---format}"
-FORMAT_VALUE="${3:-text}"
+PROGRESS_FILE=""
+FORMAT="text"
 
-# --format 플래그 파싱
-if [[ "$FORMAT" == "--format" ]]; then
-  FORMAT="$FORMAT_VALUE"
-else
-  FORMAT="text"
-fi
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --format) FORMAT="$2"; shift 2;;
+    --*)      shift;;                  # 알 수 없는 플래그 무시
+    *)        [[ -z "$PROGRESS_FILE" ]] && PROGRESS_FILE="$1"; shift;;
+  esac
+done
+
+[[ -z "$PROGRESS_FILE" ]] && PROGRESS_FILE="$(resolve_progress_file)"
 
 # ────────────────────────────────────────
 # 0. 의존성 + 파일 존재 확인
