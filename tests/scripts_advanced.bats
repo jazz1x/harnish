@@ -128,7 +128,7 @@ print(json.dumps(d))
 
 @test "quality-gate.sh flags records with empty body" {
   echo '{"type":"pattern","slug":"x","title":"t","tags":["a"],"body":"","context":"","schema_version":"0.0.2","last_accessed_at":"2026-01-01T00:00:00Z","access_count":0}' \
-    >> "$ASSET_BASE_DIR/harnish-rag.jsonl"
+    >> "$ASSET_BASE_DIR/harnish-assets.jsonl"
   run bash "$REPO_ROOT/scripts/quality-gate.sh" --base-dir "$ASSET_BASE_DIR"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "보완" ]]
@@ -150,11 +150,11 @@ print(json.dumps(d))
   bash "$REPO_ROOT/scripts/record-asset.sh" \
     --type pattern --tags "api" --title "p2" --body "b2" \
     --base-dir "$ASSET_BASE_DIR"
-  BEFORE=$(wc -l < "$ASSET_BASE_DIR/harnish-rag.jsonl" | xargs)
+  BEFORE=$(wc -l < "$ASSET_BASE_DIR/harnish-assets.jsonl" | xargs)
   run bash "$REPO_ROOT/scripts/compress-assets.sh" \
     --tag api --dry-run --base-dir "$ASSET_BASE_DIR"
   [ "$status" -eq 0 ]
-  AFTER=$(wc -l < "$ASSET_BASE_DIR/harnish-rag.jsonl" | xargs)
+  AFTER=$(wc -l < "$ASSET_BASE_DIR/harnish-assets.jsonl" | xargs)
   [ "$BEFORE" -eq "$AFTER" ]
 }
 
@@ -168,7 +168,7 @@ print(json.dumps(d))
     --tag db --base-dir "$ASSET_BASE_DIR"
   [ "$status" -eq 0 ]
   # compressed summary record must not contain the word TODO
-  run grep -c "TODO" "$ASSET_BASE_DIR/harnish-rag.jsonl"
+  run grep -c "TODO" "$ASSET_BASE_DIR/harnish-assets.jsonl"
   [ "$output" = "0" ]
 }
 
@@ -181,7 +181,7 @@ print(json.dumps(d))
   run bash "$REPO_ROOT/scripts/abstract-asset.sh" \
     --slug "my-pattern" --base-dir "$ASSET_BASE_DIR"
   [ "$status" -eq 0 ]
-  grep -q '"slug":"my-pattern-generic"' "$ASSET_BASE_DIR/harnish-rag.jsonl"
+  grep -q '"slug":"my-pattern-generic"' "$ASSET_BASE_DIR/harnish-assets.jsonl"
 }
 
 @test "abstract-asset.sh exits 1 on missing slug" {
@@ -199,7 +199,7 @@ print(json.dumps(d))
   run bash "$REPO_ROOT/scripts/localize-asset.sh" \
     --slug "gen-rule" --base-dir "$ASSET_BASE_DIR"
   [ "$status" -eq 0 ]
-  grep -q '"slug":"gen-rule-local"' "$ASSET_BASE_DIR/harnish-rag.jsonl"
+  grep -q '"slug":"gen-rule-local"' "$ASSET_BASE_DIR/harnish-assets.jsonl"
 }
 
 @test "localize-asset.sh exits 1 on missing slug" {
@@ -218,11 +218,11 @@ print(json.dumps(d))
 
 @test "migrate.sh backfills schema_version on v0.0.1 records" {
   echo '{"type":"pattern","slug":"old","title":"t","tags":["x"],"body":"b","schema_version":"0.0.1"}' \
-    >> "$ASSET_BASE_DIR/harnish-rag.jsonl"
+    >> "$ASSET_BASE_DIR/harnish-assets.jsonl"
   run bash "$REPO_ROOT/scripts/migrate.sh" --base-dir "$ASSET_BASE_DIR"
   [ "$status" -eq 0 ]
   [[ "$output" =~ "migrated" ]]
-  VERSION=$(jq -r '.schema_version' "$ASSET_BASE_DIR/harnish-rag.jsonl")
+  VERSION=$(jq -r '.schema_version' "$ASSET_BASE_DIR/harnish-assets.jsonl")
   [ "$VERSION" = "0.0.2" ]
 }
 
@@ -248,14 +248,45 @@ print(json.dumps(d))
   [ "$status" -eq 1 ]
 }
 
+# ─── init-assets.sh — legacy migration ───────────────────────────────────────
+
+@test "init-assets.sh migrates legacy harnish-rag.jsonl to harnish-assets.jsonl" {
+  # Wipe sandbox dir and start fresh, simulating an old-format install.
+  rm -rf "$ASSET_BASE_DIR"
+  mkdir -p "$ASSET_BASE_DIR"
+  echo '{"type":"pattern","slug":"legacy","title":"legacy-record","tags":["x"],"body":"b","date":"2025-01-01","schema_version":"0.0.2"}' \
+    > "$ASSET_BASE_DIR/harnish-rag.jsonl"
+
+  run bash "$REPO_ROOT/scripts/init-assets.sh" --base-dir "$ASSET_BASE_DIR"
+  [ "$status" -eq 0 ]
+  # 새 파일이 생성되어야 함
+  [ -f "$ASSET_BASE_DIR/harnish-assets.jsonl" ]
+  # 레거시 파일은 사라져야 함
+  [ ! -f "$ASSET_BASE_DIR/harnish-rag.jsonl" ]
+  # 콘텐츠가 보존되어야 함
+  grep -q '"slug":"legacy"' "$ASSET_BASE_DIR/harnish-assets.jsonl"
+}
+
+@test "init-assets.sh idempotent migration — leaves new file alone if both exist" {
+  rm -rf "$ASSET_BASE_DIR"
+  mkdir -p "$ASSET_BASE_DIR"
+  # 둘 다 있으면 신규를 보존하고 레거시를 건드리지 않아야 함
+  echo '{"slug":"new"}'    > "$ASSET_BASE_DIR/harnish-assets.jsonl"
+  echo '{"slug":"legacy"}' > "$ASSET_BASE_DIR/harnish-rag.jsonl"
+  bash "$REPO_ROOT/scripts/init-assets.sh" --base-dir "$ASSET_BASE_DIR" --quiet
+  grep -q '"slug":"new"' "$ASSET_BASE_DIR/harnish-assets.jsonl"
+  # 레거시 파일은 그대로 존재 (사용자가 수동 삭제할 수 있도록)
+  [ -f "$ASSET_BASE_DIR/harnish-rag.jsonl" ]
+}
+
 # ─── purge-assets.sh --execute ───────────────────────────────────────────────
 
 @test "purge-assets.sh --execute purges old records and creates archive" {
   bash "$REPO_ROOT/scripts/init-assets.sh" --quiet
   # Insert a very old decision record (> 365 days, access_count 0)
   echo '{"type":"decision","slug":"stale-dec","title":"old decision","tags":["arch"],"body":"body","context":"ctx","date":"2020-01-01","scope":"generic","session":"manual","schema_version":"0.0.2","last_accessed_at":"2020-01-01T00:00:00Z","access_count":0,"confidence":"medium"}' \
-    >> "$ASSET_BASE_DIR/harnish-rag.jsonl"
-  BEFORE=$(wc -l < "$ASSET_BASE_DIR/harnish-rag.jsonl" | xargs)
+    >> "$ASSET_BASE_DIR/harnish-assets.jsonl"
+  BEFORE=$(wc -l < "$ASSET_BASE_DIR/harnish-assets.jsonl" | xargs)
 
   run bash "$REPO_ROOT/scripts/purge-assets.sh" --execute \
     --base-dir "$ASSET_BASE_DIR"
@@ -264,9 +295,9 @@ print(json.dumps(d))
   STATUS=$(echo "$output" | python3 -c "import json,sys; print(json.load(sys.stdin)['status'])")
   [ "$STATUS" = "purged" ]
 
-  AFTER=$(wc -l < "$ASSET_BASE_DIR/harnish-rag.jsonl" | xargs)
+  AFTER=$(wc -l < "$ASSET_BASE_DIR/harnish-assets.jsonl" | xargs)
   [ "$AFTER" -lt "$BEFORE" ]
-  [ -f "$ASSET_BASE_DIR/harnish-rag-archive.jsonl" ]
+  [ -f "$ASSET_BASE_DIR/harnish-assets-archive.jsonl" ]
 }
 
 @test "purge-assets.sh --execute no-op when no candidates" {

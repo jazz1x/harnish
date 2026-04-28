@@ -2,7 +2,7 @@
 # detect-asset.sh — Claude Code hook에서 호출. 자산 감지 + pending 관리.
 #
 # 노이즈 줄이기: 단순 오류, 테스트 실행, 읽기 전용 작업은 무시.
-# pending은 /tmp에 저장 (세션 내 임시 데이터, RAG 오염 방지).
+# pending은 /tmp에 저장 (세션 내 임시 데이터, Asset Store 오염 방지).
 
 set -euo pipefail
 
@@ -10,7 +10,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
 BASE="$(resolve_base_dir)"
-RAG_FILE="$BASE/harnish-rag.jsonl"
+ASSET_FILE="$BASE/harnish-assets.jsonl"
 
 # hook은 조용히 실패해야 함
 trap 'exit 0' ERR
@@ -50,17 +50,27 @@ SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // ""')
 # ── Stop 이벤트: 임계치 + 품질 게이트 ──
 if [[ "$EVENT" == "Stop" ]]; then
     # 임계치 확인
-    if [[ -f "$RAG_FILE" ]] && [[ -s "$RAG_FILE" ]]; then
+    if [[ -f "$ASSET_FILE" ]] && [[ -s "$ASSET_FILE" ]]; then
         THRESHOLD_OUT=$(bash "$SCRIPT_DIR/check-thresholds.sh" --base-dir "$BASE" 2>/dev/null || true)
         if [[ -n "$THRESHOLD_OUT" ]]; then
             echo "$THRESHOLD_OUT"
         fi
     fi
 
-    # pending 보고 + 삭제
+    # pending → assets 자동 승격 + 삭제
     if [[ -f "$PENDING_FILE" ]] && [[ -s "$PENDING_FILE" ]]; then
         PENDING_COUNT=$(wc -l < "$PENDING_FILE" | xargs)
-        echo "harnish: 세션 종료 — ${PENDING_COUNT}건 pending 자산 미처리"
+        # promote-pending 호출 (dedup 후 record-asset)
+        PROMOTE_OUT=$(bash "$SCRIPT_DIR/promote-pending.sh" --session "$SESSION_HASH" --base-dir "$BASE" 2>/dev/null || echo '{"promoted":0,"deduplicated":0}')
+        PROMOTED=$(echo "$PROMOTE_OUT" | jq -r '.promoted // 0' 2>/dev/null || echo "0")
+        DEDUP=$(echo "$PROMOTE_OUT" | jq -r '.deduplicated // 0' 2>/dev/null || echo "0")
+
+        if [[ "$PROMOTED" -gt 0 ]]; then
+            echo "harnish: 세션 종료 — pending ${PENDING_COUNT}건 → ${PROMOTED}건 자산 승격 (중복 ${DEDUP}건 통합)"
+        else
+            echo "harnish: 세션 종료 — ${PENDING_COUNT}건 pending 처리 실패"
+        fi
+        # promote 성공 여부와 무관하게 pending 삭제 (오염 방지; 데이터는 assets에 영속화됨)
         rm -f "$PENDING_FILE"
     fi
 

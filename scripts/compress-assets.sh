@@ -24,16 +24,16 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-RAG_FILE="$BASE/harnish-rag.jsonl"
+ASSET_FILE="$BASE/harnish-assets.jsonl"
 
-if [[ ! -f "$RAG_FILE" ]] || [[ ! -s "$RAG_FILE" ]]; then
+if [[ ! -f "$ASSET_FILE" ]] || [[ ! -s "$ASSET_FILE" ]]; then
     echo '{"status":"empty","compressed":0}'
     exit 0
 fi
 
 # 대상 태그 결정
 if $ALL; then
-    TAGS_OVER=$(jq -c 'select(.compressed != true) | .tags[]' "$RAG_FILE" 2>/dev/null \
+    TAGS_OVER=$(jq -c 'select(.compressed != true) | .tags[]' "$ASSET_FILE" 2>/dev/null \
         | sort | uniq -c | sort -rn \
         | awk -v t="$THRESHOLD" '$1 >= t {print $2}' | tr -d '"')
 elif [[ -n "$TAG" ]]; then
@@ -52,7 +52,7 @@ fi
 if $DRY_RUN; then
     # candidates JSON 출력만, 파일 변경 없음
     CANDIDATES=$(echo "$TAGS_OVER" | awk 'NF' | while read -r t; do
-        cnt=$(jq -c --arg t "$t" 'select(.compressed != true) | select(.tags[] == $t)' "$RAG_FILE" | wc -l | xargs)
+        cnt=$(jq -c --arg t "$t" 'select(.compressed != true) | select(.tags[] == $t)' "$ASSET_FILE" | wc -l | xargs)
         jq -n -c --arg tag "$t" --argjson count "$cnt" --argjson threshold "$THRESHOLD" \
             '{tag:$tag, count:$count, would_compress:($count >= $threshold)}'
     done | jq -s .)
@@ -63,7 +63,7 @@ fi
 COMPRESSED=0
 TMPFILE=$(mktemp)
 trap 'rm -f "$TMPFILE" "${TMPFILE}.new"' EXIT
-cp "$RAG_FILE" "$TMPFILE"
+cp "$ASSET_FILE" "$TMPFILE"
 
 while IFS= read -r target_tag; do
     [[ -z "$target_tag" ]] && continue
@@ -100,5 +100,5 @@ while IFS= read -r target_tag; do
     ((COMPRESSED++)) || true
 done <<< "$TAGS_OVER"
 
-mv "$TMPFILE" "$RAG_FILE"
+mv "$TMPFILE" "$ASSET_FILE"
 echo "{\"status\":\"compressed\",\"compressed\":${COMPRESSED}}"

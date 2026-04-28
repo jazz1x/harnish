@@ -21,14 +21,14 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-RAG_FILE="$BASE/harnish-rag.jsonl"
+ASSET_FILE="$BASE/harnish-assets.jsonl"
 
-if [[ ! -f "$RAG_FILE" ]] || [[ ! -s "$RAG_FILE" ]]; then
+if [[ ! -f "$ASSET_FILE" ]] || [[ ! -s "$ASSET_FILE" ]]; then
     echo "자산 없음"
     exit 0
 fi
 
-jq -c 'select(.compressed != true) | .tags[]' "$RAG_FILE" 2>/dev/null \
+jq -c 'select(.compressed != true) | .tags[]' "$ASSET_FILE" 2>/dev/null \
   | sort | uniq -c | sort -rn \
   | awk -v t="$THRESHOLD" '{
       count=$1; tag=$2;

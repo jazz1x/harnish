@@ -20,9 +20,9 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-RAG_FILE="$BASE/harnish-rag.jsonl"
+ASSET_FILE="$BASE/harnish-assets.jsonl"
 
-if [[ ! -f "$RAG_FILE" ]] || [[ ! -s "$RAG_FILE" ]]; then
+if [[ ! -f "$ASSET_FILE" ]] || [[ ! -s "$ASSET_FILE" ]]; then
     [[ "$FORMAT" == "json" ]] && echo '{"status":"empty","issues":[]}' || echo "자산 없음"
     exit 0
 fi
@@ -38,7 +38,7 @@ ISSUES=$(jq -c 'select(.compressed != true) |
         (if (.body | length) == 0 then "body 비어있음" else empty end),
         (if (.context | length) == 0 then "context 비어있음" else empty end)
     ] | if length > 0 then {slug: $r.slug, title: $r.title, quality: (if length > 2 then "poor" elif length > 0 then "fair" else "good" end), issues: .} else empty end
-' "$RAG_FILE" 2>/dev/null | jq -s '.' 2>/dev/null || echo "[]")
+' "$ASSET_FILE" 2>/dev/null | jq -s '.' 2>/dev/null || echo "[]")
 
 ISSUE_COUNT=$(echo "$ISSUES" | jq 'length')
 

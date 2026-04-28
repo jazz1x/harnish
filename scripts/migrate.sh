@@ -19,20 +19,20 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-RAG="$BASE/harnish-rag.jsonl"
+ASSETS="$BASE/harnish-assets.jsonl"
 LOG="$BASE/harnish-migration-log.jsonl"
 
-[[ -f "$RAG" ]] || { echo '{"status":"no-op","reason":"rag file absent"}'; exit 0; }
-[[ -s "$RAG" ]] || { echo '{"status":"no-op","reason":"rag file empty"}'; exit 0; }
+[[ -f "$ASSETS" ]] || { echo '{"status":"no-op","reason":"asset file absent"}'; exit 0; }
+[[ -s "$ASSETS" ]] || { echo '{"status":"no-op","reason":"asset file empty"}'; exit 0; }
 
 # Backup
 NOW_EPOCH=$(date +%s)
-BAK="${RAG}.bak.${NOW_EPOCH}"
-cp "$RAG" "$BAK"
+BAK="${ASSETS}.bak.${NOW_EPOCH}"
+cp "$ASSETS" "$BAK"
 
 # Migrate: backfill 3 fields if schema_version missing or older
 NOW_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-TMP=$(mktemp "${RAG}.XXXXXX")
+TMP=$(mktemp "${ASSETS}.XXXXXX")
 trap 'rm -f "$TMP"' EXIT
 
 MIGRATED=0
@@ -52,9 +52,9 @@ while IFS= read -r line; do
         echo "$line" >> "$TMP"
         SKIPPED=$((SKIPPED+1))
     fi
-done < "$RAG"
+done < "$ASSETS"
 
-mv "$TMP" "$RAG"
+mv "$TMP" "$ASSETS"
 
 # Log
 jq -n -c \
@@ -68,7 +68,7 @@ jq -n -c \
   >> "$LOG"
 
 # Backup 보존: 최신 3개만 유지, 나머지 삭제
-BAK_FILES=$(ls -t "${RAG}".bak.* 2>/dev/null || true)
+BAK_FILES=$(ls -t "${ASSETS}".bak.* 2>/dev/null || true)
 if [[ -n "$BAK_FILES" ]]; then
     echo "$BAK_FILES" | tail -n +4 | xargs rm -f 2>/dev/null || true
 fi

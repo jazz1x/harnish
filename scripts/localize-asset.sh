@@ -25,14 +25,14 @@ if [[ -z "$SLUG" ]]; then
     exit 1
 fi
 
-RAG_FILE="$BASE/harnish-rag.jsonl"
+ASSET_FILE="$BASE/harnish-assets.jsonl"
 
-if [[ ! -f "$RAG_FILE" ]]; then
-    echo "오류: $RAG_FILE 없음" >&2
+if [[ ! -f "$ASSET_FILE" ]]; then
+    echo "오류: $ASSET_FILE 없음" >&2
     exit 1
 fi
 
-ORIGINAL=$(jq -c --arg s "$SLUG" 'select(.slug == $s)' "$RAG_FILE" 2>/dev/null | head -1)
+ORIGINAL=$(jq -c --arg s "$SLUG" 'select(.slug == $s)' "$ASSET_FILE" 2>/dev/null | head -1)
 
 if [[ -z "$ORIGINAL" ]]; then
     echo "오류: slug '$SLUG' 없음" >&2
@@ -41,10 +41,10 @@ fi
 
 # scope를 project로 변경한 사본 추가 (atomic write)
 LOCALIZED=$(echo "$ORIGINAL" | jq -c '.scope = "project" | .slug = .slug + "-local" | .context = .context + " (로컬화)"')
-TMPRAG=$(mktemp "${RAG_FILE}.XXXXXX")
+TMPRAG=$(mktemp "${ASSET_FILE}.XXXXXX")
 trap 'rm -f "$TMPRAG"' EXIT
-cp "$RAG_FILE" "$TMPRAG"
+cp "$ASSET_FILE" "$TMPRAG"
 echo "$LOCALIZED" >> "$TMPRAG"
-mv "$TMPRAG" "$RAG_FILE"
+mv "$TMPRAG" "$ASSET_FILE"
 
 echo "{\"status\":\"localized\",\"slug\":\"$(echo "$ORIGINAL" | jq -r '.slug')-local\"}"

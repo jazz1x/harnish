@@ -22,7 +22,7 @@ teardown() {
   run bash "$REPO_ROOT/scripts/init-assets.sh" --quiet
   [ "$status" -eq 0 ]
   [ -d "$ASSET_BASE_DIR" ]
-  [ -f "$ASSET_BASE_DIR/harnish-rag.jsonl" ]
+  [ -f "$ASSET_BASE_DIR/harnish-assets.jsonl" ]
   [ -f "$ASSET_BASE_DIR/harnish-current-work.json" ]
   # work file must be at minimum a valid JSON object.
   run python3 -m json.tool "$ASSET_BASE_DIR/harnish-current-work.json"
@@ -32,10 +32,10 @@ teardown() {
 @test "init-assets.sh is idempotent (second run leaves files intact)" {
   bash "$REPO_ROOT/scripts/init-assets.sh" --quiet
   echo '{"type":"pattern","tags":["x"],"title":"t","body":"b"}' \
-    >> "$ASSET_BASE_DIR/harnish-rag.jsonl"
+    >> "$ASSET_BASE_DIR/harnish-assets.jsonl"
   bash "$REPO_ROOT/scripts/init-assets.sh" --quiet
   # Existing line must still be there (not truncated).
-  run grep -c '"title":"t"' "$ASSET_BASE_DIR/harnish-rag.jsonl"
+  run grep -c '"title":"t"' "$ASSET_BASE_DIR/harnish-assets.jsonl"
   [ "$status" -eq 0 ]
   [ "$output" = "1" ]
 }
@@ -49,11 +49,11 @@ teardown() {
     --title "exp-backoff" --body "wait 2^n seconds" \
     --base-dir "$ASSET_BASE_DIR"
   [ "$status" -eq 0 ]
-  [ -s "$ASSET_BASE_DIR/harnish-rag.jsonl" ]
+  [ -s "$ASSET_BASE_DIR/harnish-assets.jsonl" ]
   # Each line must be valid JSON.
   while IFS= read -r line; do
     echo "$line" | python3 -m json.tool >/dev/null
-  done < "$ASSET_BASE_DIR/harnish-rag.jsonl"
+  done < "$ASSET_BASE_DIR/harnish-assets.jsonl"
 }
 
 @test "record-asset.sh accepts JSON via --stdin" {
@@ -63,7 +63,7 @@ teardown() {
       | bash '$REPO_ROOT/scripts/record-asset.sh' --stdin --base-dir '$ASSET_BASE_DIR'
   "
   [ "$status" -eq 0 ]
-  grep -q '"title":"cache-miss"' "$ASSET_BASE_DIR/harnish-rag.jsonl"
+  grep -q '"title":"cache-miss"' "$ASSET_BASE_DIR/harnish-assets.jsonl"
 }
 
 # ---------- query-assets.sh ----------

@@ -2,10 +2,10 @@
 
 > Claude Code plugin — autonomous implementation engine
 
-![version](https://img.shields.io/badge/version-0.0.4-blue)
+![version](https://img.shields.io/badge/version-0.0.5-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
-![tests](https://img.shields.io/badge/tests-74%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-80%20passing-brightgreen)
 
 **harnish** (harness + ish) — an implementation environment that gets smarter as you work. Failures become guardrails, patterns accumulate, and context persists across sessions and worktrees.
 
@@ -16,8 +16,8 @@
 | Skill | Command | Role |
 |-------|---------|------|
 | **forki** | `/harnish:forki` | Decision forcing (binary fork + D/E/V/R + trade-off, HITL only) |
-| **drafti-architect** | `/harnish:drafti-architect` | Tech-driven design PRD generation |
 | **drafti-feature** | `/harnish:drafti-feature` | Planning-based implementation spec PRD |
+| **drafti-architect** | `/harnish:drafti-architect` | Tech-driven design PRD generation |
 | **impl** | `/harnish:impl` | Autonomous implementation engine — the "harnish" engine (seeding + ralph loop + anchoring + experience) |
 | **ralphi** | `/harnish:ralphi` | Inspection (HITL reporting or autonomous fix) |
 
@@ -59,7 +59,7 @@ Expected output:
 Expected output:
 
 ```
-✓ Installed harnish@0.0.4 — 5 skills registered (forki, drafti-architect, drafti-feature, impl, ralphi)
+✓ Installed harnish@0.0.5 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
 ```
 
 ### 3. Verify
@@ -72,8 +72,8 @@ You should see `harnish` in the list. The five slash commands below should be in
 
 ```
 /harnish:forki
-/harnish:drafti-architect
 /harnish:drafti-feature
+/harnish:drafti-architect
 /harnish:impl
 /harnish:ralphi
 ```
@@ -102,21 +102,14 @@ Once installed, the fastest path end-to-end:
 /harnish:impl
 ```
 
-Sample flow (simplified):
+Sample flow:
 
 ```
-user   > /harnish:impl docs/prd-redis-cache.md
-
-step 1 > Reading PRD → 3 phases, 12 atomic tasks identified
-step 2 > Seeding → .harnish/harnish-current-work.json created
-step 3 > "Phase 1 Task 1.1 ready. Run 'loop' to start ralph loop?"
-user   > loop
-
-step 4 > [READ] task 1.1 → [ACT] write code → [LOG] result → [PROGRESS] 1/12
-step 5 > Pass → asset recorded (pattern: connection-pool-init)
-step 6 > Auto-advance to task 1.2 …
-       ⋮
-step N > Phase 1 complete → milestone report → continue Phase 2? (y/n)
+user > /harnish:impl docs/prd-redis-cache.md
+       → 3 phases, 12 atomic tasks seeded into .harnish/harnish-current-work.json
+user > loop
+       → task 1.1 → code → log → asset recorded → auto-advance 1.2 → … → Phase 1 done
+       → milestone report → continue Phase 2? (y/n)
 ```
 
 If invoked with no PRD path or task description, harnish will ask:
@@ -145,13 +138,13 @@ User: "Should we use Postgres or MongoDB for this?"
 ### 1. PRD Generation (Design)
 
 ```
-User: "Design a Redis cache layer"
-→ drafti-architect explores 2-3 design alternatives with trade-off analysis
-→ generates docs/prd-redis-cache.md
-
 User: "Create a PRD from this planning doc" (with planning document attached)
 → drafti-feature generates implementation spec PRD (feature flags only when needed)
 → generates docs/prd-user-profile-edit.md
+
+User: "Design a Redis cache layer"
+→ drafti-architect explores 2-3 design alternatives with trade-off analysis
+→ generates docs/prd-redis-cache.md
 ```
 
 ### 2. Autonomous Implementation (harnish)
@@ -165,7 +158,8 @@ User: "Start implementation" or "Decompose tasks"
 → "3 Phases, 12 Tasks seeded — review then 'run the loop'"
 
 User: "Run the loop"
-→ ralph loop auto-executes (Read → Act → Log → Progress → repeat)
+→ The ralph loop runs one task at a time until the phase is done
+  (named after Ralph Wiggum — keep trying, don't give up; not an acronym)
 → Updates harnish-current-work.json every 3 actions, milestone report on phase completion
 
 User: (in a new session) "Continue where I left off"
@@ -193,7 +187,10 @@ User: "Asset status"
 → Shows accumulated failure/pattern/guardrail/snippet/decision assets
 
 User: "Make this a skill"
-→ Generates reusable SKILL.md draft from compressed assets
+→ Bundles compressed assets into a SKILL.md scaffold (with raw asset
+  bodies + a TODO marker). The LLM must finalize the body — this is a
+  draft generator, not autonomous skill graduation. Truly autonomous
+  promotion is a planned future feature.
 ```
 
 ## Hooks
@@ -208,9 +205,35 @@ harnish registers the following hooks automatically on install via `hooks/hooks.
 
 Failures are classified by signal-to-noise: simple errors (`No such file`, `permission denied`, `command not found`, etc.) are filtered out so only meaningful failures become assets.
 
+## Memory Model
+
+harnish runs a **two-tier memory** system. Each tier serves a different role; the bridge between them is currently semi-manual.
+
+| Tier | Storage | Lifetime | Role | Loaded as |
+|------|---------|----------|------|-----------|
+| **Tier 1 — Asset Store** (episodic) | `.harnish/harnish-assets.jsonl` | Per-project, accumulates across sessions, TTL-purged | Records what happened (failures, patterns, guardrails, snippets, decisions) | Injected into context on demand via `query-assets.sh --format inject` (this is the actual RAG path) |
+| **Tier 2 — Skills** (procedural) | `skills/*/SKILL.md` | Permanent (versioned in source tree) | Codifies stable behavior | Auto-loaded by Claude Code as triggerable skills |
+
+`skillify.sh` is the bridge — it bundles compressed Tier-1 assets into a Tier-2 SKILL.md scaffold. As of v0.0.5 the scaffold is **production-grade**:
+
+- Frontmatter `Triggers:` auto-extracted from asset titles
+- Body sectioned by asset type, with metadata (level / confidence / stability / resolved)
+- `references/source-assets.jsonl` preserves originals for traceability
+- §1 still needs LLM finalization of 1-3 actionable guidelines — draft generator, not autonomous graduation
+
+**Trigger → Record → Skillify pipeline (closed in v0.0.5):**
+
+```
+PostToolUseFailure  →  detect-asset.sh (noise filter)  →  /tmp/harnish-pending-*.jsonl
+Stop                →  promote-pending.sh (dedup)      →  harnish-assets.jsonl
+"make it a skill"   →  skillify.sh                     →  SKILL.md draft + references/
+```
+
+> **Why "assets" not "RAG"?** Only `query-assets.sh --format inject` is RAG in the strict sense. The rest is capture / summarize / age-out / feed-into-skill — i.e. asset CRUD + lifecycle.
+
 ## Assets
 
-Every accumulated learning is recorded in `.harnish/harnish-rag.jsonl` (one JSON object per line). Six asset types:
+Every accumulated learning is recorded in `.harnish/harnish-assets.jsonl` (one JSON object per line). Six asset types:
 
 | Type | Captured when |
 |------|---------------|
@@ -232,7 +255,7 @@ bash scripts/purge-assets.sh                                  # dry-run purge (-
 bash scripts/migrate.sh                                       # backfill schema to latest version
 ```
 
-`.harnish/` lives inside your project CWD and persists across sessions. `impl`, `drafti-architect`, and `drafti-feature` reference relevant assets automatically (tag-based query in Step 2 of each skill).
+`.harnish/` lives inside your project CWD and persists across sessions. `impl`, `drafti-feature`, and `drafti-architect` reference relevant assets automatically (tag-based query in Step 2 of each skill).
 
 ## Worktrees
 
@@ -255,7 +278,7 @@ mkdir -p .claude/skills
 cp -r /path/to/harnish/skills/forki .claude/skills/
 ```
 
-The skill is available as `forki` (no plugin namespace). Replace `forki` with any of: `impl`, `ralphi`, `drafti-architect`, `drafti-feature`.
+The skill is available as `forki` (no plugin namespace). Replace `forki` with any of: `impl`, `ralphi`, `drafti-feature`, `drafti-architect`.
 
 ### B. Fork as your own plugin marketplace
 
@@ -283,7 +306,7 @@ git -C /path/to/harnish pull   # update later
 - **harnish** = harness + ish (autonomous implementation engine)
 - **ralphi** = ralph + i (inspection)
   - Origin: named after Ralph Wiggum from The Simpsons — keep trying, don't give up
-- **drafti** = draft + i (PRD generation — drafti-architect + drafti-feature)
+- **drafti** = draft + i (PRD generation — drafti-feature + drafti-architect)
 - **forki** = fork + i (decision forcing — binary fork + D/E/V/R + trade-off, HITL only)
 
 ## Triad

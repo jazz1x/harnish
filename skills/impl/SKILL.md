@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.0.4
+version: 0.0.5
 description: >
   Autonomous implementation engine (the "harnish" engine). PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
   Triggers: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -281,7 +281,7 @@ bash "$HARNISH_ROOT/scripts/compress-assets.sh" --dry-run --all --base-dir "$(pw
 ```
 ✅ Session summary
 Files changed: {count} ({short list})
-Key decisions: {1-2 one-liners from .harnish/harnish-rag.jsonl recorded this session}
+Key decisions: {1-2 one-liners from .harnish/harnish-assets.jsonl recorded this session}
 Suggested next: {e.g., ralphi fix | deploy | handoff | sibling plugin invocation}
 ```
 

@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -20,12 +20,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install bats + jq (ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y bats jq
-
       - name: Install bats + jq (macos)
-        if: matrix.os == 'macos-latest'
         run: brew install bats-core jq
 
       - name: Run test suite

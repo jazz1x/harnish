@@ -42,12 +42,12 @@ teardown() {
     --base-dir "$ASSET_BASE_DIR"
 
   # 5건 기록 확인
-  COUNT=$(wc -l < "$ASSET_BASE_DIR/harnish-rag.jsonl" | xargs)
+  COUNT=$(wc -l < "$ASSET_BASE_DIR/harnish-assets.jsonl" | xargs)
   [ "$COUNT" -eq 5 ]
   # 모든 라인이 유효한 JSON
   while IFS= read -r line; do
     echo "$line" | python3 -m json.tool >/dev/null
-  done < "$ASSET_BASE_DIR/harnish-rag.jsonl"
+  done < "$ASSET_BASE_DIR/harnish-assets.jsonl"
 }
 
 # ─── Step 2: query-assets — 태그 필터 + access_count 증분 ───────────────────
@@ -72,7 +72,7 @@ teardown() {
 
   # access_count 증분 확인
   ACCESS=$(jq -r 'select(.slug == "backoff") | .access_count' \
-    "$ASSET_BASE_DIR/harnish-rag.jsonl")
+    "$ASSET_BASE_DIR/harnish-assets.jsonl")
   [ "$ACCESS" -ge 1 ]
 }
 
@@ -124,12 +124,12 @@ teardown() {
   [ "$status" -eq 0 ]
 
   # 압축 요약 레코드에 TODO 없음 (C1 버그 수정 회귀)
-  run grep "TODO" "$ASSET_BASE_DIR/harnish-rag.jsonl"
+  run grep "TODO" "$ASSET_BASE_DIR/harnish-assets.jsonl"
   [ "$status" -ne 0 ]
 
   # 압축 요약 레코드가 존재하고 타이틀이 맞음
   COMPRESSED_TITLE=$(jq -r 'select(.compressed_summary == true) | .title' \
-    "$ASSET_BASE_DIR/harnish-rag.jsonl")
+    "$ASSET_BASE_DIR/harnish-assets.jsonl")
   [[ "$COMPRESSED_TITLE" =~ "redis" ]]
 }
 
@@ -139,10 +139,10 @@ teardown() {
       --type snippet --tags "dry" --title "s-$i" \
       --body "b" --context "c" --base-dir "$ASSET_BASE_DIR"
   done
-  BEFORE=$(wc -l < "$ASSET_BASE_DIR/harnish-rag.jsonl" | xargs)
+  BEFORE=$(wc -l < "$ASSET_BASE_DIR/harnish-assets.jsonl" | xargs)
   bash "$REPO_ROOT/scripts/compress-assets.sh" \
     --tag dry --dry-run --base-dir "$ASSET_BASE_DIR"
-  AFTER=$(wc -l < "$ASSET_BASE_DIR/harnish-rag.jsonl" | xargs)
+  AFTER=$(wc -l < "$ASSET_BASE_DIR/harnish-assets.jsonl" | xargs)
   [ "$BEFORE" -eq "$AFTER" ]
 }
 
@@ -152,7 +152,7 @@ teardown() {
   # 의도적으로 body 빈 레코드 삽입 (스크립트 통해 불가 — 직접 append)
   echo '{"type":"pattern","slug":"bad","title":"bad","tags":["x"],"body":"",
         "context":"","schema_version":"0.0.2","last_accessed_at":"2026-01-01T00:00:00Z","access_count":0}' \
-    >> "$ASSET_BASE_DIR/harnish-rag.jsonl"
+    >> "$ASSET_BASE_DIR/harnish-assets.jsonl"
 
   run bash "$REPO_ROOT/scripts/quality-gate.sh" \
     --base-dir "$ASSET_BASE_DIR"
@@ -163,7 +163,7 @@ teardown() {
 @test "E2E assets step 5b: quality-gate json output has expected schema" {
   echo '{"type":"pattern","slug":"ok","title":"ok","tags":["x"],"body":"detail",
         "context":"ctx","schema_version":"0.0.2","last_accessed_at":"2026-01-01T00:00:00Z","access_count":0}' \
-    >> "$ASSET_BASE_DIR/harnish-rag.jsonl"
+    >> "$ASSET_BASE_DIR/harnish-assets.jsonl"
 
   run bash "$REPO_ROOT/scripts/quality-gate.sh" \
     --base-dir "$ASSET_BASE_DIR" --format json
@@ -178,9 +178,9 @@ teardown() {
 @test "E2E assets step 6: migrate backfills schema_version on old records" {
   # v0.0.1 레코드 삽입
   echo '{"type":"failure","slug":"old-1","title":"old","tags":["a"],"body":"b","date":"2025-01-01","schema_version":"0.0.1"}' \
-    >> "$ASSET_BASE_DIR/harnish-rag.jsonl"
+    >> "$ASSET_BASE_DIR/harnish-assets.jsonl"
   echo '{"type":"pattern","slug":"old-2","title":"old2","tags":["b"],"body":"c","date":"2025-01-01","schema_version":"0.0.1"}' \
-    >> "$ASSET_BASE_DIR/harnish-rag.jsonl"
+    >> "$ASSET_BASE_DIR/harnish-assets.jsonl"
 
   run bash "$REPO_ROOT/scripts/migrate.sh" --base-dir "$ASSET_BASE_DIR"
   [ "$status" -eq 0 ]
@@ -188,12 +188,12 @@ teardown() {
 
   # 모든 레코드가 0.0.2로 업그레이드 됐는지 확인
   OLD_COUNT=$(jq 'select(.schema_version == "0.0.1")' \
-    "$ASSET_BASE_DIR/harnish-rag.jsonl" | wc -l | xargs)
+    "$ASSET_BASE_DIR/harnish-assets.jsonl" | wc -l | xargs)
   [ "$OLD_COUNT" -eq 0 ]
 
   # access_count 필드 백필 확인
   NO_ACCESS=$(jq 'select(.access_count == null)' \
-    "$ASSET_BASE_DIR/harnish-rag.jsonl" | wc -l | xargs)
+    "$ASSET_BASE_DIR/harnish-assets.jsonl" | wc -l | xargs)
   [ "$NO_ACCESS" -eq 0 ]
 }
 
@@ -204,14 +204,14 @@ teardown() {
     --type decision --tags "arch" --title "choice" \
     --body "chose A over B" --context "ctx" \
     --base-dir "$ASSET_BASE_DIR"
-  BEFORE=$(wc -l < "$ASSET_BASE_DIR/harnish-rag.jsonl" | xargs)
+  BEFORE=$(wc -l < "$ASSET_BASE_DIR/harnish-assets.jsonl" | xargs)
 
   # dry-run (기본 모드)
   run bash "$REPO_ROOT/scripts/purge-assets.sh" --base-dir "$ASSET_BASE_DIR"
   [ "$status" -eq 0 ]
   echo "$output" | python3 -m json.tool > /dev/null
 
-  AFTER=$(wc -l < "$ASSET_BASE_DIR/harnish-rag.jsonl" | xargs)
+  AFTER=$(wc -l < "$ASSET_BASE_DIR/harnish-assets.jsonl" | xargs)
   [ "$BEFORE" -eq "$AFTER" ]
 }
 
@@ -240,7 +240,7 @@ teardown() {
   # 4. Compress
   bash "$REPO_ROOT/scripts/compress-assets.sh" \
     --tag api --base-dir "$ASSET_BASE_DIR"
-  run grep "TODO" "$ASSET_BASE_DIR/harnish-rag.jsonl"
+  run grep "TODO" "$ASSET_BASE_DIR/harnish-assets.jsonl"
   [ "$status" -ne 0 ]
 
   # 5. Quality gate

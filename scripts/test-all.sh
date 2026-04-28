@@ -80,8 +80,8 @@ fi
 echo "${BOLD}[자산 초기화]${NC}"
 
 bash "$HARNISH_ROOT/scripts/init-assets.sh" --base-dir "$ASSET_DIR" >/dev/null 2>&1
-if [[ -f "$ASSET_DIR/harnish-rag.jsonl" ]] && [[ -f "$ASSET_DIR/harnish-current-work.json" ]]; then
-  pass "init-assets.sh: harnish-rag.jsonl + harnish-current-work.json 생성"
+if [[ -f "$ASSET_DIR/harnish-assets.jsonl" ]] && [[ -f "$ASSET_DIR/harnish-current-work.json" ]]; then
+  pass "init-assets.sh: harnish-assets.jsonl + harnish-current-work.json 생성"
 else
   fail "init-assets.sh" "JSONL 또는 work 파일 미생성"
 fi
@@ -93,7 +93,7 @@ echo "${BOLD}[자산 기록]${NC}"
 
 for asset_type in failure pattern guardrail snippet decision; do
   before_lines=0
-  [[ -f "$ASSET_DIR/harnish-rag.jsonl" ]] && before_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+  [[ -f "$ASSET_DIR/harnish-assets.jsonl" ]] && before_lines=$(wc -l < "$ASSET_DIR/harnish-assets.jsonl" | xargs)
 
   output=$(bash "$HARNISH_ROOT/scripts/record-asset.sh" \
     --type "$asset_type" \
@@ -104,11 +104,11 @@ for asset_type in failure pattern guardrail snippet decision; do
     --base-dir "$ASSET_DIR" 2>&1)
   rc=$?
 
-  after_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+  after_lines=$(wc -l < "$ASSET_DIR/harnish-assets.jsonl" | xargs)
 
   if [[ $rc -eq 0 ]] && [[ "$after_lines" -gt "$before_lines" ]]; then
     # 추가된 줄이 유효한 JSON인지 확인
-    last_line=$(tail -1 "$ASSET_DIR/harnish-rag.jsonl")
+    last_line=$(tail -1 "$ASSET_DIR/harnish-assets.jsonl")
     if echo "$last_line" | jq empty 2>/dev/null; then
       pass "record-asset.sh --type $asset_type"
     else
@@ -131,7 +131,7 @@ while IFS= read -r line; do
   if ! echo "$line" | jq empty 2>/dev/null; then
     invalid_lines=$((invalid_lines + 1))
   fi
-done < "$ASSET_DIR/harnish-rag.jsonl"
+done < "$ASSET_DIR/harnish-assets.jsonl"
 
 if [[ "$invalid_lines" -eq 0 ]] && [[ "$line_num" -gt 0 ]]; then
   pass "JSONL 무결성: ${line_num}줄 모두 유효한 JSON"
@@ -142,10 +142,10 @@ fi
 # ════════════════════════════════════════
 # 5. record-asset.sh --stdin 모드
 # ════════════════════════════════════════
-before_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+before_lines=$(wc -l < "$ASSET_DIR/harnish-assets.jsonl" | xargs)
 echo '{"type":"failure","tags":["stdin-test"],"title":"stdin 테스트","body":"stdin으로 기록"}' \
   | bash "$HARNISH_ROOT/scripts/record-asset.sh" --stdin --base-dir "$ASSET_DIR" >/dev/null 2>&1
-after_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+after_lines=$(wc -l < "$ASSET_DIR/harnish-assets.jsonl" | xargs)
 if [[ "$after_lines" -gt "$before_lines" ]]; then
   pass "record-asset.sh --stdin 모드"
 else
@@ -225,7 +225,7 @@ rc=$?
 
 if [[ $rc -eq 0 ]]; then
   # JSONL에서 compressed:true 레코드 확인
-  compressed_count=$(jq -c 'select(.compressed == true)' "$ASSET_DIR/harnish-rag.jsonl" 2>/dev/null | wc -l | xargs)
+  compressed_count=$(jq -c 'select(.compressed == true)' "$ASSET_DIR/harnish-assets.jsonl" 2>/dev/null | wc -l | xargs)
   if [[ "$compressed_count" -gt 0 ]]; then
     pass "compress-assets.sh: compressed:true 마킹 (${compressed_count}건)"
   else
@@ -259,14 +259,14 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
   --base-dir "$ASSET_DIR" >/dev/null 2>&1
 
 # slug 추출
-src_slug=$(jq -r 'select(.scope == "project") | .slug' "$ASSET_DIR/harnish-rag.jsonl" 2>/dev/null | head -1)
+src_slug=$(jq -r 'select(.scope == "project") | .slug' "$ASSET_DIR/harnish-assets.jsonl" 2>/dev/null | head -1)
 
 abstract_slug=""
 if [[ -n "$src_slug" ]]; then
-  before_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+  before_lines=$(wc -l < "$ASSET_DIR/harnish-assets.jsonl" | xargs)
   output=$(bash "$HARNISH_ROOT/scripts/abstract-asset.sh" --slug "$src_slug" --base-dir "$ASSET_DIR" 2>&1)
   rc=$?
-  after_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+  after_lines=$(wc -l < "$ASSET_DIR/harnish-assets.jsonl" | xargs)
 
   if [[ $rc -eq 0 ]] && [[ "$after_lines" -gt "$before_lines" ]]; then
     abstract_slug=$(echo "$output" | jq -r '.slug // ""' 2>/dev/null)
@@ -282,9 +282,9 @@ fi
 # 12. localize-asset.sh (JSONL --slug)
 # ════════════════════════════════════════
 if [[ -n "$abstract_slug" ]]; then
-  before_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+  before_lines=$(wc -l < "$ASSET_DIR/harnish-assets.jsonl" | xargs)
   output=$(bash "$HARNISH_ROOT/scripts/localize-asset.sh" --slug "$abstract_slug" --base-dir "$ASSET_DIR" 2>&1)
-  after_lines=$(wc -l < "$ASSET_DIR/harnish-rag.jsonl" | xargs)
+  after_lines=$(wc -l < "$ASSET_DIR/harnish-assets.jsonl" | xargs)
   if [[ $? -eq 0 ]] && [[ "$after_lines" -gt "$before_lines" ]]; then
     pass "localize-asset.sh --slug"
   else
@@ -982,11 +982,11 @@ mkdir -p "$DRY_FIXTURE"
 for i in 1 2 3 4 5 6; do
   jq -n -c --arg t "dry-test-tag" --argjson i "$i" \
     '{schema_version:"0.0.2",type:"pattern",slug:"p\($i)",title:"t\($i)",tags:[$t],date:"2026-01-01",scope:"generic",body:"b",context:"c",session:"s",last_accessed_at:"2026-01-01T00:00:00Z",access_count:0}' \
-    >> "$DRY_FIXTURE/harnish-rag.jsonl"
+    >> "$DRY_FIXTURE/harnish-assets.jsonl"
 done
-HASH_BEFORE=$(shasum "$DRY_FIXTURE/harnish-rag.jsonl" | awk '{print $1}')
+HASH_BEFORE=$(shasum "$DRY_FIXTURE/harnish-assets.jsonl" | awk '{print $1}')
 DRY_OUT=$(bash "$HARNISH_ROOT/scripts/compress-assets.sh" --all --dry-run --base-dir "$DRY_FIXTURE" 2>&1)
-HASH_AFTER=$(shasum "$DRY_FIXTURE/harnish-rag.jsonl" | awk '{print $1}')
+HASH_AFTER=$(shasum "$DRY_FIXTURE/harnish-assets.jsonl" | awk '{print $1}')
 if [[ "$HASH_BEFORE" == "$HASH_AFTER" ]] && echo "$DRY_OUT" | grep -q '"status":"dry_run"'; then
   pass "compress-assets --dry-run 비파괴 + dry_run status"
 else
@@ -1001,12 +1001,12 @@ echo "${BOLD}[v0.0.2: migrate.sh 백필]${NC}"
 MIG_FIX="$TMPDIR_BASE/mig-fix/.harnish"
 mkdir -p "$MIG_FIX"
 jq -n -c '{type:"pattern",slug:"legacy",title:"legacy","tags":["l"],"date":"2026-01-15",scope:"generic",body:"b",context:"c",session:"s"}' \
-  > "$MIG_FIX/harnish-rag.jsonl"
+  > "$MIG_FIX/harnish-assets.jsonl"
 bash "$HARNISH_ROOT/scripts/migrate.sh" --base-dir "$MIG_FIX" >/dev/null 2>&1 || true
-MIG_VER=$(jq -r '.schema_version' "$MIG_FIX/harnish-rag.jsonl")
-MIG_LA=$(jq -r '.last_accessed_at' "$MIG_FIX/harnish-rag.jsonl")
-MIG_AC=$(jq -r '.access_count' "$MIG_FIX/harnish-rag.jsonl")
-BAK_EXISTS=$(ls "$MIG_FIX"/harnish-rag.jsonl.bak* 2>/dev/null | wc -l | xargs)
+MIG_VER=$(jq -r '.schema_version' "$MIG_FIX/harnish-assets.jsonl")
+MIG_LA=$(jq -r '.last_accessed_at' "$MIG_FIX/harnish-assets.jsonl")
+MIG_AC=$(jq -r '.access_count' "$MIG_FIX/harnish-assets.jsonl")
+BAK_EXISTS=$(ls "$MIG_FIX"/harnish-assets.jsonl.bak* 2>/dev/null | wc -l | xargs)
 if [[ "$MIG_VER" == "0.0.2" ]] && [[ "$MIG_LA" == "2026-01-15" ]] && [[ "$MIG_AC" == "0" ]] && [[ "$BAK_EXISTS" -ge 1 ]]; then
   pass "migrate.sh 백필: schema_version=0.0.2, last_accessed_at=date, access_count=0, .bak 생성"
 else
@@ -1023,10 +1023,10 @@ mkdir -p "$PURGE_FIX"
 OLD_DATE=$(date -u -v-400d +"%Y-%m-%d" 2>/dev/null || date -u -d "-400 days" +"%Y-%m-%d" 2>/dev/null || echo "2024-01-01")
 jq -n -c --arg d "$OLD_DATE" \
   '{schema_version:"0.0.2",type:"decision",slug:"old-dec",title:"old",tags:["x"],date:$d,scope:"generic",body:"b",context:"c",session:"s",last_accessed_at:$d,access_count:0}' \
-  > "$PURGE_FIX/harnish-rag.jsonl"
-HASH_BEFORE=$(shasum "$PURGE_FIX/harnish-rag.jsonl" | awk '{print $1}')
+  > "$PURGE_FIX/harnish-assets.jsonl"
+HASH_BEFORE=$(shasum "$PURGE_FIX/harnish-assets.jsonl" | awk '{print $1}')
 PURGE_OUT=$(bash "$HARNISH_ROOT/scripts/purge-assets.sh" --base-dir "$PURGE_FIX" 2>&1)
-HASH_AFTER=$(shasum "$PURGE_FIX/harnish-rag.jsonl" | awk '{print $1}')
+HASH_AFTER=$(shasum "$PURGE_FIX/harnish-assets.jsonl" | awk '{print $1}')
 if [[ "$HASH_BEFORE" == "$HASH_AFTER" ]] && echo "$PURGE_OUT" | grep -q '"status":"dry_run"'; then
   pass "purge-assets 기본 dry-run 비파괴 + status"
 else
