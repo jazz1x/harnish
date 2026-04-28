@@ -18,14 +18,22 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
-      - name: Install bats + jq (macos)
-        run: brew install bats-core jq
+      - name: Install bats (macos)
+        run: brew install bats-core
 
-      - name: Run test suite
+      - name: Install pytest
+        run: pip install pytest
+
+      - name: Run pytest unit tests
+        run: PYTHONPATH=scripts python3 -m pytest tests/ -v
+        env:
+          PYTHONDONTWRITEBYTECODE: 1
+
+      - name: Run bats test suite
         run: bash tests/run.sh
 
-      - name: Run deep suite
+      - name: Run bats deep suite
         run: HARNISH_RUN_DEEP_TESTS=1 bash tests/run.sh
         if: success()

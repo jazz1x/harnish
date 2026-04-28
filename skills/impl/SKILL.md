@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.0.5
+version: 0.1.0
 description: >
   Autonomous implementation engine (the "harnish" engine). PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
   Triggers: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",

@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.0.5
+version: 0.1.0
 description: >
   자율 구현 엔진 ("harnish" 엔진). PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
   트리거: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",

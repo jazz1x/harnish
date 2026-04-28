@@ -117,7 +117,7 @@ teardown() {
   grep -q "## .*Patterns" "$SKILL_FILE"
   grep -q "## .*Guardrails" "$SKILL_FILE"
   grep -q "## .*Failures" "$SKILL_FILE"
-  grep -q "skillify_version: 0.0.5" "$SKILL_FILE"
+  grep -q "skillify_version: 0.1.0" "$SKILL_FILE"
 
   # references에 3건 자산 보존
   REFS_COUNT=$(wc -l < "$REFS_FILE" | xargs)
