@@ -66,7 +66,7 @@ if [[ ! -d "$BASE" ]]; then
     bash "$SCRIPT_DIR/init-assets.sh" --base-dir "$BASE" --quiet
 fi
 
-RAG_FILE="$BASE/harnish-rag.jsonl"
+ASSET_FILE="$BASE/harnish-assets.jsonl"
 
 # --- 본문 ---
 BODY_CONTENT="$BODY"
@@ -76,10 +76,10 @@ fi
 
 # --- 슬러그 (중복 방지: 동일 slug 존재 시 -2, -3 ... suffix) ---
 SLUG=$(slugify "$TITLE")
-if [[ -f "$RAG_FILE" ]] && [[ -s "$RAG_FILE" ]]; then
+if [[ -f "$ASSET_FILE" ]] && [[ -s "$ASSET_FILE" ]]; then
     BASE_SLUG="$SLUG"
     COUNTER=2
-    while jq -e --arg s "$SLUG" 'select(.slug == $s)' "$RAG_FILE" 2>/dev/null | grep -q .; do
+    while jq -e --arg s "$SLUG" 'select(.slug == $s)' "$ASSET_FILE" 2>/dev/null | grep -q .; do
         SLUG="${BASE_SLUG}-${COUNTER}"
         COUNTER=$((COUNTER + 1))
     done
@@ -114,11 +114,11 @@ case "$TYPE" in
 esac
 
 # --- append (atomic: copy + append + mv) ---
-TMPRAG=$(mktemp "${RAG_FILE}.XXXXXX")
+TMPRAG=$(mktemp "${ASSET_FILE}.XXXXXX")
 trap 'rm -f "$TMPRAG"' EXIT
-cp "$RAG_FILE" "$TMPRAG"
+cp "$ASSET_FILE" "$TMPRAG"
 echo "$RECORD" >> "$TMPRAG"
-mv "$TMPRAG" "$RAG_FILE"
+mv "$TMPRAG" "$ASSET_FILE"
 
 # --- RCA 검증 ---
 RCA_WARNINGS=()

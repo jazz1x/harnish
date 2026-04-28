@@ -25,15 +25,15 @@ if [[ -z "$SLUG" ]]; then
     exit 1
 fi
 
-RAG_FILE="$BASE/harnish-rag.jsonl"
+ASSET_FILE="$BASE/harnish-assets.jsonl"
 
-if [[ ! -f "$RAG_FILE" ]]; then
-    echo "오류: $RAG_FILE 없음" >&2
+if [[ ! -f "$ASSET_FILE" ]]; then
+    echo "오류: $ASSET_FILE 없음" >&2
     exit 1
 fi
 
 # 원본 찾기
-ORIGINAL=$(jq -c --arg s "$SLUG" 'select(.slug == $s)' "$RAG_FILE" 2>/dev/null | head -1)
+ORIGINAL=$(jq -c --arg s "$SLUG" 'select(.slug == $s)' "$ASSET_FILE" 2>/dev/null | head -1)
 
 if [[ -z "$ORIGINAL" ]]; then
     echo "오류: slug '$SLUG' 없음" >&2
@@ -42,10 +42,10 @@ fi
 
 # scope를 generic으로 변경한 사본 추가 (atomic write)
 ABSTRACTED=$(echo "$ORIGINAL" | jq -c '.scope = "generic" | .slug = .slug + "-generic" | .context = .context + " (추상화)"')
-TMPRAG=$(mktemp "${RAG_FILE}.XXXXXX")
+TMPRAG=$(mktemp "${ASSET_FILE}.XXXXXX")
 trap 'rm -f "$TMPRAG"' EXIT
-cp "$RAG_FILE" "$TMPRAG"
+cp "$ASSET_FILE" "$TMPRAG"
 echo "$ABSTRACTED" >> "$TMPRAG"
-mv "$TMPRAG" "$RAG_FILE"
+mv "$TMPRAG" "$ASSET_FILE"
 
 echo "{\"status\":\"abstracted\",\"slug\":\"${SLUG}-generic\"}"

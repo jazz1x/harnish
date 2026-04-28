@@ -62,7 +62,7 @@ teardown() {
   run bash "$REPO_ROOT/scripts/init-assets.sh" --quiet
   [ "$status" -eq 0 ]
   [ -d "$ASSET_BASE_DIR" ]
-  [ -f "$ASSET_BASE_DIR/harnish-rag.jsonl" ]
+  [ -f "$ASSET_BASE_DIR/harnish-assets.jsonl" ]
   [ -f "$ASSET_BASE_DIR/harnish-current-work.json" ]
 }
 

@@ -28,7 +28,7 @@
 2. 중복 자산 식별 및 병합
 3. 핵심 내용만 추출하여 하나의 요약 문서로
 4. 원본 레코드에 `compressed: true` 추가
-5. 요약본 1건 harnish-rag.jsonl에 append
+5. 요약본 1건 harnish-assets.jsonl에 append
 
 ## 스킬화 프로세스
 

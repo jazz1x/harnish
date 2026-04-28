@@ -28,7 +28,7 @@
 2. Identify and merge duplicate assets
 3. Extract only essential content into a single summary document
 4. Add `compressed: true` to original records
-5. Append 1 summary entry to harnish-rag.jsonl
+5. Append 1 summary entry to harnish-assets.jsonl
 
 ## Skillification Process
 

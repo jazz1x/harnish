@@ -29,10 +29,17 @@ log() { $QUIET || echo "$*"; }
 
 mkdir -p "$BASE"
 
-RAG_FILE="$BASE/harnish-rag.jsonl"
+ASSET_FILE="$BASE/harnish-assets.jsonl"
+LEGACY_RAG_FILE="$BASE/harnish-rag.jsonl"
 WORK_FILE="$BASE/harnish-current-work.json"
 
-[[ -f "$RAG_FILE" ]]  || touch "$RAG_FILE"
-[[ -f "$WORK_FILE" ]] || echo '{}' > "$WORK_FILE"
+# 레거시 → 신규 자동 이전 (idempotent: 신규가 이미 있으면 무시)
+if [[ -f "$LEGACY_RAG_FILE" ]] && [[ ! -f "$ASSET_FILE" ]]; then
+    mv "$LEGACY_RAG_FILE" "$ASSET_FILE"
+    log "ℹ legacy harnish-rag.jsonl → harnish-assets.jsonl 자동 이전"
+fi
+
+[[ -f "$ASSET_FILE" ]] || touch "$ASSET_FILE"
+[[ -f "$WORK_FILE" ]]  || echo '{}' > "$WORK_FILE"
 
 log "✓ .harnish/ 초기화 완료 ($BASE)"

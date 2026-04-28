@@ -32,7 +32,7 @@ fi
 
 [[ -z "$BASE_DIR" ]] && BASE_DIR="$(resolve_base_dir)"
 
-RAG_FILE="${BASE_DIR}/harnish-rag.jsonl"
+ASSET_FILE="${BASE_DIR}/harnish-assets.jsonl"
 
 # --- 빈 결과 처리 ---
 empty_result() {
@@ -46,7 +46,7 @@ empty_result() {
     exit 0
 }
 
-if [[ ! -f "$RAG_FILE" ]] || [[ ! -s "$RAG_FILE" ]]; then
+if [[ ! -f "$ASSET_FILE" ]] || [[ ! -s "$ASSET_FILE" ]]; then
     empty_result
 fi
 
@@ -75,7 +75,7 @@ fi
 JQ_FILTER="${JQ_FILTER} | select(.tags as \$t | ${TAG_JSON} | any(. as \$q | \$t | any(. == \$q)))"
 
 # --- 검색 실행 ---
-RESULTS=$(jq -c "${JQ_FILTER}" "$RAG_FILE" 2>/dev/null | head -n "$LIMIT" | jq -s '.' 2>/dev/null || echo "[]")
+RESULTS=$(jq -c "${JQ_FILTER}" "$ASSET_FILE" 2>/dev/null | head -n "$LIMIT" | jq -s '.' 2>/dev/null || echo "[]")
 RESULT_COUNT=$(echo "$RESULTS" | jq 'length')
 
 if [[ "$RESULT_COUNT" -eq 0 ]]; then
@@ -86,13 +86,13 @@ fi
 # 출력 전에 실행 (empty_result 분기 시 skip됨 = OK, 매칭 0이면 갱신 불필요)
 NOW_UTC=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 MATCHED_SLUGS=$(echo "$RESULTS" | jq -c '[.[].slug]')
-TMP_RAG=$(mktemp "${RAG_FILE}.XXXXXX")
+TMP_RAG=$(mktemp "${ASSET_FILE}.XXXXXX")
 trap 'rm -f "$TMP_RAG"' EXIT
 jq -c --arg now "$NOW_UTC" --argjson slugs "$MATCHED_SLUGS" \
   'if (.slug as $s | $slugs | any(. == $s))
    then . + {last_accessed_at: $now, access_count: ((.access_count // 0) + 1)}
-   else . end' "$RAG_FILE" > "$TMP_RAG"
-mv "$TMP_RAG" "$RAG_FILE"
+   else . end' "$ASSET_FILE" > "$TMP_RAG"
+mv "$TMP_RAG" "$ASSET_FILE"
 
 # --- 출력 ---
 case "$FORMAT" in
@@ -114,7 +114,16 @@ case "$FORMAT" in
         echo "### 관련 자산 (asset-recorder)"
         echo ""
         echo "$RESULTS" | jq -r '.[] |
-            "- **[\(.type)] \(.title)**: \(.body[0:100])"'
+            # type 헤더 — guardrail은 level, decision은 confidence, pattern은 stability를 머리에 노출
+            ( "[\(.type)" +
+              (if .level       then "/\(.level)"       else "" end) +
+              (if .confidence  then "/\(.confidence)"  else "" end) +
+              (if .stability   then "/s\(.stability)"  else "" end) +
+              "]" ) as $hdr |
+            "- **\($hdr) \(.title)**: \(.body[0:120])" +
+            "\n  - context: \(.context // "(none)")" +
+            (if .resolved != null then " | resolved: \(.resolved)" else "" end)
+        '
         ;;
     *)
         echo "오류: 알 수 없는 포맷 '$FORMAT'" >&2; exit 1;;

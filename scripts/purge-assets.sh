@@ -19,10 +19,10 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-RAG="$BASE/harnish-rag.jsonl"
-ARCHIVE="$BASE/harnish-rag-archive.jsonl"
+ASSETS="$BASE/harnish-assets.jsonl"
+ARCHIVE="$BASE/harnish-assets-archive.jsonl"
 
-[[ -f "$RAG" ]] || { echo '{"status":"no-op","reason":"rag file absent"}'; exit 0; }
+[[ -f "$ASSETS" ]] || { echo '{"status":"no-op","reason":"asset file absent"}'; exit 0; }
 
 # Hardcoded defaults (retention-policy.md 참조; 향후 파싱 확장 가능)
 # ttl_days: decision=365, failure=90, pattern=never, guardrail=never, snippet=180
@@ -54,7 +54,7 @@ PURGE_FILTER='
 '
 
 CANDIDATES=$(jq -c --argjson now_epoch "$NOW_EPOCH" --argjson safety_sec "$SAFETY_SEC" \
-    "select($PURGE_FILTER)" "$RAG" 2>/dev/null || echo "")
+    "select($PURGE_FILTER)" "$ASSETS" 2>/dev/null || echo "")
 CANDIDATE_COUNT=$(echo "$CANDIDATES" | awk 'NF' | wc -l | xargs)
 
 if ! $EXECUTE; then
@@ -71,11 +71,11 @@ fi
 # Append candidates to archive
 echo "$CANDIDATES" >> "$ARCHIVE"
 
-# Rewrite rag with non-candidates
-TMP=$(mktemp "${RAG}.XXXXXX")
+# Rewrite asset file with non-candidates
+TMP=$(mktemp "${ASSETS}.XXXXXX")
 trap 'rm -f "$TMP"' EXIT
 jq -c --argjson now_epoch "$NOW_EPOCH" --argjson safety_sec "$SAFETY_SEC" \
-    "select($PURGE_FILTER | not)" "$RAG" > "$TMP"
-mv "$TMP" "$RAG"
+    "select($PURGE_FILTER | not)" "$ASSETS" > "$TMP"
+mv "$TMP" "$ASSETS"
 
 echo "{\"status\":\"purged\",\"purged\":$CANDIDATE_COUNT,\"archive\":\"$ARCHIVE\"}"

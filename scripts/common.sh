@@ -45,9 +45,19 @@ resolve_progress_file() {
     echo "$(resolve_base_dir)/harnish-current-work.json"
 }
 
-# RAG 자산 파일 경로
-resolve_rag_file() {
+# Asset Store 파일 경로 (Tier 1 episodic memory)
+resolve_asset_file() {
+    echo "$(resolve_base_dir)/harnish-assets.jsonl"
+}
+
+# 레거시 RAG 파일 경로 (마이그레이션 감지용; v0.0.4까지는 이 이름이었음)
+resolve_legacy_asset_file() {
     echo "$(resolve_base_dir)/harnish-rag.jsonl"
+}
+
+# Deprecated alias — 외부 호출자 호환을 위해 유지. 향후 메이저 릴리스에서 제거 예정.
+resolve_rag_file() {
+    resolve_asset_file
 }
 
 # 스킬 디렉토리 (references/ 접근용)

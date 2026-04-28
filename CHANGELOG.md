@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.5] - 2026-04-28
+
+This release combines the asset-store identity correction with the production pipeline closure originally drafted as 0.0.6. Both ship together as 0.0.5.
+
+### Fixed (CRITICAL — closed loop restored)
+- **Trigger→Record pipeline closure**: hook이 `/tmp/harnish-pending-*.jsonl`에 적재한 실패 컨텍스트가 세션 종료 시 삭제만 되고 자산으로 영속화되지 않던 버그를 수정. `Stop` 이벤트가 새 `promote-pending.sh`를 호출하여 자동 dedup + `record-asset.sh` 호출 + 영속화. README의 "failures become guardrails" 약속이 처음으로 실제 동작.
+
+### Changed
+- **BREAKING (file rename, auto-migrated)**: Asset store renamed `.harnish/harnish-rag.jsonl` → `.harnish/harnish-assets.jsonl`. `init-assets.sh` performs an idempotent atomic `mv` on first run if the legacy file is present and the new file is absent. No data loss.
+- Archive file renamed: `harnish-rag-archive.jsonl` → `harnish-assets-archive.jsonl` (`purge-assets.sh --execute` output)
+- L0 Contract (`schema.json`) field rename: `rag_record` → `asset_record`, `storage.rag_file` → `storage.asset_file`
+- 14 scripts: `RAG_FILE` / `RAG` shell variables → `ASSET_FILE` / `ASSETS`; `harnish-rag.jsonl` literals replaced
+- `common.sh`: `resolve_rag_file()` kept as deprecated alias of `resolve_asset_file()`; new `resolve_legacy_asset_file()` for migration paths
+- `scripts/skillify.sh` production-grade 업그레이드:
+  - description에 `Triggers: ...` 자동 생성 (자산 title에서 빈도 기반 5개 후보 추출)
+  - body 구조화: §1 가이드라인 (LLM finalize) / §2 타입별 자산 섹션 (Failures/Patterns/Guardrails/Decisions/Snippets) / §3 메타데이터
+  - `references/source-assets.jsonl` 트레이서빌리티 보존
+  - 자산 메타 필드 노출: level / confidence / stability / resolved
+- `scripts/query-assets.sh --format inject` 출력에 RCA 컨텍스트 포함:
+  - guardrail은 `[guardrail/soft]`, decision은 `[decision/medium]`, pattern은 `[pattern/s1]`로 type 머리에 메타 노출
+  - 각 자산에 `context:` 라인 추가, failure는 `resolved:` 표시
+
+### Added
+- `scripts/promote-pending.sh` — pending JSONL을 `(tool, first_error_line)` 키로 deduplicate 후 자동으로 `failure` 자산 등록. 태그: `auto`, `tool:<name>`, `session:<short>`. context에 occurrences 카운트.
+- `tests/e2e_pipeline.bats` — 4개 production E2E (trigger→record, dedup, skillify quality, inject 풍부화).
+- `tests/scripts_advanced.bats` +2: legacy `harnish-rag.jsonl` → `harnish-assets.jsonl` migration regression + idempotency test
+- README "Memory Model" section: documents the two-tier model (Tier 1 Asset Store + Tier 2 Skills) and clarifies that only `query-assets.sh --format inject` is strict RAG
+
+### Documentation
+- README "ralph loop"의 잘못된 약자 풀이 (`Read → Act → Log → Progress`) 제거. 이름은 심슨의 Ralph Wiggum에서 유래한 것이며 약자가 아님을 명시.
+- Honest framing of `skillify.sh`: it is a draft generator (asset bundling + TODO scaffold), **not** autonomous skill graduation. Future feature flagged on roadmap.
+- README/SKILL.md/thresholds.md path references updated to `harnish-assets.jsonl`
+
 ## [0.0.4] - 2026-04-27
 
 ### Fixed
@@ -72,7 +105,7 @@ First public release. 5 skills + shared script suite + asset infrastructure + au
 #### impl `0.0.1` (the "harnish" engine)
 - 자율 구현 엔진 (시딩 + ralph 루프 + 앵커링 + 경험 축적)
 - 모드 A: PRD → 원자적 태스크 분해 → `harnish-current-work.json` 생성
-- 모드 B: ralph 루프 (Read → Act → Log → Progress → repeat)
+- 모드 B: ralph 루프 (한 태스크씩 자동 실행 → 결과 기록 → 진행률 갱신 반복)
 - 모드 C: 세션 복원 (앵커링) + 자산 감지/기록/압축/스킬화
 - §B.9 acceptance_criteria 실행: bash/조건/혼합/없음 4가지 분기
 - 다언어 타입 체커 (Python/TS/Go/Java/Rust)
@@ -119,7 +152,9 @@ First public release. 5 skills + shared script suite + asset infrastructure + au
 - README 구조 정리 (galmuri 동일 톤): badges, install steps, quickstart, usage, hooks, assets, worktrees, fork & customize, naming, triad
 - VERSIONING.md, references/* 가이드
 
-[Unreleased]: https://github.com/jazz1x/harnish/compare/v0.0.3...HEAD
+[Unreleased]: https://github.com/jazz1x/harnish/compare/v0.0.5...HEAD
+[0.0.5]: https://github.com/jazz1x/harnish/compare/v0.0.4...v0.0.5
+[0.0.4]: https://github.com/jazz1x/harnish/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/jazz1x/harnish/compare/v0.0.2...v0.0.3
 [0.0.2]: https://github.com/jazz1x/harnish/compare/v0.0.1...v0.0.2
 [0.0.1]: https://github.com/jazz1x/harnish/releases/tag/v0.0.1

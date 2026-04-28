@@ -27,5 +27,5 @@
    - `(now - created_at) <= ttl_days * 86400` → 제외 (TTL 미도래)
    - `min_access_count` 있고 `access_count < min_access_count` → 후보
    - 그 외 → 후보
-3. 후보들을 `harnish-rag-archive.jsonl`에 append
+3. 후보들을 `harnish-assets-archive.jsonl`에 append
 4. 원본에서 후보 제거

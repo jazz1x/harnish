@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.0.4
+version: 0.0.5
 description: >
   자율 구현 엔진 ("harnish" 엔진). PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
   트리거: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -291,7 +291,7 @@ bash "$HARNISH_ROOT/scripts/compress-assets.sh" --dry-run --all --base-dir "$(pw
 ```
 ✅ 세션 요약
 변경된 파일: {개수} ({짧은 목록})
-핵심 결정: {이 세션에서 기록된 .harnish/harnish-rag.jsonl의 1-2줄 항목}
+핵심 결정: {이 세션에서 기록된 .harnish/harnish-assets.jsonl의 1-2줄 항목}
 다음 제안: {예: ralphi 수정 | 배포 | 인계 | 다른 플러그인 호출}
 ```
 

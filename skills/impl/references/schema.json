@@ -72,8 +72,8 @@
     }
   },
 
-  "rag_record": {
-    "_comment": "harnish-rag.jsonl 각 레코드의 필드 정의. v0.0.2부터 3개 필드 필수.",
+  "asset_record": {
+    "_comment": "harnish-assets.jsonl 각 레코드의 필드 정의. v0.0.2부터 3개 필드 필수.",
     "required": {
       "schema_version": {
         "format": "X.Y.Z",
@@ -95,9 +95,9 @@
 
   "storage": {
     "_comment": "JSONL 기반 단일 파일 저장. .meta/index.json 불필요.",
-    "rag_file": {
-      "path": ".harnish/harnish-rag.jsonl",
-      "description": "모든 자산을 1줄=1레코드로 저장하는 JSONL 파일"
+    "asset_file": {
+      "path": ".harnish/harnish-assets.jsonl",
+      "description": "모든 자산을 1줄=1레코드로 저장하는 JSONL 파일 (Tier 1 episodic memory). v0.0.4까지는 harnish-rag.jsonl이었음 — init-assets.sh가 자동 마이그레이션."
     },
     "work_file": {
       "path": ".harnish/harnish-current-work.json",
