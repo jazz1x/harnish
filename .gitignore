@@ -15,5 +15,10 @@ Thumbs.db
 # Runtime data (per-project, generated in user's CWD)
 .harnish/
 
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
 # Packaged skills
 *.skill
