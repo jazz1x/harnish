@@ -74,6 +74,11 @@ while IFS= read -r target_tag; do
         continue
     fi
 
+    # 압축 전: 대상 자산 타이틀 수집 (compressed:true 마킹 이전에 읽어야 함)
+    TITLES=$(jq -rc --arg t "$target_tag" \
+        'select(.compressed != true) | select(.tags[] == $t) | "\(.type): \(.title)"' \
+        "$TMPFILE" 2>/dev/null | head -5 | paste -s -d '|' -)
+
     # 원본에 compressed:true 추가
     jq -c --arg t "$target_tag" 'if (.compressed != true) and (.tags | any(. == $t)) then . + {compressed: true} else . end' "$TMPFILE" > "${TMPFILE}.new"
     mv "${TMPFILE}.new" "$TMPFILE"
@@ -86,7 +91,7 @@ while IFS= read -r target_tag; do
         --argjson tags "$(jq -n -c --arg t "$target_tag" '[$t]')" \
         --arg date "$(date +%Y-%m-%d)" \
         --arg scope "generic" \
-        --arg body "TODO: Claude가 ${COUNT}건의 ${target_tag} 자산을 요약해야 합니다." \
+        --arg body "[${target_tag} × ${COUNT}건 압축] ${TITLES}" \
         --arg context "compress-assets.sh" \
         --arg session "compress" \
         '{type:$type,slug:$slug,title:$title,tags:$tags,date:$date,scope:$scope,body:$body,context:$context,session:$session,compressed_summary:true}')

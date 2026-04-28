@@ -67,4 +67,10 @@ jq -n -c \
   '{ts:$ts, from:$from, to:$to, migrated:$migrated, skipped:$skipped, backup:$backup}' \
   >> "$LOG"
 
+# Backup 보존: 최신 3개만 유지, 나머지 삭제
+BAK_FILES=$(ls -t "${RAG}".bak.* 2>/dev/null || true)
+if [[ -n "$BAK_FILES" ]]; then
+    echo "$BAK_FILES" | tail -n +4 | xargs rm -f 2>/dev/null || true
+fi
+
 echo "{\"status\":\"migrated\",\"migrated\":$MIGRATED,\"skipped\":$SKIPPED,\"backup\":\"$BAK\"}"

@@ -10,13 +10,14 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/common.sh"
 
 BASE="$(resolve_base_dir)"
-TAG="" SKILL_NAME=""
+TAG="" SKILL_NAME="" OUTPUT_DIR="skills"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --tag)        TAG="$2"; shift 2;;
+        --tag)        TAG="$2";        shift 2;;
         --skill-name) SKILL_NAME="$2"; shift 2;;
-        --base-dir)   BASE="$2"; shift 2;;
+        --output-dir) OUTPUT_DIR="$2"; shift 2;;
+        --base-dir)   BASE="$2";       shift 2;;
         *) shift;;
     esac
 done
@@ -43,7 +44,7 @@ if [[ "$COUNT" -eq 0 ]]; then
 fi
 
 # 스킬 초안 생성
-SKILL_DIR="skills/${SKILL_NAME}"
+SKILL_DIR="${OUTPUT_DIR}/${SKILL_NAME}"
 mkdir -p "$SKILL_DIR"
 
 cat > "${SKILL_DIR}/SKILL.md" << EOF

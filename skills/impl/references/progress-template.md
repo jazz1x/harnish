@@ -13,6 +13,7 @@
     "prd": "docs/prd-{slug}.md",
     "started_at": "YYYY-MM-DDTHH:MM:SS+09:00",
     "last_session": "YYYY-MM-DDTHH:MM:SS+09:00",
+    "ceremony_done": false,
     "status": {
       "emoji": "🟢",
       "phase": 1,
@@ -113,7 +114,7 @@ An object if there is an active task, `null` otherwise.
   "title": "Data model",
   "compressed": true,
   "compressed_summary": "tasks:4 | files:src/models/*.ts",
-  "archive_ref": ".progress-archive/phases.jsonl#phase=1"
+  "archive_ref": "harnish-progress-archive.jsonl#phase=1"
 }
 ```
 

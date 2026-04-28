@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.4] - 2026-04-27
+
+### Fixed
+- `check-thresholds.sh` W1: `--threshold` flag now parsed correctly regardless of argument order; `--base-dir` first no longer silently corrupts the threshold value
+- `compress-assets.sh` C1: compressed summary body no longer contains `TODO` placeholder — titles are extracted before source records are marked compressed
+- `skills/impl/references/schema.json` L0 Contract: `script_io` entries for 6 scripts updated to match actual CLIs (purge-assets, compress-assets, quality-gate, localize-asset, abstract-asset, skillify)
+- `record-asset.sh`: duplicate slug auto-suffix (`-2`, `-3` ...) — prevents `query-assets.sh` write-back from incrementing `access_count` on unrelated records with the same title
+- `loop-step.sh`: proper while-loop arg parsing — `--format json` without explicit file path now resolves correctly via `resolve_progress_file()`
+- `validate-progress.sh`: added `🔵` to the valid status-emoji set — eliminates false WARNING on in-progress work files
+- `compress-progress.sh`: replaced deterministic `.tmp` path with `mktemp` — eliminates concurrent-run conflict
+- `detect-asset.sh`: Stop event now deletes the session pending file and prunes stale pending files older than 7 days from `/tmp`
+- `migrate.sh`: keeps only the 3 most recent `.bak.*` files — prevents unbounded backup accumulation
+
+### Added
+- `tests/e2e_workflow.bats` — 9 E2E tests covering the full progress pipeline: `init-assets → validate-progress → loop-step → compress-progress → progress-report → check-violations`
+- `tests/e2e_assets.bats` — 11 E2E tests covering the full asset lifecycle: `record(6 types) → query → check-thresholds → compress-assets → quality-gate → migrate → purge`
+- `tests/scripts_advanced.bats` +5: `purge --execute`, `loop-step --format without path`, `detect-asset meaningful error → pending`, `detect-asset Stop → pending deleted`
+- `scripts/skillify.sh`: `--output-dir` flag for configurable skill output directory
+
 ## [0.0.3] - 2026-04-23
 
 ### Fixed

@@ -74,8 +74,16 @@ if [[ -n "$BODY_FILE" && -f "$BODY_FILE" ]]; then
     BODY_CONTENT=$(cat "$BODY_FILE")
 fi
 
-# --- 슬러그 ---
+# --- 슬러그 (중복 방지: 동일 slug 존재 시 -2, -3 ... suffix) ---
 SLUG=$(slugify "$TITLE")
+if [[ -f "$RAG_FILE" ]] && [[ -s "$RAG_FILE" ]]; then
+    BASE_SLUG="$SLUG"
+    COUNTER=2
+    while jq -e --arg s "$SLUG" 'select(.slug == $s)' "$RAG_FILE" 2>/dev/null | grep -q .; do
+        SLUG="${BASE_SLUG}-${COUNTER}"
+        COUNTER=$((COUNTER + 1))
+    done
+fi
 
 # --- 태그 배열 ---
 TAG_JSON="[]"

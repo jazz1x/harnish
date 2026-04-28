@@ -32,14 +32,15 @@ harnish는 **혼합 버저닝**을 사용한다.
 
 ```
 harnish/
-├── VERSION                          ← 리포 버전 (한 줄: "0.0.1")
+├── VERSION                          ← 리포 버전 (한 줄: "0.0.4")
 ├── CHANGELOG.md                     ← Keep a Changelog 포맷
 ├── VERSIONING.md                    ← 이 문서
 └── skills/
-    ├── drafti-architect/SKILL.md    ← frontmatter version: 0.0.1
-    ├── drafti-feature/SKILL.md      ← frontmatter version: 0.0.1
-    ├── harnish/SKILL.md             ← frontmatter version: 0.0.1
-    └── ralphi/SKILL.md              ← frontmatter version: 0.0.1
+    ├── drafti-architect/SKILL.md    ← frontmatter version: X.Y.Z
+    ├── drafti-feature/SKILL.md      ← frontmatter version: X.Y.Z
+    ├── forki/SKILL.md               ← frontmatter version: X.Y.Z
+    ├── impl/SKILL.md                ← frontmatter version: X.Y.Z
+    └── ralphi/SKILL.md              ← frontmatter version: X.Y.Z
 ```
 
 ## Git Tag

@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.0.3
+version: 0.0.4
 description: >
   Autonomous implementation engine (the "harnish" engine). PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
   Triggers: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -24,7 +24,7 @@ drafti-architect (or drafti-feature) → impl → ralphi
 |-------|----------------|---------------|
 | drafti-architect | Yes | None (only needs a technical problem) |
 | drafti-feature | Yes | Requires a planning document |
-| harnish | Yes | docs/prd-*.md or existing harnish-current-work.json |
+| impl | Yes | docs/prd-*.md or existing harnish-current-work.json |
 | ralphi | Yes | Specify target files/directories to verify |
 
 When harnish starts without a PRD: "No PRD found. Please create one first with /drafti-architect or /drafti-feature."

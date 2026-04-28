@@ -62,7 +62,7 @@ done
 EMOJI=$(jq -r '.metadata.status.emoji // ""' "$PROGRESS_FILE")
 if [[ -n "$EMOJI" ]]; then
     case "$EMOJI" in
-        "🟢"|"🟡"|"🔴"|"✅") ;;
+        "🟢"|"🟡"|"🔴"|"✅"|"🔵") ;;
         *) WARNINGS+=("현재 상태에 유효한 상태 이모지(🟢🟡🔴✅) 없음: '$EMOJI'");;
     esac
 fi

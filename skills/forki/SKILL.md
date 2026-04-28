@@ -1,6 +1,6 @@
 ---
 name: forki
-version: 0.0.3
+version: 0.0.4
 description: >
   Decision-forcing skill. Reduces a problem to a binary fork via role decomposition
   (Decision / Execution / Validation / Recovery), surfaces trade-offs, forces a single choice.
