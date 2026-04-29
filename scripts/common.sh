@@ -5,28 +5,16 @@
 # 역할: 디렉토리·인덱스 관리, 환경 해석, 유틸리티 함수
 # 규칙: L2 이상의 스크립트를 호출하지 않는다.
 #
+# v0.1.0: jq 의존 제거 — 모든 JSON 처리는 Python(harnish_py)으로 이전됨.
+#          이 파일은 resolve_* 헬퍼와 slugify만 남긴다.
+#
 # 사용법 (다른 스크립트에서):
 #   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 #   source "$SCRIPT_DIR/common.sh"
 
 # ═══════════════════════════════════════
-# 의존성 체크
-# ═══════════════════════════════════════
-require_cmd() {
-    local cmd="$1" install_hint="${2:-}"
-    if ! command -v "$cmd" &>/dev/null; then
-        echo "오류: '$cmd'이(가) 설치되어 있지 않습니다.${install_hint:+ $install_hint}" >&2
-        exit 1
-    fi
-}
-
-require_cmd jq "brew install jq"
-
-# ═══════════════════════════════════════
 # 환경 해석
 # ═══════════════════════════════════════
-# 이 파일이 source된 스크립트의 SCRIPT_DIR을 기준으로 한다.
-# SCRIPT_DIR은 source하기 전에 설정되어야 한다.
 
 # 자산 루트 경로 해석
 # 우선순위: ASSET_BASE_DIR > CWD/.harnish
@@ -87,4 +75,3 @@ slugify() {
         echo "$hash"
     fi
 }
-

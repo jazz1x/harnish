@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.0.5
+version: 0.1.0
 description: >
   Autonomous implementation engine (the "harnish" engine). PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
   Triggers: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -31,7 +31,7 @@ When harnish starts without a PRD: "No PRD found. Please create one first with /
 
 ## Bash Convention
 
-> bash 3.2+, python3, jq. macOS/Linux.
+> bash 3.2+, python3 (3.14+). macOS/Linux. No jq required as of v0.1.0.
 
 Each Bash tool invocation is a fresh subshell — variables do **not** survive across calls. Every bash block in this skill must re-declare `HARNISH_ROOT="${CLAUDE_PLUGIN_ROOT}"` inline before using any script path. There are no persistent script-name aliases; full paths (`$HARNISH_ROOT/scripts/{name}.sh`) are used directly.
 

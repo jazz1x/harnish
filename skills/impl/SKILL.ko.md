@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.0.5
+version: 0.1.0
 description: >
   자율 구현 엔진 ("harnish" 엔진). PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
   트리거: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -31,7 +31,7 @@ harnish 시작 시 PRD 없으면: "PRD가 없습니다. /drafti-architect 또는
 
 ## Bash 컨벤션
 
-> bash 3.2+, python3, jq. macOS/Linux.
+> bash 3.2+, python3 (3.14+). macOS/Linux. v0.1.0부터 jq 의존성 없음.
 
 각 Bash 도구 호출은 새 subshell — 변수는 호출 간 **살아남지 않는다**. 이 스킬의 모든 bash 블록은 자기 안에서 `HARNISH_ROOT="${CLAUDE_PLUGIN_ROOT}"`를 다시 선언한 후 스크립트 경로를 사용한다. 영구 alias 없음; full path (`$HARNISH_ROOT/scripts/{name}.sh`) 직접 사용.
 
