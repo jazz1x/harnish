@@ -43,23 +43,29 @@ ralphi  ──→  inspects any artifact (PRD, SKILL.md, scripts, code)
 
 ## Install
 
-### 1. Register the marketplace
+### Option 1 — `npx skills add` (recommended)
 
-Inside a Claude Code session, run:
+Works with Claude Code, Cursor, Codex, Windsurf, and other skills.sh-compatible agents.
 
-```
-/plugin marketplace add https://github.com/jazz1x/harnish.git
+```bash
+npx skills add jazz1x/harnish               # install into ./.claude/skills/ (project)
+npx skills add jazz1x/harnish -g            # install into ~/.claude/skills/ (global)
+npx skills add jazz1x/harnish --list        # list skills before installing
+npx skills add jazz1x/harnish --skill impl  # install a single skill
 ```
 
 Expected output:
 
 ```
-✓ Marketplace 'harnish' added (1 plugin)
+✓ Installed jazz1x/harnish — 5 skills (forki, drafti-feature, drafti-architect, impl, ralphi)
 ```
 
-### 2. Install the plugin
+### Option 2 — Claude Code native plugin
+
+Inside a Claude Code session:
 
 ```
+/plugin marketplace add https://github.com/jazz1x/harnish.git
 /plugin install harnish
 ```
 
@@ -69,13 +75,7 @@ Expected output:
 ✓ Installed harnish@0.1.0 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
 ```
 
-### 3. Verify
-
-```
-/plugin list
-```
-
-You should see `harnish` in the list. The five slash commands below should be invocable:
+Verify with `/plugin list`. The five slash commands below should be invocable:
 
 ```
 /harnish:forki
@@ -85,11 +85,9 @@ You should see `harnish` in the list. The five slash commands below should be in
 /harnish:ralphi
 ```
 
-### 4. Hooks (auto-registered)
+Hooks are auto-registered via `hooks/hooks.json` — see the [Hooks](#hooks) section.
 
-harnish ships hooks in `hooks/hooks.json`, which the plugin loader picks up automatically on install. **No manual setup needed** — see the [Hooks](#hooks) section for what each does.
-
-### 5. Uninstall
+### Uninstall
 
 ```
 /plugin uninstall harnish
