@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-04-29
+
+Big-bang migration: all `jq` usage replaced with Python standard library. External interface (CLI flags, stdin/stdout JSON, exit codes, hooks.json, SKILL.md) is 100% preserved.
+
+### Changed
+- **All 18 scripts**: bash+jq logic replaced with `scripts/harnish_py/` Python package; `.sh` files are now 2-line wrappers (`PYTHONPATH + exec python3 -m harnish_py <sub> "$@"`)
+- `common.sh`: `require_cmd jq` removed; only `resolve_*` helpers and `slugify` remain
+- `scripts/skillify.sh`: `skillify_version` bumped `0.0.5` → `0.1.0`
+- CI: Python `3.12` → `3.14`; `pytest` unit step added before bats; `jq` install retained for test infrastructure (`test-all.sh` + bats files use jq for assertions; production scripts no longer depend on jq)
+- VERSION + 10 SKILL.md frontmatters: `0.0.5` → `0.1.0`
+- `.claude-plugin/plugin.json`: `0.0.4` → `0.1.0` (catches up the missed bump from v0.0.5 release; was a pre-existing inconsistency)
+
+### Added
+- `scripts/harnish_py/` — 18-module Python package (cli, io, common, asset, record, query, init, compress, promote, detect, skillify, quality, thresholds, purge, migrate, progress, violations)
+- `tests/conftest.py` — pytest sys.path injection (honne pattern)
+- 11 pytest unit test files (35+ tests): io, cli, asset, record, query, compress, promote, skillify, purge, progress, init
+- Python 3.14+ version guard (`sys.version_info < (3, 14)` → exit 4)
+- `_Parser` class (argparse exit code 1 instead of 2, honne pattern)
+
+### Removed
+- `jq` runtime dependency — `scripts/` no longer calls `jq` anywhere (wrappers are pure delegation)
+
 ## [0.0.5] - 2026-04-28
 
 This release combines the asset-store identity correction with the production pipeline closure originally drafted as 0.0.6. Both ship together as 0.0.5.
@@ -152,7 +174,8 @@ First public release. 5 skills + shared script suite + asset infrastructure + au
 - README 구조 정리 (galmuri 동일 톤): badges, install steps, quickstart, usage, hooks, assets, worktrees, fork & customize, naming, triad
 - VERSIONING.md, references/* 가이드
 
-[Unreleased]: https://github.com/jazz1x/harnish/compare/v0.0.5...HEAD
+[Unreleased]: https://github.com/jazz1x/harnish/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/jazz1x/harnish/compare/v0.0.5...v0.1.0
 [0.0.5]: https://github.com/jazz1x/harnish/compare/v0.0.4...v0.0.5
 [0.0.4]: https://github.com/jazz1x/harnish/compare/v0.0.3...v0.0.4
 [0.0.3]: https://github.com/jazz1x/harnish/compare/v0.0.2...v0.0.3

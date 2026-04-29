@@ -2,10 +2,11 @@
 
 > Claude Code plugin — autonomous implementation engine
 
-![version](https://img.shields.io/badge/version-0.0.5-blue)
+![version](https://img.shields.io/badge/version-0.1.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
-![tests](https://img.shields.io/badge/tests-80%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-123%20passing-brightgreen)
+![python](https://img.shields.io/badge/python-3.14%2B-blue)
 
 **harnish** (harness + ish) — an implementation environment that gets smarter as you work. Failures become guardrails, patterns accumulate, and context persists across sessions and worktrees.
 
@@ -34,6 +35,12 @@ ralphi  ──→  inspects any artifact (PRD, SKILL.md, scripts, code)
               HITL (report → wait) or autonomous (fix immediately)
 ```
 
+## Requirements
+
+- **Python 3.14+** — runtime for all `scripts/*.sh` (they delegate to `scripts/harnish_py/` via 1-line wrappers; the `sys.version_info < (3, 14)` guard exits with code 4 on older interpreters).
+- **Claude Code** — plugin host.
+- **No `jq` dependency** as of v0.1.0.
+
 ## Install
 
 ### 1. Register the marketplace
@@ -59,7 +66,7 @@ Expected output:
 Expected output:
 
 ```
-✓ Installed harnish@0.0.5 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
+✓ Installed harnish@0.1.0 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
 ```
 
 ### 3. Verify
@@ -214,14 +221,14 @@ harnish runs a **two-tier memory** system. Each tier serves a different role; th
 | **Tier 1 — Asset Store** (episodic) | `.harnish/harnish-assets.jsonl` | Per-project, accumulates across sessions, TTL-purged | Records what happened (failures, patterns, guardrails, snippets, decisions) | Injected into context on demand via `query-assets.sh --format inject` (this is the actual RAG path) |
 | **Tier 2 — Skills** (procedural) | `skills/*/SKILL.md` | Permanent (versioned in source tree) | Codifies stable behavior | Auto-loaded by Claude Code as triggerable skills |
 
-`skillify.sh` is the bridge — it bundles compressed Tier-1 assets into a Tier-2 SKILL.md scaffold. As of v0.0.5 the scaffold is **production-grade**:
+`skillify.sh` is the bridge — it bundles compressed Tier-1 assets into a Tier-2 SKILL.md scaffold. The scaffold is **production-grade** (since v0.0.5; reimplemented in Python in v0.1.0):
 
 - Frontmatter `Triggers:` auto-extracted from asset titles
 - Body sectioned by asset type, with metadata (level / confidence / stability / resolved)
 - `references/source-assets.jsonl` preserves originals for traceability
 - §1 still needs LLM finalization of 1-3 actionable guidelines — draft generator, not autonomous graduation
 
-**Trigger → Record → Skillify pipeline (closed in v0.0.5):**
+**Trigger → Record → Skillify pipeline** (closed in v0.0.5; pure-Python implementation in v0.1.0, `.sh` files are 1-line wrappers):
 
 ```
 PostToolUseFailure  →  detect-asset.sh (noise filter)  →  /tmp/harnish-pending-*.jsonl

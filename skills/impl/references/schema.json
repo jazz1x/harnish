@@ -208,7 +208,7 @@
     "L1_Storage": {
       "files": ["scripts/common.sh", "scripts/init-assets.sh"],
       "rule": "디렉토리·인덱스 관리, 공용 함수. L2 이상을 호출하지 않음.",
-      "exports": ["require_cmd()", "resolve_base_dir()", "resolve_progress_file()", "resolve_rag_file()", "resolve_skill_dir()", "resolve_sections_file()", "slugify()"]
+      "exports": ["resolve_base_dir()", "resolve_progress_file()", "resolve_asset_file()", "resolve_legacy_asset_file()", "resolve_rag_file()", "resolve_skill_dir()", "resolve_sections_file()", "slugify()"]
     },
     "L2_Operation": {
       "files": ["scripts/record-asset.sh", "scripts/quality-gate.sh", "scripts/localize-asset.sh", "scripts/abstract-asset.sh"],
