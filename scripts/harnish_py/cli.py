@@ -17,8 +17,8 @@ class _Parser(argparse.ArgumentParser):
 
 def main(argv: Optional[List[str]] = None) -> int:
     """CLI entry point. Returns exit code."""
-    if sys.version_info < (3, 10):
-        sys.stderr.write("python3>=3.10 required\n")
+    if sys.version_info < (3, 14):
+        sys.stderr.write("python3>=3.14 required\n")
         return 4
 
     parser = _Parser(
