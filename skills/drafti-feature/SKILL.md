@@ -120,7 +120,7 @@ Read `references/prd-template.md` and write accordingly.
 - `overwrite` → existing file is replaced without backup (user has explicitly confirmed destructive write).
 - `new-slug` → ask for a different slug, then re-check existence; repeat until a free slug is chosen or user picks `n`/`overwrite`.
 
-Save PRD (only after `y`):
+Save PRD (only after `y` or `overwrite`):
 ```bash
 mkdir -p docs/
 # Write PRD content to docs/prd-{slug}.md

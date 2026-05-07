@@ -119,7 +119,7 @@ fi
 - `overwrite` → 기존 파일을 백업 없이 덮어쓰기 (사용자가 명시적으로 파괴 쓰기 확인).
 - `new-slug` → 다른 slug 묻기, 그 후 존재 여부 재확인; 빈 slug가 선택되거나 사용자가 `n`/`overwrite`를 고를 때까지 반복.
 
-PRD 저장 (`y` 이후만):
+PRD 저장 (`y` 또는 `overwrite` 이후만):
 ```bash
 mkdir -p docs/
 # PRD 내용을 docs/prd-{slug}.md에 작성
