@@ -236,8 +236,8 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 
 ### 수동 트리거
 
-| 발화 | 스크립트 |
-|------|---------|
+| 발화 | 동작 |
+|------|------|
 | "자산 현황" | check-thresholds.sh |
 | "자산 압축" | compress-assets.sh |
 | "이 패턴 기억해" | record-asset.sh --type pattern |

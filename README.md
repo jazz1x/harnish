@@ -5,7 +5,7 @@
 ![version](https://img.shields.io/badge/version-0.1.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
-![tests](https://img.shields.io/badge/tests-144%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-145%20passing-brightgreen)
 ![python](https://img.shields.io/badge/python-3.14%2B-blue)
 
 **harnish** (harness + ish) — an implementation environment that gets smarter as you work. Failures become guardrails, patterns accumulate, and context persists across sessions and worktrees.
@@ -72,7 +72,7 @@ Inside a Claude Code session:
 Expected output:
 
 ```
-✓ Installed harnish@0.1.0 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
+✓ Installed harnish@0.1.1 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
 ```
 
 Verify with `/plugin list`. The five slash commands below should be invocable:

@@ -242,7 +242,7 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 
 ### Manual Triggers
 
-| Utterance | Script |
+| Utterance | Action |
 |-----------|--------|
 | "자산 현황" / "asset status" | check-thresholds.sh |
 | "자산 압축" / "compress assets" | compress-assets.sh |

@@ -13,7 +13,7 @@ Audit-driven body-prose patches. No frontmatter schema change, no script change.
 
 ### Fixed
 - **ralphi Step 3B (en+ko)**: orphan reference `references/criteria-project.md` is now loaded — Step 3B mirrors Step 3A's "exactly **1** criteria file" pattern. Directory-scope inspection no longer runs without a criteria reference.
-- **drafti-architect Step 5 (en+ko) + drafti-feature Step 7 (en+ko)**: silent overwrite of `docs/prd-{slug}.md` is closed. HITL prompt now detects pre-existence and offers `(overwrite / n / new-slug)` instead of `(y / n / edit-slug)`. `Prohibited` section gains a symmetric bullet on each skill.
+- **drafti-architect Step 5 (en+ko) + drafti-feature Step 7 (en+ko)**: silent overwrite of `docs/prd-{slug}.md` is closed. HITL prompt now detects pre-existence and offers `(overwrite / n / new-slug)` instead of `(y / n / edit-slug)`. `Prohibited` section gains a symmetric bullet on each skill. Save-guard updated to `(only after y or overwrite)` so the new branch doesn't dead-end at the save step.
 - **impl Step 5 (en+ko)**: orphan reference `references/retention-policy.md` is now intentionally addressed — added a manual-trigger row (`자산 보존 정책` / `asset retention policy`) and a Mode Detection note explicitly framing retention/purge as out-of-band ops, not auto-loaded by any utterance.
 
 ### Added
@@ -21,6 +21,10 @@ Audit-driven body-prose patches. No frontmatter schema change, no script change.
 - `tests/skills_drafti.bats` — overwrite-gate regression on drafti-architect Step 5 + drafti-feature Step 7 (en+ko).
 - `tests/skills_ralphi.bats` — `criteria-project.md` mapping regression (en+ko).
 - `tests/skills_impl.bats` (extension) — `retention-policy.md` reference regression (en+ko).
+- `tests/skills_orphan_refs.bats` — **general orphan-reference guard**: every `skills/*/references/*.md` (en + ko) must be mentioned in the corresponding `SKILL.md` body. Prevents the class of bug fixed in this release (orphan reference). Currently 34/34 references wired.
+
+### Changed
+- `impl` Step 5 manual triggers table header (en+ko): `Script` / `스크립트` → `Action` / `동작`. The new retention-policy row points to a `.md` reference doc, not a `.sh` script — header generalized to keep table semantics consistent.
 
 ### Versioning
 - `VERSION`, `.claude-plugin/plugin.json`, 5 SKILL × (md + ko.md) = 10 frontmatters, `README.md` + `README.ko.md` badges — all bumped `0.1.0` → `0.1.1` in lockstep (deep-tier check at `scripts/test-all.sh:1037-1053`).
