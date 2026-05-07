@@ -1,6 +1,6 @@
 ---
 name: drafti-feature
-version: 0.1.0
+version: 0.1.1
 description: >
   Planning-based implementation spec PRD generator. Converts planning requirements into an implementation-ready spec.
   Triggers: "drafti-feature", "drafti", "drafti 피쳐", "이 기획서로 PRD 만들어", "create PRD from this planning doc",
@@ -111,12 +111,16 @@ Read `references/prd-template.md` and write accordingly.
 
 **HITL** (before any file write):
 > "PRD draft ready: §{sections present} ({with/without} flag). Save to `docs/prd-{slug}.md`? (y / n / edit-slug)"
+>
+> **If `docs/prd-{slug}.md` already exists**, the prompt becomes: *"`docs/prd-{slug}.md` already exists. (overwrite / n / new-slug)"* — `y` is **not** offered. Treat `overwrite` as explicit destructive confirmation.
 
 - `n` → end. PRD not saved.
-- `edit-slug` → ask for slug, then `y`.
+- `edit-slug` → ask for slug, then `y` (re-check existence after slug change).
 - `y` → proceed with save below.
+- `overwrite` → existing file is replaced without backup (user has explicitly confirmed destructive write).
+- `new-slug` → ask for a different slug, then re-check existence; repeat until a free slug is chosen or user picks `n`/`overwrite`.
 
-Save PRD (only after `y`):
+Save PRD (only after `y` or `overwrite`):
 ```bash
 mkdir -p docs/
 # Write PRD content to docs/prd-{slug}.md
@@ -179,5 +183,6 @@ Load **at most 1** reference at a time; switch when moving phase.
 - Guessing requirements without a planning doc (use drafti-architect instead)
 - Forcing unnecessary feature flags (follow the Step 4 assessment table)
 - Saving PRD without explicit user confirmation in Step 7
+- Saving over an existing `docs/prd-*.md` without explicit `overwrite` confirmation
 - Proceeding past Step 1 with any of the 4 required items missing
 - Loading 2 references simultaneously

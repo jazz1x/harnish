@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.1.0
+version: 0.1.1
 description: >
   Autonomous implementation engine (the "harnish" engine). PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
   Triggers: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -53,6 +53,8 @@ If invoked with no context (no PRD path, no task description, no experience comm
 | harnish-current-work.json exists + session start | Restore | Step 4 | — |
 
 Load **at most 2 references** at a time. (See Context Budget below.)
+
+**Note**: `references/retention-policy.md` is **not** auto-loaded by any utterance — it documents an out-of-band ops flow (`scripts/purge-assets.sh`, asset deletion). It is referenced only on explicit `자산 보존 정책` / `asset retention policy` utterance per Step 5.
 
 ## Step 2: Seeding (PRD → harnish-current-work.json)
 
@@ -240,7 +242,7 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 
 ### Manual Triggers
 
-| Utterance | Script |
+| Utterance | Action |
 |-----------|--------|
 | "자산 현황" / "asset status" | check-thresholds.sh |
 | "자산 압축" / "compress assets" | compress-assets.sh |
@@ -248,6 +250,7 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 | "스킬로 만들어" / "make it a skill" | skillify.sh |
 | "자산 품질" / "asset quality" | quality-gate.sh |
 | "위반 확인" / "check violations" | check-violations.sh |
+| "자산 보존 정책" / "asset retention policy" | references/retention-policy.md (read-only — purge-assets is invoked out-of-band via CLI/cron, not via skill utterance) |
 
 ## Step 6: Post-Completion Ceremony
 

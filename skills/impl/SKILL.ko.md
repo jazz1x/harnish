@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.1.0
+version: 0.1.1
 description: >
   자율 구현 엔진 ("harnish" 엔진). PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
   트리거: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -47,6 +47,8 @@ harnish 시작 시 PRD 없으면: "PRD가 없습니다. /drafti-architect 또는
 | harnish-current-work.json 존재 + 세션 시작 | 복원 | Step 4 | — |
 
 reference는 **동시에 2개까지만** 로드. (아래 Context Budget 참조.)
+
+**참고**: `references/retention-policy.md`는 어떤 utterance로도 자동 load되지 않는다 — out-of-band ops 흐름(`scripts/purge-assets.sh`, 자산 삭제)을 문서화한 것이다. Step 5의 명시적 `자산 보존 정책` / `asset retention policy` utterance에서만 참조된다.
 
 ## Step 2: 시딩 (PRD → harnish-current-work.json)
 
@@ -234,14 +236,15 @@ bash "$HARNISH_ROOT/scripts/record-asset.sh" \
 
 ### 수동 트리거
 
-| 발화 | 스크립트 |
-|------|---------|
+| 발화 | 동작 |
+|------|------|
 | "자산 현황" | check-thresholds.sh |
 | "자산 압축" | compress-assets.sh |
 | "이 패턴 기억해" | record-asset.sh --type pattern |
 | "스킬로 만들어" | skillify.sh |
 | "자산 품질" | quality-gate.sh |
 | "위반 확인" | check-violations.sh |
+| "자산 보존 정책" / "asset retention policy" | references/retention-policy.md (읽기 전용 — purge-assets는 CLI/cron 등 out-of-band로 호출됨, 스킬 utterance로는 호출 안 됨) |
 
 ## 가드레일
 

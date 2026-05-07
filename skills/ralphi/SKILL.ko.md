@@ -1,6 +1,6 @@
 ---
 name: ralphi
-version: 0.1.0
+version: 0.1.1
 description: >
   점검 스킬. 트리거: "점검해", "확인해", "검증해", "ralphi",
   "셀프점검", "커버리지 확인", "테스트 갭",
@@ -36,6 +36,7 @@ description: >
 
 ## Step 3B: 프로젝트/디렉토리 점검
 
+0. `references/criteria-project.md` 를 load한다 (정확히 1개 criteria 파일; 다른 것 읽지 말 것). Step 3A의 per-file criteria 매핑에 대한 디렉토리 스코프 카운터파트.
 1. 테스트 실행. 코드를 읽기 전에 테스트부터. 테스트 러너 모르면 **사용자에게 묻는다**: *"테스트 명령은? (예: `pytest`, `npm test`, `go test ./...`, `cargo test`, 커스텀?)"* 추측 금지. 도구 미설치(command not found) → 해당 검사 SKIP + 경고. **설치 시도 금지.**
 2. 변경 파일 목록 (git diff)
 3. 각 파일의 **diff만** 분석. **파일 전체를 읽지 않는다.**
@@ -119,7 +120,7 @@ HITL:
 | 시점 | 읽는 것 |
 |------|---------|
 | Step 3A (파일 점검) | `references/`에서 정확히 **1개** criteria 파일, 감지된 타입에 매칭. 다른 파일 금지. |
-| Step 3B (프로젝트 점검) | `git diff`만. **파일 전체 읽기 금지.** 시나리오 워크스루에 필요한 함수만. |
+| Step 3B (프로젝트 점검) | 정확히 1개 criteria 파일 (`references/criteria-project.md`); `git diff`만. **파일 전체 읽기 금지.** 시나리오 워크스루에 필요한 함수만. |
 | 필요성 검증 | 이미 로드된 내용에 대해서만 동작. 새 파일 읽기 없음. |
 | Step 5 (보고) | 파일 읽기 없음. 출력만. |
 

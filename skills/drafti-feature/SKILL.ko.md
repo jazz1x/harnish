@@ -1,6 +1,6 @@
 ---
 name: drafti-feature
-version: 0.1.0
+version: 0.1.1
 description: >
   기획 기반 구현 명세 PRD 생성기. 기획 요구사항을 구현 가능한 명세로 변환한다.
   트리거: "drafti-feature", "drafti", "drafti 피쳐", "이 기획서로 PRD 만들어", "피쳐 PRD",
@@ -110,12 +110,16 @@ fi
 
 **HITL** (어떤 파일 쓰기보다도 먼저):
 > "PRD 초안 준비됨: §{포함 섹션} ({플래그 있음/없음}). `docs/prd-{slug}.md`에 저장할까요? (y / n / edit-slug)"
+>
+> **`docs/prd-{slug}.md`가 이미 존재할 경우**, 프롬프트는 다음으로 바뀜: *"`docs/prd-{slug}.md`가 이미 존재합니다. (overwrite / n / new-slug)"* — `y`는 제공되지 **않음**. `overwrite`는 명시적 파괴 확인으로 간주.
 
 - `n` → 종료. PRD 저장 안 됨.
-- `edit-slug` → slug 묻기, 그 후 `y`.
+- `edit-slug` → slug 묻기, 그 후 `y` (slug 변경 후 존재 여부 재확인).
 - `y` → 아래 저장 진행.
+- `overwrite` → 기존 파일을 백업 없이 덮어쓰기 (사용자가 명시적으로 파괴 쓰기 확인).
+- `new-slug` → 다른 slug 묻기, 그 후 존재 여부 재확인; 빈 slug가 선택되거나 사용자가 `n`/`overwrite`를 고를 때까지 반복.
 
-PRD 저장 (`y` 이후만):
+PRD 저장 (`y` 또는 `overwrite` 이후만):
 ```bash
 mkdir -p docs/
 # PRD 내용을 docs/prd-{slug}.md에 작성
@@ -178,5 +182,6 @@ reference는 **동시에 1개**까지; 단계 전환 시 교체.
 - 기획서 없이 요구사항 추측 (없으면 drafti-architect로)
 - 불필요한 피쳐플래그 강제 (Step 4 판단표 따를 것)
 - Step 7에서 사용자 명시 확인 없이 PRD 저장
+- 기존 `docs/prd-*.md` 위에 explicit `overwrite` 확인 없이 덮어쓰기
 - Step 1에서 4개 필수 항목 중 하나라도 빠진 채로 진행
 - reference 2개 동시 로드
