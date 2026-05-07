@@ -2,10 +2,10 @@
 
 > Claude Code 플러그인 — 자율 구현 엔진
 
-![version](https://img.shields.io/badge/version-0.1.0-blue)
+![version](https://img.shields.io/badge/version-0.1.1-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
-![tests](https://img.shields.io/badge/tests-123%20passing-brightgreen)
+![tests](https://img.shields.io/badge/tests-144%20passing-brightgreen)
 ![python](https://img.shields.io/badge/python-3.14%2B-blue)
 
 **harnish** (harness + ish) = "대충 하네스 비스무리한 것" — 작업할수록 똑똑해지는 구현 환경. 실패가 가드레일이 되고, 패턴이 축적되며, 세션과 워크트리가 바뀌어도 맥락이 유실되지 않는다.

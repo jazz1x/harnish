@@ -1,6 +1,6 @@
 ---
 name: ralphi
-version: 0.1.0
+version: 0.1.1
 description: >
   Inspection skill. Triggers: "점검해", "확인해", "검증해", "ralphi",
   "셀프점검", "커버리지 확인", "테스트 갭",
@@ -39,6 +39,7 @@ Otherwise → **HITL** (report only and wait)
 
 ## Step 3B: Project/Directory Inspection
 
+0. Load `references/criteria-project.md` (exactly **1** criteria file; do not read others). This is the directory-scope counterpart to Step 3A's per-file criteria.
 1. Run tests. Tests before reading code. If test runner is unknown, **ask the user**: *"What is the test command? (e.g. `pytest`, `npm test`, `go test ./...`, `cargo test`, custom?)"* No guessing. Tool not installed (command not found) → SKIP that check + warn. **Do not attempt installation.**
 2. List changed files (git diff)
 3. Analyze **only the diff** of each file. **Do not read entire files.**
@@ -122,7 +123,7 @@ No issues found → `ralphi inspection complete, no issues found.` Single line. 
 | When | What is read |
 |------|--------------|
 | Step 3A (file inspection) | Exactly **1** criteria file from `references/`, matched to detected type. No others. |
-| Step 3B (project inspection) | `git diff` only. **No full file reads.** Read only the function relevant to a scenario walkthrough. |
+| Step 3B (project inspection) | Exactly **1** criteria file (`references/criteria-project.md`); `git diff` only. **No full file reads.** Read only the function relevant to a scenario walkthrough. |
 | Necessity check | Operates on already-loaded content. No new file reads. |
 | Step 5 (report) | No file reads. Output only. |
 

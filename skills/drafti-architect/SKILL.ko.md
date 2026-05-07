@@ -1,6 +1,6 @@
 ---
 name: drafti-architect
-version: 0.1.0
+version: 0.1.1
 description: >
   기술 설계 PRD 생성기. 기획 문서 없이 기술 문제 정의만으로 구현 가능한 PRD를 생성한다.
   트리거: "drafti-architect", "drafti", "drafti 설계", "설계해", "아키텍처 PRD",
@@ -94,10 +94,14 @@ fi
 
 **HITL** (어떤 파일 쓰기보다도 먼저):
 > "PRD 초안 준비됨: §{섹션} / {규모}. `docs/prd-{slug}.md`에 저장할까요? (y / n / edit-slug)"
+>
+> **`docs/prd-{slug}.md`가 이미 존재하면** 프롬프트는 다음으로 바뀐다: *"`docs/prd-{slug}.md`가 이미 존재합니다. (overwrite / n / new-slug)"* — `y`는 제공하지 **않는다**. `overwrite`는 명시적 파괴 확인으로 취급.
 
 - `n` → 종료. PRD 저장 안 됨.
-- `edit-slug` → slug 묻기, 그 후 `y`.
+- `edit-slug` → slug 묻기, 그 후 `y` (slug 변경 후 존재 여부 재확인).
 - `y` → 아래 저장 진행.
+- `overwrite` → 기존 파일을 백업 없이 덮어쓴다 (사용자가 파괴적 쓰기를 명시적으로 확인한 경우).
+- `new-slug` → 다른 slug를 묻고 존재 여부 재확인; 비어 있는 slug가 선택되거나 사용자가 `n`/`overwrite`를 고를 때까지 반복.
 
 PRD 저장 (`y` 이후만):
 ```bash
@@ -158,5 +162,6 @@ reference는 **동시에 1개**까지; 단계 전환 시 교체.
 - "~가 더 낫다" 식 근거 없는 선택
 - 유효 조건 없이 결정 확정
 - Step 5에서 사용자 명시 확인 없이 PRD 저장
+- 기존 `docs/prd-*.md` 위에 explicit `overwrite` 확인 없이 덮어쓰기
 - 규모 불명확한데 침묵으로 가정
 - reference 2개 동시 로드

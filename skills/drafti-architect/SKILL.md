@@ -1,6 +1,6 @@
 ---
 name: drafti-architect
-version: 0.1.0
+version: 0.1.1
 description: >
   Technical design PRD generator. Creates an implementation-ready PRD from a technical problem definition alone, without a planning document.
   Triggers: "drafti-architect", "drafti", "drafti 설계", "설계해", "design this", "아키텍처 PRD", "architecture PRD",
@@ -95,10 +95,14 @@ If unclear → **ask the user**: *"Scale: small (1-2 days), medium (1-2 weeks), 
 
 **HITL** (before any file write):
 > "PRD draft ready: §{sections} / {scale}. Save to `docs/prd-{slug}.md`? (y / n / edit-slug)"
+>
+> **If `docs/prd-{slug}.md` already exists**, the prompt becomes: *"`docs/prd-{slug}.md` already exists. (overwrite / n / new-slug)"* — `y` is **not** offered. Treat `overwrite` as explicit destructive confirmation.
 
 - `n` → end. PRD not saved.
-- `edit-slug` → ask for slug, then `y`.
+- `edit-slug` → ask for slug, then `y` (re-check existence after slug change).
 - `y` → proceed with save below.
+- `overwrite` → existing file is replaced without backup (user has explicitly confirmed destructive write).
+- `new-slug` → ask for a different slug, then re-check existence; repeat until a free slug is chosen or user picks `n`/`overwrite`.
 
 Save PRD (only after `y`):
 ```bash
@@ -159,5 +163,6 @@ Load **at most 1** reference at a time; switch when moving phase.
 - Groundless selection like "~is better"
 - Finalizing a decision without validity conditions
 - Saving PRD without explicit user confirmation in Step 5
+- Saving over an existing `docs/prd-*.md` without explicit `overwrite` confirmation
 - Silently assuming PRD scale when unclear
 - Loading 2 references simultaneously
