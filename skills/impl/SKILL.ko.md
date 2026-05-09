@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.1.1
+version: 0.2.0
 description: >
   자율 구현 엔진 ("harnish" 엔진). PRD→태스크 분해, ralph 루프 자율 실행, 세션 간 맥락 유지, 경험 축적.
   트리거: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -8,6 +8,12 @@ description: >
   "다음 태스크", "진행 상태", "자산 현황", "자산 압축",
   "이 패턴 기억해", "스킬로 만들어",
   harnish-current-work.json 존재 시 작업 재개 요청.
+ssl:
+  logical:
+    writes: ["harnish-current-work.json", ".harnish/assets/*.jsonl", "project files (current task scope)", "docs/session-*.md"]
+    idempotent: false
+    resumable: true
+    rollback: "Hard guardrails STOP loop; 3-failure rule halts task; ceremony_done flag prevents re-fire; deleting harnish-current-work.json is a hard guardrail"
 ---
 
 # impl — 자율 구현 엔진 ("harnish" 엔진)

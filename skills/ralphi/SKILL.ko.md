@@ -1,10 +1,16 @@
 ---
 name: ralphi
-version: 0.1.1
+version: 0.2.0
 description: >
   점검 스킬. 트리거: "점검해", "확인해", "검증해", "ralphi",
   "셀프점검", "커버리지 확인", "테스트 갭",
   "고쳐", "수정해", "점검하고 고쳐", "자동으로 처리해"
+ssl:
+  logical:
+    writes: ["target files (autonomous mode, after fix passes test)"]
+    deletes: ["[unjustified existence] items (autonomous mode, subtraction-preferred)"]
+    idempotent: false
+    rollback: "test FAIL → rollback that fix; HITL mode never auto-edits; structural changes marked [unfixed]"
 ---
 
 # ralphi — 점검

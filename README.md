@@ -2,7 +2,7 @@
 
 > Claude Code plugin — autonomous implementation engine
 
-![version](https://img.shields.io/badge/version-0.1.1-blue)
+![version](https://img.shields.io/badge/version-0.2.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
 ![tests](https://img.shields.io/badge/tests-145%20passing-brightgreen)
@@ -72,7 +72,7 @@ Inside a Claude Code session:
 Expected output:
 
 ```
-✓ Installed harnish@0.1.1 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
+✓ Installed harnish@0.2.0 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
 ```
 
 Verify with `/plugin list`. The five slash commands below should be invocable:
