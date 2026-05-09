@@ -2,7 +2,7 @@
 
 > Claude Code 플러그인 — 자율 구현 엔진
 
-![version](https://img.shields.io/badge/version-0.1.1-blue)
+![version](https://img.shields.io/badge/version-0.2.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
 ![tests](https://img.shields.io/badge/tests-145%20passing-brightgreen)
@@ -72,7 +72,7 @@ Claude Code 세션 안에서:
 예상 출력:
 
 ```
-✓ Installed harnish@0.1.1 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
+✓ Installed harnish@0.2.0 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
 ```
 
 `/plugin list` 로 확인. 아래 슬래시 명령들이 호출 가능해야 함:

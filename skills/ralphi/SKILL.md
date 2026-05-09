@@ -1,6 +1,6 @@
 ---
 name: ralphi
-version: 0.1.1
+version: 0.2.0
 description: >
   Inspection skill. Triggers: "점검해", "확인해", "검증해", "ralphi",
   "셀프점검", "커버리지 확인", "테스트 갭",
@@ -8,6 +8,12 @@ description: >
   "inspect", "check", "verify", "self-check",
   "coverage check", "test gap",
   "fix", "repair", "inspect and fix", "handle automatically"
+ssl:
+  logical:
+    writes: ["target files (autonomous mode, after fix passes test)"]
+    deletes: ["[unjustified existence] items (autonomous mode, subtraction-preferred)"]
+    idempotent: false
+    rollback: "test FAIL → rollback that fix; HITL mode never auto-edits; structural changes marked [unfixed]"
 ---
 
 # ralphi — Inspection

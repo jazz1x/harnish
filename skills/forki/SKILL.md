@@ -1,6 +1,6 @@
 ---
 name: forki
-version: 0.1.1
+version: 0.2.0
 description: >
   Decision-forcing skill. Reduces a problem to a binary fork via role decomposition
   (Decision / Execution / Validation / Recovery), surfaces trade-offs, forces a single choice.
@@ -9,6 +9,11 @@ description: >
   "decide", "decision", "choose between", "fork", "torn between",
   "past decision", "decided before", "record decision".
   Scope: any domain. Pre-PRD, pre-implementation.
+ssl:
+  logical:
+    writes: ["/tmp/forki-{ts}.md", ".harnish/assets/decision-{date}.jsonl"]
+    idempotent: true
+    rollback: "Step 8 is opt-out (append-only); Step 6 verdict stands regardless"
 ---
 
 # forki — Decision Forcing

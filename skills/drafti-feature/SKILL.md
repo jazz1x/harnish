@@ -1,12 +1,17 @@
 ---
 name: drafti-feature
-version: 0.1.1
+version: 0.2.0
 description: >
   Planning-based implementation spec PRD generator. Converts planning requirements into an implementation-ready spec.
   Triggers: "drafti-feature", "drafti", "drafti 피쳐", "이 기획서로 PRD 만들어", "create PRD from this planning doc",
   "피쳐 PRD", "feature PRD", "기획서 기반 구현 명세", "implementation spec from planning doc",
   "피쳐 설계", "feature design", or when a planning document is attached/referenced.
   Distinction from drafti-architect: planning document exists → feature, does not exist → architect.
+ssl:
+  logical:
+    writes: ["docs/prd-{slug}.md", ".harnish/assets/*.jsonl"]
+    idempotent: false
+    rollback: "Step 7 HITL gate; 'overwrite' is explicit destructive — no auto backup"
 ---
 
 # drafti-feature — Planning to Implementation Spec PRD

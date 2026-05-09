@@ -1,6 +1,6 @@
 ---
 name: impl
-version: 0.1.1
+version: 0.2.0
 description: >
   Autonomous implementation engine (the "harnish" engine). PRD to task decomposition, ralph loop autonomous execution, cross-session context preservation, experience accumulation.
   Triggers: "impl", "harnish", "harnish 시작", "harnish 돌려", "harnish 이어서",
@@ -8,6 +8,12 @@ description: >
   "다음 태스크", "next task", "진행 상태", "progress status", "자산 현황", "asset status", "자산 압축", "compress assets",
   "이 패턴 기억해", "remember this pattern", "스킬로 만들어", "make it a skill",
   Request to resume work when harnish-current-work.json exists.
+ssl:
+  logical:
+    writes: ["harnish-current-work.json", ".harnish/assets/*.jsonl", "project files (current task scope)", "docs/session-*.md"]
+    idempotent: false
+    resumable: true
+    rollback: "Hard guardrails STOP loop; 3-failure rule halts task; ceremony_done flag prevents re-fire; deleting harnish-current-work.json is a hard guardrail"
 ---
 
 # impl — Autonomous Implementation Engine (the "harnish" engine)

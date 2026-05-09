@@ -1,6 +1,6 @@
 ---
 name: forki
-version: 0.1.1
+version: 0.2.0
 description: >
   의사결정 강제 스킬. 문제를 역할 분해(Decision/Execution/Validation/Recovery)로
   2지선택으로 환원, trade-off를 드러내고 단일 선택을 강제.
@@ -9,6 +9,11 @@ description: >
   "decide", "decision", "choose between", "fork", "torn between",
   "past decision", "decided before", "record decision".
   스코프: 모든 도메인. PRD 이전, 구현 이전.
+ssl:
+  logical:
+    writes: ["/tmp/forki-{ts}.md", ".harnish/assets/decision-{date}.jsonl"]
+    idempotent: true
+    rollback: "Step 8 is opt-out (append-only); Step 6 verdict stands regardless"
 ---
 
 # forki — 의사결정 강제

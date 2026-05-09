@@ -1,12 +1,17 @@
 ---
 name: drafti-architect
-version: 0.1.1
+version: 0.2.0
 description: >
   Technical design PRD generator. Creates an implementation-ready PRD from a technical problem definition alone, without a planning document.
   Triggers: "drafti-architect", "drafti", "drafti 설계", "설계해", "design this", "아키텍처 PRD", "architecture PRD",
   "이 문제 어떻게 해결할지", "how to solve this problem",
   "기술적으로 어떻게", "how to technically", "PRD 만들어", "create PRD" (when no planning doc is provided).
   Distinction from drafti-feature: no planning document → architect, has planning document → feature.
+ssl:
+  logical:
+    writes: ["docs/prd-{slug}.md", ".harnish/assets/*.jsonl"]
+    idempotent: false
+    rollback: "Step 5 HITL gate; 'overwrite' is explicit destructive — no auto backup"
 ---
 
 # drafti-architect — Technical Design PRD
