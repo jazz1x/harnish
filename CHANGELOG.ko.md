@@ -9,6 +9,32 @@
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-21
+
+`ralphi` 점검 스킬이 harnish에서 졸업해 자매 플러그인 **galmuri** (`galmuri:ralphi`)로 이전. harnish는 구현 엔진 도메인(forki + drafti + impl)을 유지하고, 점검/감사는 galmuri의 기존 `audit` + `distill` 스킬 옆에서 동일한 Socratic 프레임 아래 함께 산다. public API breaking 변경.
+
+### Removed
+- **`ralphi` 스킬** — [galmuri](https://github.com/jazz1x/galmuri) `galmuri:ralphi`로 이전.
+  - `skills/ralphi/` 삭제 (SKILL.md + SKILL.ko.md + 5개 criteria reference × en/ko = 12개 파일).
+  - `tests/skills_ralphi.bats` 삭제.
+- **`/harnish:ralphi` 슬래시 명령** — 더 이상 등록되지 않음. galmuri 설치 후 `/galmuri:ralphi` 사용.
+
+### Changed
+- **`impl` Step 6.1 (완료 후 점검)** 이 `galmuri:ralphi` 를 자매 플러그인 호출로 호출. galmuri 미설치 시 한 줄 안내만 출력하고 단계 건너뛰기 — 하드 의존성 없음.
+- **`drafti-architect` / `drafti-feature` 후속 안내** `/ralphi` → `/galmuri:ralphi`.
+- **README / README.ko** — ralphi 테이블 행, §3 점검 예시, 슬래시 명령 목록, Footnote 헌사 제거. Naming 섹션은 어원 안내와 galmuri 링크 유지. 흐름도는 `galmuri:ralphi` 를 외부 post-Done 노드로 표시.
+- **plugin.json / marketplace.json** description 이전 사실 반영.
+- **VERSIONING.md** changelog 예시 `ralphi` → `impl`.
+
+### Migration
+이전에 `/harnish:ralphi` 를 사용하던 경우:
+1. galmuri 설치: `npx skills add jazz1x/galmuri` (또는 `/plugin marketplace add https://github.com/jazz1x/galmuri.git && /plugin install galmuri`).
+2. `/harnish:ralphi` 참조를 `/galmuri:ralphi` 로 교체.
+3. ralphi 스킬 본문은 galmuri 안에 그대로 보존됨 — 동작 변화 없이 네임스페이스만 이전.
+
+### Why MINOR, not MAJOR
+`VERSIONING.md` 정책표는 "호환 불가 변경"을 MAJOR로 규정. pre-1.0 관례는 이를 휜다 — 프로젝트가 1.0을 넘기 전까지 MINOR가 breaking을 담당하고, "unstable 졸업" 결정은 별도의 `1.0.0` 컷에 미룬다. breaking surface(스킬 1개 제거 + 슬래시 1개 이름 변경)는 위 Migration 항목에 명시.
+
 ## [0.2.0] - 2026-05-09
 
 Frontmatter SSL `logical` block 도입. 5개 스킬 (en+ko = 10개 SKILL.md) 의 frontmatter 에 destructive surface / idempotency / rollback 을 정적으로 노출하는 메타필드 추가. 본문 / 명령 / skill 동작 무변경 — backwards-compatible additive.

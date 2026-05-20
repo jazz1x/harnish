@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-05-21
+
+The `ralphi` inspection skill graduates out of harnish into the sibling plugin **galmuri** (`galmuri:ralphi`). harnish keeps the implementation-engine concern (forki + drafti + impl); inspection/audit moves next to galmuri's existing `audit` + `distill` skills under a shared Socratic frame. This is a public-API breaking change.
+
+### Removed
+- **`ralphi` skill** — moved to [galmuri](https://github.com/jazz1x/galmuri) as `galmuri:ralphi`.
+  - Deleted `skills/ralphi/` (SKILL.md + SKILL.ko.md + 5 criteria references × en/ko = 12 files).
+  - Deleted `tests/skills_ralphi.bats`.
+- **`/harnish:ralphi` slash command** — no longer registered. Use `/galmuri:ralphi` after installing galmuri.
+
+### Changed
+- **`impl` Step 6.1 (Post-Done inspection)** now calls `galmuri:ralphi` as a sibling-plugin invocation. If galmuri is not installed, impl skips the step with a one-line note instead of failing — no hard dependency.
+- **`drafti-architect` / `drafti-feature` follow-up hint** updated from `/ralphi` to `/galmuri:ralphi`.
+- **README / README.ko** — ralphi table row, §3 Inspection example, slash-command list, and footnote tribute removed; Naming section retains the etymology pointer with a link to galmuri; flow diagram now shows `galmuri:ralphi` as an external post-Done node.
+- **plugin.json / marketplace.json** description updated to reflect the move.
+- **VERSIONING.md** changelog example switched from `ralphi` to `impl`.
+
+### Migration
+For consumers who previously relied on `/harnish:ralphi`:
+1. Install galmuri: `npx skills add jazz1x/galmuri` (or `/plugin marketplace add https://github.com/jazz1x/galmuri.git && /plugin install galmuri`).
+2. Replace any references to `/harnish:ralphi` with `/galmuri:ralphi`.
+3. The ralphi skill body is preserved verbatim in galmuri — no behavior change, only namespace.
+
+### Why MINOR, not MAJOR
+SemVer policy in `VERSIONING.md` lists "호환 불가 변경" as MAJOR. Pre-1.0 convention bends this: until the project crosses 1.0, MINOR is used for breaking changes and the "leaving unstable" decision is reserved for the eventual `1.0.0` cut. The breaking surface (one removed skill + one renamed slash command) is documented above with a migration path.
+
 ## [0.2.0] - 2026-05-09
 
 Frontmatter SSL `logical` block introduced. The 5 skills (en+ko = 10 SKILL.md files) gain a frontmatter metafield that exposes the destructive surface, idempotency, and rollback contract for static auditors. Body, commands, and skill behavior are unchanged — backwards-compatible additive.
