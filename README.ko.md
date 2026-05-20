@@ -2,7 +2,7 @@
 
 > Claude Code 플러그인 — 자율 구현 엔진
 
-![version](https://img.shields.io/badge/version-0.2.0-blue)
+![version](https://img.shields.io/badge/version-0.3.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
 ![tests](https://img.shields.io/badge/tests-145%20passing-brightgreen)
@@ -20,7 +20,8 @@
 | **drafti-feature** | `/harnish:drafti-feature` | 기획 기반 구현 명세 PRD 생성 |
 | **drafti-architect** | `/harnish:drafti-architect` | 기술 주도 설계 PRD 생성 |
 | **impl** | `/harnish:impl` | 자율 구현 엔진 — "harnish" 엔진 (시딩 + ralph 루프 + 앵커링 + 경험축적) |
-| **ralphi** | `/harnish:ralphi` | 점검 (HITL 보고 또는 자율 수정) |
+
+> **점검 스킬 이전**: `ralphi`는 자매 플러그인 **galmuri**로 졸업했다 (`galmuri:ralphi`). harnish는 완료 후 점검 단계에서 이를 cross-plugin으로 호출한다.
 
 각 스킬은 **독립 궤도**에서 동작하며, 오직 **공유 아티팩트(파일)** 로만 연결된다.
 
@@ -30,9 +31,8 @@ forki   ──→  2지선택 강제 (D/E/V/R + trade-off, HITL 전용)
 drafti  ──→  docs/prd-*.md  ──→  harnish  ──→  구현 코드
                                      │
                                      └── .harnish/ (작업 좌표 + 경험 축적, 사용자 프로젝트 CWD)
-
-ralphi  ──→  어떤 아티팩트든 점검 (PRD, SKILL.md, 스크립트, 코드)
-              HITL(보고→대기) 또는 자율(즉시 수정)
+                                     │
+                                     └── galmuri:ralphi (완료 후 점검, 자매 플러그인)
 ```
 
 ## 요구 사항
@@ -57,7 +57,7 @@ npx skills add jazz1x/harnish --skill impl  # 단일 스킬만 설치
 예상 출력:
 
 ```
-✓ Installed jazz1x/harnish — 5 skills (forki, drafti-feature, drafti-architect, impl, ralphi)
+✓ Installed jazz1x/harnish — 4 skills (forki, drafti-feature, drafti-architect, impl)
 ```
 
 ### Option 2 — Claude Code 네이티브 플러그인
@@ -72,7 +72,7 @@ Claude Code 세션 안에서:
 예상 출력:
 
 ```
-✓ Installed harnish@0.2.0 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
+✓ Installed harnish@0.3.0 — 4 skills registered (forki, drafti-feature, drafti-architect, impl)
 ```
 
 `/plugin list` 로 확인. 아래 슬래시 명령들이 호출 가능해야 함:
@@ -82,7 +82,6 @@ Claude Code 세션 안에서:
 /harnish:drafti-feature
 /harnish:drafti-architect
 /harnish:impl
-/harnish:ralphi
 ```
 
 훅은 `hooks/hooks.json` 으로 자동 등록됨 — 아래 [Hooks](#hooks) 섹션 참고.
@@ -171,18 +170,7 @@ PRD 경로나 작업 설명 없이 호출하면 harnish 가 먼저 묻는다:
 → harnish-current-work.json에서 좌표 복원, 중단 지점부터 자동 재개
 ```
 
-### 3. 점검 (ralphi)
-
-```
-사용자: "이 PRD 점검해"
-→ 타입 감지 (PRD) → 정적 분석 → 이슈 보고 → 사용자 판단 대기 (HITL)
-
-사용자: "src/cache.py 점검하고 고쳐"
-→ 타입 감지 (코드) → 분석 → 즉시 수정 → 결과 보고 (자율)
-→ 테스트 FAIL 시 롤백, 의도 불명확 시 미수정 분류
-```
-
-### 4. 경험 축적
+### 3. 경험 축적
 
 ```
 사용자: "이 패턴 기억해"
@@ -282,7 +270,7 @@ mkdir -p .claude/skills
 cp -r /path/to/harnish/skills/forki .claude/skills/
 ```
 
-해당 스킬이 `forki` 로 호출 가능 (플러그인 네임스페이스 없음). `forki` 대신 `impl`, `ralphi`, `drafti-feature`, `drafti-architect` 중 어느 것도 가능.
+해당 스킬이 `forki` 로 호출 가능 (플러그인 네임스페이스 없음). `forki` 대신 `impl`, `drafti-feature`, `drafti-architect` 중 어느 것도 가능.
 
 ### B. 자체 플러그인 마켓으로 포크
 
@@ -308,10 +296,10 @@ git -C /path/to/harnish pull   # 업데이트
 ## Naming
 
 - **harnish** = harness + ish (자율 구현 엔진)
-- **ralphi** = ralph + i (점검)
-  - 유래: 심슨 가족의 캐릭터 '랄프 위검'처럼 포기하지 않고 끈질기게 시도한다는 의미
+  - impl 내부의 ralph 루프는 심슨 가족의 캐릭터 '랄프 위검'에서 따왔다 — 포기하지 않고 끈질기게 시도한다는 의미
 - **drafti** = draft + i (PRD 생성 — drafti-feature + drafti-architect)
 - **forki** = fork + i (의사결정 강제 — 2지선택 + D/E/V/R + trade-off, HITL 전용)
+- **ralphi** = ralph + i (점검) — **[galmuri](https://github.com/jazz1x/galmuri)로 이전**
 
 ## Triad
 
@@ -325,14 +313,6 @@ harnish (make)  ──→  honne (know)  ──→  galmuri (keep)
 - [harnish](https://github.com/jazz1x/harnish) — 자율 구현 엔진
 - [honne](https://github.com/jazz1x/honne) — 증거 기반 자기 성찰 (6축 persona)
 - [galmuri](https://github.com/jazz1x/galmuri) — 요약 · 의사결정 덱 · 문서화
-
-## Footnote
-
-> *"`ralphi`가 이미 하는 일이라면, 새 스킬은 노이즈일 뿐이다 —
-> distill은 자기 자신의 첫 희생자가 된다."*
-
-`distill`이라는 스킬이 제안됐고, 자신이 내세운 원리에 의해 지워졌다.
-그게 바로 ralphi가 작동한 순간이었다.
 
 ## License
 

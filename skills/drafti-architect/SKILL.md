@@ -1,6 +1,6 @@
 ---
 name: drafti-architect
-version: 0.2.0
+version: 0.3.0
 description: >
   Technical design PRD generator. Creates an implementation-ready PRD from a technical problem definition alone, without a planning document.
   Triggers: "drafti-architect", "drafti", "drafti 설계", "설계해", "design this", "아키텍처 PRD", "architecture PRD",
@@ -24,7 +24,7 @@ Each Bash tool invocation is a fresh subshell. Every bash block re-declares `HAR
 
 ## Skill Chain
 
-Can be invoked independently. Follow-up: "start implementation after review" → impl, or "/ralphi to verify PRD consistency" → ralphi.
+Can be invoked independently. Follow-up: "start implementation after review" → impl, or "/galmuri:ralphi to verify PRD consistency" → galmuri:ralphi (sibling plugin).
 
 ## Step 1: Problem Clarification
 
@@ -138,7 +138,7 @@ fi
 ```
 ✅ PRD complete: docs/prd-{slug}.md
 Includes: §4 Implementation spec / §6 Test criteria / §7 Guardrails
-Next: "start implementation" after review, or /ralphi for consistency check.
+Next: "start implementation" after review, or /galmuri:ralphi for consistency check.
 ```
 
 ## Distinction from drafti-feature

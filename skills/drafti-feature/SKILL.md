@@ -1,6 +1,6 @@
 ---
 name: drafti-feature
-version: 0.2.0
+version: 0.3.0
 description: >
   Planning-based implementation spec PRD generator. Converts planning requirements into an implementation-ready spec.
   Triggers: "drafti-feature", "drafti", "drafti 피쳐", "이 기획서로 PRD 만들어", "create PRD from this planning doc",
@@ -24,7 +24,7 @@ Each Bash tool invocation is a fresh subshell. Every bash block re-declares `HAR
 
 ## Skill Chain
 
-Can be invoked independently (planning doc required). Follow-up: "start implementation after review" → impl, or "/ralphi to verify PRD consistency" → ralphi.
+Can be invoked independently (planning doc required). Follow-up: "start implementation after review" → impl, or "/galmuri:ralphi to verify PRD consistency" → galmuri:ralphi (sibling plugin).
 
 ## Step 1: Requirement Parsing
 
@@ -159,7 +159,7 @@ fi
 ```
 ✅ PRD generated: docs/prd-{slug}.md
 Includes: §4 Implementation spec / §6 Test criteria / §7 Guardrails
-Next: "start implementation" after review, or /ralphi for consistency check.
+Next: "start implementation" after review, or /galmuri:ralphi for consistency check.
 ```
 
 ## Distinction from drafti-architect

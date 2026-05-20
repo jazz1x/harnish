@@ -2,7 +2,7 @@
 
 > Claude Code plugin — autonomous implementation engine
 
-![version](https://img.shields.io/badge/version-0.2.0-blue)
+![version](https://img.shields.io/badge/version-0.3.0-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
 ![claude-code](https://img.shields.io/badge/claude--code-plugin-purple)
 ![tests](https://img.shields.io/badge/tests-145%20passing-brightgreen)
@@ -20,7 +20,8 @@
 | **drafti-feature** | `/harnish:drafti-feature` | Planning-based implementation spec PRD |
 | **drafti-architect** | `/harnish:drafti-architect` | Tech-driven design PRD generation |
 | **impl** | `/harnish:impl` | Autonomous implementation engine — the "harnish" engine (seeding + ralph loop + anchoring + experience) |
-| **ralphi** | `/harnish:ralphi` | Inspection (HITL reporting or autonomous fix) |
+
+> **Inspection moved**: `ralphi` has graduated to the sibling plugin **galmuri** (`galmuri:ralphi`). harnish now calls it cross-plugin in its post-Done step.
 
 Each skill operates in an **independent orbit**, connected only through **shared artifacts (files)**.
 
@@ -30,9 +31,8 @@ forki   ──→  forces a binary decision (D/E/V/R + trade-off, HITL only)
 drafti  ──→  docs/prd-*.md  ──→  harnish  ──→  implementation code
                                      │
                                      └── .harnish/ (work coordinates + experience, in user project CWD)
-
-ralphi  ──→  inspects any artifact (PRD, SKILL.md, scripts, code)
-              HITL (report → wait) or autonomous (fix immediately)
+                                     │
+                                     └── galmuri:ralphi (post-Done inspection, sibling plugin)
 ```
 
 ## Requirements
@@ -57,7 +57,7 @@ npx skills add jazz1x/harnish --skill impl  # install a single skill
 Expected output:
 
 ```
-✓ Installed jazz1x/harnish — 5 skills (forki, drafti-feature, drafti-architect, impl, ralphi)
+✓ Installed jazz1x/harnish — 4 skills (forki, drafti-feature, drafti-architect, impl)
 ```
 
 ### Option 2 — Claude Code native plugin
@@ -72,17 +72,16 @@ Inside a Claude Code session:
 Expected output:
 
 ```
-✓ Installed harnish@0.2.0 — 5 skills registered (forki, drafti-feature, drafti-architect, impl, ralphi)
+✓ Installed harnish@0.3.0 — 4 skills registered (forki, drafti-feature, drafti-architect, impl)
 ```
 
-Verify with `/plugin list`. The five slash commands below should be invocable:
+Verify with `/plugin list`. The four slash commands below should be invocable:
 
 ```
 /harnish:forki
 /harnish:drafti-feature
 /harnish:drafti-architect
 /harnish:impl
-/harnish:ralphi
 ```
 
 Hooks are auto-registered via `hooks/hooks.json` — see the [Hooks](#hooks) section.
@@ -171,18 +170,7 @@ User: (in a new session) "Continue where I left off"
 → Restores coordinates from harnish-current-work.json, auto-resumes from break point
 ```
 
-### 3. Inspection (ralphi)
-
-```
-User: "Inspect this PRD"
-→ Type detection (PRD) → static analysis → issue report → waits for user judgment (HITL)
-
-User: "Inspect and fix src/cache.py"
-→ Type detection (code) → analysis → immediate fix → result report (autonomous)
-→ Rolls back on test failure, classifies as unfixed when intent is unclear
-```
-
-### 4. Experience Accumulation
+### 3. Experience Accumulation
 
 ```
 User: "Remember this pattern"
@@ -283,7 +271,7 @@ mkdir -p .claude/skills
 cp -r /path/to/harnish/skills/forki .claude/skills/
 ```
 
-The skill is available as `forki` (no plugin namespace). Replace `forki` with any of: `impl`, `ralphi`, `drafti-feature`, `drafti-architect`.
+The skill is available as `forki` (no plugin namespace). Replace `forki` with any of: `impl`, `drafti-feature`, `drafti-architect`.
 
 ### B. Fork as your own plugin marketplace
 
@@ -309,10 +297,10 @@ git -C /path/to/harnish pull   # update later
 ## Naming
 
 - **harnish** = harness + ish (autonomous implementation engine)
-- **ralphi** = ralph + i (inspection)
-  - Origin: named after Ralph Wiggum from The Simpsons — keep trying, don't give up
+  - The ralph loop inside impl is named after Ralph Wiggum from The Simpsons — keep trying, don't give up
 - **drafti** = draft + i (PRD generation — drafti-feature + drafti-architect)
 - **forki** = fork + i (decision forcing — binary fork + D/E/V/R + trade-off, HITL only)
+- **ralphi** = ralph + i (inspection) — **moved to [galmuri](https://github.com/jazz1x/galmuri)**
 
 ## Triad
 
@@ -326,14 +314,6 @@ harnish (make)  ──→  honne (know)  ──→  galmuri (keep)
 - [harnish](https://github.com/jazz1x/harnish) — autonomous implementation engine
 - [honne](https://github.com/jazz1x/honne) — evidence-backed self-reflection (6-axis persona)
 - [galmuri](https://github.com/jazz1x/galmuri) — summary · decision-deck · documentation
-
-## Footnote
-
-> *"If `ralphi` already does it, a new skill is just noise —
-> and distill becomes its own first victim."*
-
-A skill called `distill` was proposed, and erased by the very principle it stood for.
-That was ralphi, working.
 
 ## License
 
