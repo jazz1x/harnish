@@ -23,7 +23,7 @@ ssl:
 ## Skill Chain
 
 ```
-drafti-architect (or drafti-feature) → impl → ralphi
+drafti-architect (or drafti-feature) → impl → galmuri:ralphi (sibling plugin)
 ```
 
 | Skill | Standalone Call | Prerequisites |
@@ -31,7 +31,7 @@ drafti-architect (or drafti-feature) → impl → ralphi
 | drafti-architect | Yes | None (only needs a technical problem) |
 | drafti-feature | Yes | Requires a planning document |
 | impl | Yes | docs/prd-*.md or existing harnish-current-work.json |
-| ralphi | Yes | Specify target files/directories to verify |
+| galmuri:ralphi | Yes (external) | Specify target files/directories to verify |
 
 When harnish starts without a PRD: "No PRD found. Please create one first with /drafti-architect or /drafti-feature."
 
@@ -266,10 +266,10 @@ Purpose: turn "all tasks done" into a deliberate closing beat — inspect, compr
 
 ### 6.1 Automatic Inspection (read-only)
 
-Invoke ralphi inspection on files changed since session start. Report findings inline. **DO NOT auto-fix** — fixing is a separate user trigger.
+Invoke `galmuri:ralphi` (sibling plugin) on files changed since session start. Report findings inline. **DO NOT auto-fix** — fixing is a separate user trigger. If galmuri is not installed, skip this step and surface a one-line note ("galmuri not installed — skipping post-Done inspection").
 
 ```
-📋 Post-Done inspection (ralphi, read-only)
+📋 Post-Done inspection (galmuri:ralphi, read-only)
 Files changed this session: {N}
 Findings: {count by severity}
 ```
@@ -291,7 +291,7 @@ bash "$HARNISH_ROOT/scripts/compress-assets.sh" --dry-run --all --base-dir "$(pw
 ✅ Session summary
 Files changed: {count} ({short list})
 Key decisions: {1-2 one-liners from .harnish/harnish-assets.jsonl recorded this session}
-Suggested next: {e.g., ralphi fix | deploy | handoff | sibling plugin invocation}
+Suggested next: {e.g., galmuri:ralphi fix | deploy | handoff | sibling plugin invocation}
 ```
 
 ### 6.4 HITL Before Persist
@@ -304,7 +304,7 @@ Suggested next: {e.g., ralphi fix | deploy | handoff | sibling plugin invocation
 
 ### Prohibited in Step 6
 
-- Auto-fixing ralphi findings (report only)
+- Auto-fixing galmuri:ralphi findings (report only)
 - Auto-applying asset compression (suggest only)
 - Modifying harnish-current-work.json beyond `.metadata.ceremony_done` (done object is frozen)
 - Re-entering the ceremony on a session that already ran it (single-fire per session)
@@ -321,7 +321,7 @@ Suggested next: {e.g., ralphi fix | deploy | handoff | sibling plugin invocation
 | Step 3 [PROGRESS] | Test outputs only |
 | Step 4 (Restore) | `harnish-current-work.json`, no source code |
 | Step 5 (Experience) | `references/thresholds.md`, asset query output |
-| Step 6 (Post-Completion) | ralphi output + compress-assets dry-run output + session assets |
+| Step 6 (Post-Completion) | galmuri:ralphi output + compress-assets dry-run output + session assets |
 
 `Load at most 2 references at a time.` Other references must wait for a phase switch.
 

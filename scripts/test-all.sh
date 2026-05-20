@@ -1040,7 +1040,7 @@ echo "${BOLD}[SKILL version 일관성]${NC}"
 
 EXPECTED_V=$(jq -r .version "$HARNISH_ROOT/.claude-plugin/plugin.json" 2>/dev/null || echo missing)
 VERSION_OK=true
-for skill in impl ralphi forki drafti-architect drafti-feature; do
+for skill in impl forki drafti-architect drafti-feature; do
   for ext in md ko.md; do
     V=$(awk '/^version:/ {print $2; exit}' "$HARNISH_ROOT/skills/$skill/SKILL.$ext" 2>/dev/null || echo "missing")
     if [[ "$V" != "$EXPECTED_V" ]]; then
@@ -1050,7 +1050,7 @@ for skill in impl ralphi forki drafti-architect drafti-feature; do
   done
 done
 if $VERSION_OK; then
-  pass "5개 SKILL × (md + ko.md) frontmatter version == $EXPECTED_V"
+  pass "4개 SKILL × (md + ko.md) frontmatter version == $EXPECTED_V"
 fi
 
 # ════════════════════════════════════════

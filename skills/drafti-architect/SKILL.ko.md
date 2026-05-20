@@ -23,7 +23,7 @@ ssl:
 
 ## 스킬 체인
 
-독립 호출 가능. 후속: "검토 후 '구현 시작'" → impl, 또는 "/ralphi로 PRD 정합성 확인" → ralphi.
+독립 호출 가능. 후속: "검토 후 '구현 시작'" → impl, 또는 "/galmuri:ralphi로 PRD 정합성 확인" → galmuri:ralphi (자매 플러그인).
 
 ## Step 1: 문제 명확화
 
@@ -137,7 +137,7 @@ fi
 ```
 ✅ PRD 완성: docs/prd-{slug}.md
 포함: §4 구현 명세 / §6 테스트 기준 / §7 가드레일
-다음: 검토 후 "구현 시작" 또는 /ralphi로 정합성 확인.
+다음: 검토 후 "구현 시작" 또는 /galmuri:ralphi로 정합성 확인.
 ```
 
 ## drafti-feature와의 구분

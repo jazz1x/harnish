@@ -4,13 +4,13 @@
     "name": "jazz1x"
   },
   "metadata": {
-    "description": "자율 구현 엔진. PRD 생성 → 자율 구현 → 점검."
+    "description": "자율 구현 엔진. PRD 생성 → 자율 구현."
   },
   "plugins": [
     {
       "name": "harnish",
       "source": "./",
-      "description": "자율 구현 엔진. PRD 생성(drafti) → 자율 구현(harnish) → 점검(ralphi)."
+      "description": "자율 구현 엔진. PRD 생성(drafti) → 자율 구현(harnish). 점검(ralphi)은 galmuri로 이관."
     }
   ]
 }
